@@ -5,10 +5,16 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        Buffer buffer = new Buffer("/home/milagros/Documentos/Compiladores/Compiladores/texto.txt");
+        AnalisisLexico aLex = new AnalisisLexico("C:\\FACULTAD\\Cuarto\\compiladores\\TPE_Compiladores\\texto.txt");
 
-        while (!buffer.ArchivoVacio()) {
-            buffer.obtenerCaracter();
+        int i = aLex.obtenerToken();
+
+        while (i != -2) {
+            System.out.println("TOKEN: "+i);
+            i = aLex.obtenerToken();
         }
+        //System.out.println("TOKEN COMPLETO: "+tokenLexema.getLexema());
+
+        aLex.imprimirTabla();
     }
 }

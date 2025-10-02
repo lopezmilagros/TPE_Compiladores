@@ -29,13 +29,14 @@ public class Buffer {
 
         // Obtener el primer carácter
         primerCaracter = copia.charAt(0);
-        System.out.println("Primer carácter: " + primerCaracter);
 
         // Eliminar el primer carácter y sobrescribir la copia
         copia = copia.substring(1);
 
-        System.out.println("Archivo actualizado sin el primer carácter.");
-
         return primerCaracter;
+    }
+
+    public void agregarCaracter (char caracter){
+        this.copia = caracter + this.copia;
     }
 }
