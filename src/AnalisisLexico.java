@@ -50,7 +50,7 @@ public class AnalisisLexico {
         tablaTokens.put(">", 21);
         tablaTokens.put("<", 22);
         tablaTokens.put("==", 23);
-        tablaTokens.put("=!", 24);
+        tablaTokens.put("!=", 24);
         tablaTokens.put("(", 25);
         tablaTokens.put(")", 26);
         tablaTokens.put("{", 27);
