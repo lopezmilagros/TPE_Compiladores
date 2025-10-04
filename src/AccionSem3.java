@@ -20,7 +20,7 @@ public class AccionSem3 implements AccionSem{
             return lexema;
         }
         else {
-            System.out.println("ACCION SEMANTICA 3: el entero se exedio del rango"+lexema.getLexema());
+            System.out.println("ACCION SEMANTICA 3: el entero se exedio del rango "+lexema.getLexema());
             return null;
         }
     }

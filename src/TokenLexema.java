@@ -6,10 +6,6 @@ public class TokenLexema {
     //vaos a tener que tener las tablas con los id y un metodo setID()
     public TokenLexema() {}
 
-    public void concatenar(char token){
-        this.token += token;
-    }
-
     public int getToken(){ return this.token;}
     public String getLexema(){ return  this.lexema;}
 
@@ -18,6 +14,10 @@ public class TokenLexema {
             this.lexema = this.lexema + caracter;
         else
             this.lexema = String.valueOf(caracter);
+    }
+
+    public void reescribirLexema(String lexema){
+        this.lexema = lexema;
     }
     public void setToken(int token) {
         this.token = token;

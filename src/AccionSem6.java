@@ -13,6 +13,11 @@ public class AccionSem6 implements AccionSem{
     @Override
     public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
         buffer.agregarCaracter(caracter);
+        if(lexema.getLexema().length() > 20){
+            String nuevoLexema = lexema.getLexema().substring(0,20);
+            System.out.println("Warning: El identificador "+lexema.getLexema()+" fue truncado a: "+nuevoLexema);
+            lexema.reescribirLexema(nuevoLexema);
+        }
         if (!tablaDeSimbolos.containsKey(lexema.getLexema())){
             tablaDeSimbolos.put(lexema.getLexema(), 12);
             lexema.setToken(12);

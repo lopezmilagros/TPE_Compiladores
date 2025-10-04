@@ -44,7 +44,7 @@ public class AccionSem4 implements AccionSem{
             tablaDeSimbolos.put(lexema.getLexema(), lexema.getToken());
             return lexema;
         }
-        System.out.println("ACCION SEMANTICA 4: float se exedio de rango"+lexema.getLexema());
+        System.out.println("ACCION SEMANTICA 4: float se exedio de rango "+lexema.getLexema());
         return null;
     }
 }

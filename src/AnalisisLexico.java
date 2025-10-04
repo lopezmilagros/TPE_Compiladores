@@ -58,18 +58,9 @@ public class AnalisisLexico {
         tablaTokens.put("_", 29);
         tablaTokens.put(";", 30);
         tablaTokens.put("->", 31);
+        tablaTokens.put("cvr",32);
     }
-    /*public void llenarPalabrasReservadas(){
-        this.palabrasReservadas.add("if");
-        this.palabrasReservadas.add("else");
-        this.palabrasReservadas.add("endif");
-        this.palabrasReservadas.add("print");
-        this.palabrasReservadas.add("return");
-        this.palabrasReservadas.add("ulong");
-        this.palabrasReservadas.add("dfloat");
-        this.palabrasReservadas.add("while");
-        this.palabrasReservadas.add("do");
-    }*/
+
     public void llenarMatrices(){
 
         //Creamos instancias de las acciones semanticas para llenar la matriz
@@ -80,6 +71,7 @@ public class AnalisisLexico {
         AccionSem a5 = new AccionSem5(buffer, tablaTokens);
         AccionSem a6 = new AccionSem6(buffer, tablaDeSimbolos);
         AccionSem a7 = new AccionSem7(buffer);
+        AccionSem a8 = new AccionSem8(buffer, tablaDeSimbolos);
 
         //El estado final sera el numero 18, el estado de error sera -1
 
@@ -159,7 +151,7 @@ public class AnalisisLexico {
                     case 8 -> {
                         if(j == 22) {
                             estados[i][j] = 18;
-                            accionesSem[i][j] = a2;
+                            accionesSem[i][j] = a8;
                         }
                         else if (j != 23) {
                             estados[i][j] = 8;
@@ -228,46 +220,62 @@ public class AnalisisLexico {
         }
     }
 
-    public int obtenerToken(){
+    public int yylex() {
         int estadoActual = 0;
         int estadoSiguiente;
+
+        //Inicializamos el token
         TokenLexema tokenLexema = new TokenLexema();
+        tokenLexema.setToken(-1);
 
         if (buffer.ArchivoVacio())
-            return -1;
-        while (!buffer.ArchivoVacio() & estadoActual < 18){
+            return 0;
+
+        while (!buffer.ArchivoVacio() & estadoActual < 18) {
             char caracter = buffer.obtenerCaracter();
-            System.out.println("caracter: "+caracter);
+            System.out.println("caracter: " + caracter);
 
             //ir reccorriendo las matrices para ver estados y acciones semanticas
             int columna = obtenerColumna(caracter);
-            if(columna == -1)
-                System.out.println("Caracter invalido: "+caracter+".");
+            if (columna == -1)
+                //Un caracter invalido que no coincide con nincula columna de la matriz
+                System.out.println("Caracter invalido: " + caracter + ".");
             else {
                 estadoSiguiente = estados[estadoActual][columna];
-                AccionSem a = accionesSem[estadoActual][columna];
-                estadoActual = estadoSiguiente;
-                if ( a != null){
-                    tokenLexema = a.ejecutar(tokenLexema, caracter);}
-                else System.out.println("Accion semantica fue null por este caracter: "+caracter+".");
+                if (estadoSiguiente == -1) {
+                    //Una transicion invalida, reportar error
+                    AccionSem9 a9 = new AccionSem9(estadoActual, columna);
+                    tokenLexema = a9.ejecutar(tokenLexema, caracter);
+                }
+                else{
+                    //Transicion valida, ejecuto la accion semantica en caso de que tenga
+                    AccionSem a = accionesSem[estadoActual][columna];
+                    if (a != null)
+                        tokenLexema = a.ejecutar(tokenLexema, caracter);
+                }
+                //Actualizo mi estado
+                if (estadoSiguiente != -1)
+                    estadoActual = estadoSiguiente;
+                else
+                    //Hubo un error de transicion y se debe finalizar el token
+                    estadoActual = 18;
+
             }
         }
-        if (tokenLexema == null){
+
+        //Llamamos de nuevo a la funcion porque el lexema anterior dio error y no termino el archivo.
+        if (tokenLexema != null) {
+            if (tokenLexema.getToken() != 10 & tokenLexema.getToken() != 11 & tokenLexema.getToken() != 12) {
+                if (tablaTokens.get(tokenLexema.getLexema()) != null)
+                    tokenLexema.setToken(tablaTokens.get(tokenLexema.getLexema()));
+            }
+        }
+        else{
             tokenLexema = new TokenLexema();
             tokenLexema.setLexema('E');
             tokenLexema.setToken(-1);
         }
-
-        if (buffer.ArchivoVacio())
-            return -2;
-
-            //Llamamos de nuevo a la funcion porque el lexema anterior dio error y no termino el archivo.
-        if (tokenLexema != null){
-            if (tablaDeSimbolos.containsKey(tokenLexema.getLexema()))
-                return tablaDeSimbolos.get(tokenLexema.getLexema());}
-            else
-                return tokenLexema.getToken(); //ver que devolver
-        return -1;
+        return tokenLexema.getToken();
     }
 
     public void imprimirTabla(){

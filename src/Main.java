@@ -7,11 +7,11 @@ public class Main {
 
         AnalisisLexico aLex = new AnalisisLexico("C:\\FACULTAD\\Cuarto\\compiladores\\TPE_Compiladores\\texto.txt");
 
-        int i = aLex.obtenerToken();
+        int i = aLex.yylex();
 
         while (i != -2) {
             System.out.println("TOKEN: "+i);
-            i = aLex.obtenerToken();
+            i = aLex.yylex();
         }
         //System.out.println("TOKEN COMPLETO: "+tokenLexema.getLexema());
 
