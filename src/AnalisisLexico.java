@@ -10,6 +10,7 @@ public class AnalisisLexico {
     private ArrayList<String> palabrasReservadas;
     private HashMap<String, Integer> tablaTokens;
     private HashMap<String, Integer> tablaDeSimbolos;  //HACER UN HASMAP DE STRING, LISTA
+    private ParserVal yylval;
 
     public AnalisisLexico(String ruta) throws IOException {
         this.tablaTokens = new HashMap<>();
@@ -27,18 +28,19 @@ public class AnalisisLexico {
         System.out.println("La primera fila de la tabla de tokens: "+tablaTokens.get("if"));
     }
     public void llenarTablaTokens(){
-        tablaTokens.put("if", 1);
-        tablaTokens.put("else", 2);
-        tablaTokens.put("endif", 3);
-        tablaTokens.put("print", 4);
-        tablaTokens.put("return", 5);
-        tablaTokens.put("ulong", 6);
+        tablaTokens.put("if", 257);
+        tablaTokens.put("else", 258);
+        tablaTokens.put("endif", 259);
+        tablaTokens.put("print", 260);
+        tablaTokens.put("return", 261);
+        tablaTokens.put("ulong", 262);
         tablaTokens.put("dfloat", 7);
-        tablaTokens.put("while", 8);
-        tablaTokens.put("do", 9);
-        tablaTokens.put("cte", 10);
-        tablaTokens.put("cadena", 11);
-        tablaTokens.put("id", 12);
+        tablaTokens.put("while", 263);
+        tablaTokens.put("do", 264);
+        tablaTokens.put("cte", 265);
+        tablaTokens.put("cadena", 266);
+        tablaTokens.put("id", 267);
+        tablaTokens.put("cvr",268);
         tablaTokens.put(":=", 13);
         tablaTokens.put("+", 14);
         tablaTokens.put("-", 15);
@@ -58,7 +60,6 @@ public class AnalisisLexico {
         tablaTokens.put("_", 29);
         tablaTokens.put(";", 30);
         tablaTokens.put("->", 31);
-        tablaTokens.put("cvr",32);
     }
 
     public void llenarMatrices(){
@@ -268,6 +269,10 @@ public class AnalisisLexico {
             if (tokenLexema.getToken() != 10 & tokenLexema.getToken() != 11 & tokenLexema.getToken() != 12) {
                 if (tablaTokens.get(tokenLexema.getLexema()) != null)
                     tokenLexema.setToken(tablaTokens.get(tokenLexema.getLexema()));
+            }
+            else{
+                //Enviamos la referencia a el lexema a traves de la variable yylval
+                yylval = new ParserVal(tokenLexema.getLexema());
             }
         }
         else{
