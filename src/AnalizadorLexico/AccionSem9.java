@@ -11,7 +11,7 @@ public class AccionSem9 implements AccionSem {
     }
 
     @Override
-    public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
+    public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         //aca iria el switch case
         String[] simbolos = {
                 "dígito", "U", "L", "D", "letra minúscula", "letra mayúscula",
@@ -22,39 +22,39 @@ public class AccionSem9 implements AccionSem {
         switch (fila) {
 
             case 1:
-                System.out.println("Error: se esperaba una 'U', un digito o un '.'  y llegó '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: se esperaba una 'U', un digito o un '.'  y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 2:
-                System.out.println("Error: en el estado 2 se esperaba una 'L' y llegó '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: en el estado 2 se esperaba una 'L' y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 3:
-                System.out.println("Error: se esperaba un número y llegó '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: se esperaba un número y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 5:
-                System.out.println("Error: se esperaba '+' o '-' y llegó  '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: se esperaba '+' o '-' y llegó  '" + simbolos[columna] + "'");
                 break;
 
             case 6:
-                System.out.println("Error: se esperaba un digito y llegó '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: se esperaba un digito y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 8:
-                System.out.println("Error: salto de linea inválido '");
+                System.out.println("Linea "+nroLinea+": ERROR: salto de linea inválido '");
                 break;
 
             case 13:
-                System.out.println("Error: se esperaba '=' y llegó  '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: se esperaba '=' y llegó  '" + simbolos[columna] + "'");
                 break;
 
             case 15,17:
-                System.out.println("Error: se esperaba '#' y llegó  ' '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: se esperaba '#' y llegó  ' '" + simbolos[columna] + "'");
                 break;
 
             default:
-                System.out.println("Error: caracter invalido: '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR: caracter invalido: '" + simbolos[columna] + "'");
                 break;
         }
         return null;

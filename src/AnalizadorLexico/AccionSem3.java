@@ -10,19 +10,19 @@ public class AccionSem3 implements AccionSem{
     }
     //mandarias el caracter en null
     @Override
-    public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
+    public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         int numero = Integer.parseInt(lexema.getLexema());
         long max = 4294967295L; // 2^32 -1
         int min = 0;
         if ( numero <= max & numero >= min){
-            lexema.setToken(6);
+            lexema.setToken(265);
             tablaDeSimbolos.put(lexema.getLexema(), lexema.getToken());
             lexema.setLexema(caracter);     //id de ulong en tablaTokens
 
             return lexema;
         }
         else {
-            System.out.println("ACCION SEMANTICA 3: el entero se exedio del rango "+lexema.getLexema());
+            System.out.println("Linea "+nroLinea+": ERROR el entero se exedio del rango "+lexema.getLexema());
             return null;
         }
     }

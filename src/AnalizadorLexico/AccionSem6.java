@@ -12,17 +12,17 @@ public class AccionSem6 implements AccionSem{
         this.tablaDeSimbolos = tablaDeSimbolos;
     }
     @Override
-    public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
+    public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         buffer.agregarCaracter(caracter);
         if(lexema.getLexema().length() > 20){
             String nuevoLexema = lexema.getLexema().substring(0,20);
-            System.out.println("Warning: El identificador "+lexema.getLexema()+" fue truncado a: "+nuevoLexema);
+            System.out.println("Linea "+nroLinea+":WARNING: El identificador "+lexema.getLexema()+" fue truncado a: "+nuevoLexema);
             lexema.reescribirLexema(nuevoLexema);
         }
         if (!tablaDeSimbolos.containsKey(lexema.getLexema())){
-            tablaDeSimbolos.put(lexema.getLexema(), 12);
-            lexema.setToken(12);
+            tablaDeSimbolos.put(lexema.getLexema(),267);
         }
+        lexema.setToken(267);
         return lexema;
     }
 }

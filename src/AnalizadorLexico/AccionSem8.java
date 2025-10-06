@@ -11,11 +11,11 @@ public class AccionSem8 implements AccionSem{
         this.tablaDeSimbolos = tablaDeSimbolos;
     }
     @Override
-    public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
+    public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         lexema.setLexema(caracter);
         if (!tablaDeSimbolos.containsKey(lexema.getLexema())){
-            tablaDeSimbolos.put(lexema.getLexema(), 11);
-            lexema.setToken(11);
+            tablaDeSimbolos.put(lexema.getLexema(),266);
+            lexema.setToken(266);
         }
         return lexema;
     }

@@ -8,7 +8,7 @@ public class AccionSem7 implements AccionSem{
         this.buffer = buffer;
     }
     @Override
-    public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
+    public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         buffer.agregarCaracter(caracter);
         return lexema;
     }

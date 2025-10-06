@@ -14,7 +14,7 @@ public class AccionSem4 implements AccionSem{
 
     //escribir en el buffer denuevo el caracter leido y chequear que no pase de 64 bits
     @Override
-    public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
+    public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         String lex = lexema.getLexema();
         String base = null;
         String exponente = null;
@@ -46,7 +46,7 @@ public class AccionSem4 implements AccionSem{
             tablaDeSimbolos.put(lexema.getLexema(), lexema.getToken());
             return lexema;
         }
-        System.out.println("ACCION SEMANTICA 4: float se exedio de rango "+lexema.getLexema());
+        System.out.println("Linea "+nroLinea+": ERROR: float se exedio de rango "+lexema.getLexema());
         return null;
     }
 }

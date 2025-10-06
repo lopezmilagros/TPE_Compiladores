@@ -1,0 +1,9 @@
+PROGRAMA{
+    ulong X := 3UL;
+    if ( X < 15UL ) {
+        print ( " DATACRUSHERS " );
+    }
+    endif;
+    ## es un comentario ##
+    return X
+}

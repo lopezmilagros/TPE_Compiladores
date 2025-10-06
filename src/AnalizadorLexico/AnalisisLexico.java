@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import AnalizadorSintactico.*;
+
 
 public class AnalisisLexico {
     private int[][] estados;
@@ -13,8 +15,11 @@ public class AnalisisLexico {
     private HashMap<String, Integer> tablaTokens;
     private HashMap<String, Integer> tablaDeSimbolos;  //HACER UN HASMAP DE STRING, LISTA
     private ParserVal yylval;
+    private static int nroLinea;
+
 
     public AnalisisLexico(String ruta) throws IOException {
+        nroLinea = 1;
         this.tablaTokens = new HashMap<>();
         llenarTablaTokens();
 
@@ -27,7 +32,6 @@ public class AnalisisLexico {
 
         llenarMatrices();
         //llenarPalabrasReservadas();
-        System.out.println("La primera fila de la tabla de tokens: "+tablaTokens.get("if"));
     }
     public void llenarTablaTokens(){
         tablaTokens.put("if", 257);
@@ -43,25 +47,25 @@ public class AnalisisLexico {
         tablaTokens.put("cadena", 266);
         tablaTokens.put("id", 267);
         tablaTokens.put("cvr",268);
-        tablaTokens.put(":=", 13);
-        tablaTokens.put("+", 14);
-        tablaTokens.put("-", 15);
-        tablaTokens.put("*", 16);
-        tablaTokens.put("/", 17);
-        tablaTokens.put("=", 18);
-        tablaTokens.put(">=", 19);
-        tablaTokens.put("<=", 20);
-        tablaTokens.put(">", 21);
-        tablaTokens.put("<", 22);
-        tablaTokens.put("==", 23);
-        tablaTokens.put("!=", 24);
-        tablaTokens.put("(", 25);
-        tablaTokens.put(")", 26);
-        tablaTokens.put("{", 27);
-        tablaTokens.put("}", 28);
-        tablaTokens.put("_", 29);
-        tablaTokens.put(";", 30);
-        tablaTokens.put("->", 31);
+        tablaTokens.put(":=", 269);
+        tablaTokens.put("+", 270);
+        tablaTokens.put("-", 271);
+        tablaTokens.put("*", 272);
+        tablaTokens.put("/", 273);
+        tablaTokens.put("=", 274);
+        tablaTokens.put(">=", 275);
+        tablaTokens.put("<=", 276);
+        tablaTokens.put(">", 277);
+        tablaTokens.put("<", 278);
+        tablaTokens.put("==", 279);
+        tablaTokens.put("!=", 280);
+        tablaTokens.put("(", 281);
+        tablaTokens.put(")", 282);
+        tablaTokens.put("{", 283);
+        tablaTokens.put("}", 284);
+        tablaTokens.put("_", 285);
+        tablaTokens.put(";", 286);
+        tablaTokens.put("->", 287);
     }
 
     public void llenarMatrices(){
@@ -223,7 +227,7 @@ public class AnalisisLexico {
         }
     }
 
-    public int yylex() {
+    public int yylex() throws IOException {
         int estadoActual = 0;
         int estadoSiguiente;
 
@@ -231,8 +235,10 @@ public class AnalisisLexico {
         TokenLexema tokenLexema = new TokenLexema();
         tokenLexema.setToken(-1);
 
-        if (buffer.ArchivoVacio())
-            return 0;
+        if (buffer.ArchivoVacio()){
+            System.out.println("Estamos en el final del archivo");
+
+            return 0;}
 
         while (!buffer.ArchivoVacio() & estadoActual < 18) {
             char caracter = buffer.obtenerCaracter();
@@ -240,21 +246,26 @@ public class AnalisisLexico {
 
             //ir reccorriendo las matrices para ver estados y acciones semanticas
             int columna = obtenerColumna(caracter);
+
+            if (columna == 23)
+                //Hizo un salto de linea
+                nroLinea++;
+
             if (columna == -1)
                 //Un caracter invalido que no coincide con nincula columna de la matriz
-                System.out.println("Caracter invalido: " + caracter + ".");
+                System.out.println("Linea "+nroLinea+": Caracter invalido: " + caracter + ".");
             else {
                 estadoSiguiente = estados[estadoActual][columna];
                 if (estadoSiguiente == -1) {
                     //Una transicion invalida, reportar error
                     AccionSem9 a9 = new AccionSem9(estadoActual, columna);
-                    tokenLexema = a9.ejecutar(tokenLexema, caracter);
+                    tokenLexema = a9.ejecutar(tokenLexema, caracter, nroLinea);
                 }
                 else{
                     //Transicion valida, ejecuto la accion semantica en caso de que tenga
                     AccionSem a = accionesSem[estadoActual][columna];
                     if (a != null)
-                        tokenLexema = a.ejecutar(tokenLexema, caracter);
+                        tokenLexema = a.ejecutar(tokenLexema, caracter, nroLinea);
                 }
                 //Actualizo mi estado
                 if (estadoSiguiente != -1)
@@ -282,6 +293,11 @@ public class AnalisisLexico {
             tokenLexema.setLexema('E');
             tokenLexema.setToken(-1);
         }
+
+        if(tokenLexema.getToken() == -1)
+            //Es un caracter de error asi que ignoro el token y vuelvo a llamar
+            return yylex();
+
         return tokenLexema.getToken();
     }
 
@@ -364,4 +380,9 @@ public class AnalisisLexico {
                 return -1;    // no encontrado
         }
     }
+
+    public static int getNroLinea(){
+        return nroLinea;
+    }
 }
+

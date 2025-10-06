@@ -12,7 +12,7 @@ public class AccionSem5 implements AccionSem{
         this.tablaTokens = tablaTokens;
     }
     @Override
-    public TokenLexema ejecutar(TokenLexema lexema, char caracter) {
+    public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         buffer.agregarCaracter(caracter);
 
         if (tablaTokens.containsKey(lexema.getLexema())) {
@@ -21,7 +21,7 @@ public class AccionSem5 implements AccionSem{
         }
 
         else {
-            System.out.println("ACCION SEMANTICA 5: no es una palabra reservada "+lexema.getLexema()+".");
+            System.out.println("Linea "+nroLinea+":ERROR: no es una palabra reservada "+lexema.getLexema()+".");
             return null;
         }
     }
