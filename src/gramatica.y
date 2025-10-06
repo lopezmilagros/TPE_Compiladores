@@ -1,7 +1,8 @@
 %{
+    package AnalisisSintactico
     import java.io.*;
     import java.util.ArrayList;
-    AnalisisLexico lexer;
+    import AnalizadorLexico.*;
 %}
 
 
@@ -104,21 +105,10 @@ public void verificar_cantidades (ArrayList<String> lista1, ArrayList<String> li
         System.out.println("ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
 }
 
-public void setLexer (AnalisisLexico aLex){
-    this.lexer = aLex;
-}
+void yyerror (String s){}
 
-public int yylex () throws IOException {
-    return lexer.yylex();
-}
-
-public void yyerror(String s) {
-    System.out.println("Error: " + s);
-}
-
-public static void main (String[] args) throws Exception {
-    AnalisisLexico aLex = new AnalisisLexico("/home/milagros/Documentos/Compiladores/Compiladores/texto.txt");
-    Parser p = new Parser();
-    p.setLexer(aLex);
-    p.yyparse();
+int yylex () throws IOException{
+    AnalisisLexico aLex = new AnalisisLexico("C:\\FACULTAD\\Cuarto\\compiladores\\TPE_Compiladores\\texto.txt");
+    int token = aLex.yylex();
+    return token;
 }

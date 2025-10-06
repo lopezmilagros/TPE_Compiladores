@@ -1,3 +1,5 @@
+package AnalizadorLexico;
+
 import java.util.HashMap;
 
 public class AccionSem4 implements AccionSem{

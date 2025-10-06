@@ -19,8 +19,8 @@
 //#line 2 "gramatica.y"
     import java.io.*;
     import java.util.ArrayList;
-    AnalisisLexico lexer;
-//#line 21 "Parser.java"
+    import AnalizadorLexico.*;
+//#line 22 "Parser.java"
 
 
 
@@ -376,7 +376,7 @@ final static String yyrule[] = {
 "expresion_lambda : '(' tipo ID ')' bloque '(' CTE ')'",
 };
 
-//#line 99 "gramatica.y"
+//#line 100 "gramatica.y"
 
 /* CODIGO AUXILIAR */
 
@@ -385,25 +385,14 @@ public void verificar_cantidades (ArrayList<String> lista1, ArrayList<String> li
         System.out.println("ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
 }
 
-public void setLexer (AnalisisLexico aLex){
-    this.lexer = aLex;
-}
+void yyerror (String s){}
 
-public int yylex () throws IOException {
-    return lexer.yylex();
+int yylex () throws IOException{
+    AnalisisLexico aLex = new AnalisisLexico("C:\\FACULTAD\\Cuarto\\compiladores\\TPE_Compiladores\\texto.txt");
+    int token = aLex.yylex();
+    return token;
 }
-
-public void yyerror(String s) {
-    System.out.println("Error: " + s);
-}
-
-public static void main (String[] args) throws Exception {
-    AnalisisLexico aLex = new AnalisisLexico("/home/milagros/Documentos/Compiladores/Compiladores/texto.txt");
-    Parser p = new Parser();
-    p.setLexer(aLex);
-    p.yyparse();
-}
-//#line 335 "Parser.java"
+//#line 325 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -432,8 +421,7 @@ String yys;    //current token string
 //###############################################################
 // method: yyparse : parse input and execute indicated items
 //###############################################################
-int yyparse()
-{
+int yyparse() throws IOException {
 boolean doaction;
   init_stacks();
   yynerrs = 0;
@@ -558,54 +546,54 @@ boolean doaction;
       {
 //########## USER-SUPPLIED ACTIONS ##########
 case 5:
-//#line 23 "gramatica.y"
+//#line 24 "gramatica.y"
 {System.out.println("SENTENCIA: asignacion");}
 break;
 case 6:
-//#line 24 "gramatica.y"
+//#line 25 "gramatica.y"
 {System.out.println("SENTENCIA: if");}
 break;
 case 7:
-//#line 25 "gramatica.y"
+//#line 26 "gramatica.y"
 {System.out.println("SENTENCIA:if else");}
 break;
 case 8:
-//#line 26 "gramatica.y"
+//#line 27 "gramatica.y"
 {System.out.println("SENTENCIA:while");}
 break;
 case 9:
-//#line 27 "gramatica.y"
+//#line 28 "gramatica.y"
 {System.out.println("SENTENCIA:return");}
 break;
 case 10:
-//#line 28 "gramatica.y"
+//#line 29 "gramatica.y"
 {System.out.println("SENTENCIA:declaracion");}
 break;
 case 11:
-//#line 29 "gramatica.y"
+//#line 30 "gramatica.y"
 {System.out.println("SENTENCIA:lambda");}
 break;
 case 34:
-//#line 68 "gramatica.y"
+//#line 69 "gramatica.y"
 { yyval = new ArrayList<>(); yyval.add(val_peek(0)); }
 break;
 case 35:
-//#line 69 "gramatica.y"
+//#line 70 "gramatica.y"
 { yyval = val_peek(2); yyval.add(val_peek(0)); }
 break;
 case 42:
-//#line 84 "gramatica.y"
+//#line 85 "gramatica.y"
 { verificar_cantidades (val_peek(3), val_peek(1)); }
 break;
 case 43:
-//#line 87 "gramatica.y"
+//#line 88 "gramatica.y"
 { yyval = new ArrayList<>(); yyval.add(val_peek(0)); }
 break;
 case 44:
-//#line 88 "gramatica.y"
+//#line 89 "gramatica.y"
 { yyval = val_peek(2); yyval.add(val_peek(0)); }
 break;
-//#line 532 "Parser.java"
+//#line 522 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

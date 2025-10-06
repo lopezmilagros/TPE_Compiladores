@@ -1,3 +1,5 @@
+package AnalizadorLexico;
+
 public class AccionSem9 implements AccionSem {
     //Esta accion semantica se ejecuta cuando hay una transicion invalida y reporta error
     private int fila;

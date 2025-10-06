@@ -1,3 +1,5 @@
+package AnalizadorLexico;
+
 public class AccionSem7 implements AccionSem{
 
     private Buffer buffer;
