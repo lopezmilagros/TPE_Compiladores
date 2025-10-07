@@ -13,7 +13,7 @@ public class AnalisisLexico {
     private Buffer buffer;
     private ArrayList<String> palabrasReservadas;
     private HashMap<String, Integer> tablaTokens;
-    private HashMap<String, Integer> tablaDeSimbolos;  //HACER UN HASMAP DE STRING, LISTA
+    private HashMap<String, ArrayList<String>> tablaDeSimbolos;  //HACER UN HASMAP DE STRING, LISTA
     private ParserVal yylval;
     private static int nroLinea;
 
@@ -66,6 +66,8 @@ public class AnalisisLexico {
         tablaTokens.put("_", 285);
         tablaTokens.put(";", 286);
         tablaTokens.put("->", 287);
+        tablaTokens.put(".", 288);
+        tablaTokens.put(",", 289);
     }
 
     public void llenarMatrices(){
@@ -78,7 +80,7 @@ public class AnalisisLexico {
         AccionSem a5 = new AccionSem5(buffer, tablaTokens);
         AccionSem a6 = new AccionSem6(buffer, tablaDeSimbolos);
         AccionSem a7 = new AccionSem7(buffer);
-        AccionSem a8 = new AccionSem8(buffer, tablaDeSimbolos);
+        AccionSem a8 = new AccionSem8(tablaDeSimbolos);
 
         //El estado final sera el numero 18, el estado de error sera -1
 
@@ -236,8 +238,7 @@ public class AnalisisLexico {
         tokenLexema.setToken(-1);
 
         if (buffer.ArchivoVacio()){
-            System.out.println("Estamos en el final del archivo");
-
+            System.out.println("Fin de archivo");
             return 0;}
 
         while (!buffer.ArchivoVacio() & estadoActual < 18) {
@@ -298,12 +299,18 @@ public class AnalisisLexico {
             //Es un caracter de error asi que ignoro el token y vuelvo a llamar
             return yylex();
 
+        System.out.println("Token: " + tokenLexema.getToken());
         return tokenLexema.getToken();
     }
 
-    public void imprimirTabla(){
-        for (Map.Entry<String, Integer> entry : tablaDeSimbolos.entrySet()) {
-            System.out.printf("%-20s | %d%n", entry.getKey(), entry.getValue());
+    public void imprimirTabla() {
+        System.out.printf("%-20s | %s%n", "Clave", "Valores");
+        System.out.println("---------------------+--------------------");
+
+        for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
+            String clave = entry.getKey();
+            String valores = String.join(", ", entry.getValue());
+            System.out.printf("%-20s | %s%n", clave, valores);
         }
     }
 
@@ -381,7 +388,7 @@ public class AnalisisLexico {
         }
     }
 
-    public static int getNroLinea(){
+    public int getNroLinea(){
         return nroLinea;
     }
 }

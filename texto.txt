@@ -1,9 +1,10 @@
 PROGRAMA{
-    ulong X := 3UL;
-    if ( X < 15UL ) {
-        print ( " DATACRUSHERS " );
+    ulong X;
+    while ( X < Y) do { X := Y;};
+    X := 3UL;
+    ulong Y := 5UL;
+    if ( Y < X ){
+        print ("Y es menor que x");
     }
     endif;
-    ## es un comentario ##
-    return X
 }

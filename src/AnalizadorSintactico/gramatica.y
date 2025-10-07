@@ -60,7 +60,8 @@ operador            :MAS
                     |BARRA
                     ;
 
-declaracion         :tipo lista_id
+declaracion         :tipo tipo_id
+                    |tipo lista_id
                     |tipo ID PARENTESISA parametros_formales PARENTESISC bloque
                     ;
 

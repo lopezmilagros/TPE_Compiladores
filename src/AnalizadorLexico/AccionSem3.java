@@ -1,11 +1,12 @@
 package AnalizadorLexico;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AccionSem3 implements AccionSem{
-    private HashMap<String, Integer> tablaDeSimbolos;
+    private HashMap<String, ArrayList<String>> tablaDeSimbolos;
 
-    public AccionSem3(HashMap<String, Integer> tablaDeSimbolos){
+    public AccionSem3(HashMap<String, ArrayList<String>> tablaDeSimbolos){
         this.tablaDeSimbolos = tablaDeSimbolos;
     }
     //mandarias el caracter en null
@@ -16,7 +17,9 @@ public class AccionSem3 implements AccionSem{
         int min = 0;
         if ( numero <= max & numero >= min){
             lexema.setToken(265);
-            tablaDeSimbolos.put(lexema.getLexema(), lexema.getToken());
+            ArrayList<String> a = new ArrayList<>();
+            a.add("ULONG");
+            tablaDeSimbolos.put(lexema.getLexema(), a);
             lexema.setLexema(caracter);     //id de ulong en tablaTokens
 
             return lexema;

@@ -1,0 +1,35 @@
+public interface ParserTokens {
+public final static short IF=257;
+public final static short ELSE=258;
+public final static short ENDIF=259;
+public final static short PRINT=260;
+public final static short RETURN=261;
+public final static short ULONG=262;
+public final static short WHILE=263;
+public final static short DO=264;
+public final static short CTE=265;
+public final static short CADENA=266;
+public final static short ID=267;
+public final static short CVR=268;
+public final static short ASIGN=269;
+public final static short MAS=270;
+public final static short MENOS=271;
+public final static short AST=272;
+public final static short BARRA=273;
+public final static short IGUAL=274;
+public final static short MAYIG=275;
+public final static short MENIG=276;
+public final static short MAYOR=277;
+public final static short MENOR=278;
+public final static short IGIG=279;
+public final static short DIF=280;
+public final static short PARENTESISA=281;
+public final static short PARENTESISC=282;
+public final static short LLAVEA=283;
+public final static short LLAVEC=284;
+public final static short GUIONB=285;
+public final static short PUNTOCOMA=286;
+public final static short FLECHA=287;
+public final static short PUNTO=288;
+public final static short COMA=289;
+}

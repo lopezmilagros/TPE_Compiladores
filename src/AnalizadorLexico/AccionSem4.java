@@ -1,13 +1,14 @@
 package AnalizadorLexico;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AccionSem4 implements AccionSem{
 
     private Buffer buffer;
-    private HashMap<String, Integer> tablaDeSimbolos;
+    private HashMap<String, ArrayList<String>> tablaDeSimbolos;
 
-    public AccionSem4(Buffer buffer, HashMap<String, Integer> tablaDeSimbolos){
+    public AccionSem4(Buffer buffer, HashMap<String, ArrayList<String>> tablaDeSimbolos){
         this.tablaDeSimbolos = tablaDeSimbolos;
         this.buffer = buffer;
     }
@@ -43,7 +44,9 @@ public class AccionSem4 implements AccionSem{
         if ((minP < resultado && resultado < maxP) | (minN < resultado && resultado < maxN ) | resultado == 0.0){
             buffer.agregarCaracter(caracter);
             lexema.setToken(7);     //id de dfloat en tablaToken
-            tablaDeSimbolos.put(lexema.getLexema(), lexema.getToken());
+            ArrayList<String> a = new ArrayList<>();
+            a.add("DFLOAT");
+            tablaDeSimbolos.put(lexema.getLexema(), a);
             return lexema;
         }
         System.out.println("Linea "+nroLinea+": ERROR: float se exedio de rango "+lexema.getLexema());

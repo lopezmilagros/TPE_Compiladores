@@ -1,13 +1,14 @@
 package AnalizadorLexico;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AccionSem6 implements AccionSem{
     //Devuelve el ultimo caracter u chequea si el identificador esta en la tabla de simbolos, sino lo agrega
     private Buffer buffer;
-    private HashMap<String, Integer> tablaDeSimbolos;
+    private HashMap<String, ArrayList<String>> tablaDeSimbolos;
 
-    public AccionSem6(Buffer buffer, HashMap<String, Integer> tablaDeSimbolos){
+    public AccionSem6(Buffer buffer, HashMap<String, ArrayList<String>> tablaDeSimbolos){
         this.buffer = buffer;
         this.tablaDeSimbolos = tablaDeSimbolos;
     }
@@ -20,7 +21,9 @@ public class AccionSem6 implements AccionSem{
             lexema.reescribirLexema(nuevoLexema);
         }
         if (!tablaDeSimbolos.containsKey(lexema.getLexema())){
-            tablaDeSimbolos.put(lexema.getLexema(),267);
+            ArrayList<String> a = new ArrayList<>();
+            a.add("ID");
+            tablaDeSimbolos.put(lexema.getLexema(), a);
         }
         lexema.setToken(267);
         return lexema;
