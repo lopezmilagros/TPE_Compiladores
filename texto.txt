@@ -3,8 +3,9 @@ PROGRAMA{
     while ( X < Y) do { X := Y;};
     X := 3UL;
     ulong Y := 5UL;
-    if ( Y < X ){
-        print ("Y es menor que x");
-    }
+    if  Y < X ){
+        print ();
+
     endif;
+    ulong X,Y;
 }

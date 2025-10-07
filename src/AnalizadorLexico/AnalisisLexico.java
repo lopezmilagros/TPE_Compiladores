@@ -243,7 +243,6 @@ public class AnalisisLexico {
 
         while (!buffer.ArchivoVacio() & estadoActual < 18) {
             char caracter = buffer.obtenerCaracter();
-            System.out.println("caracter: " + caracter);
 
             //ir reccorriendo las matrices para ver estados y acciones semanticas
             int columna = obtenerColumna(caracter);

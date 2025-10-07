@@ -13,13 +13,18 @@
 
 %%
 prog                :ID bloque
+                    |error bloque                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
                     ;
 
-bloque              : LLAVEA sentencias LLAVEC
+bloque              :LLAVEA sentencias LLAVEC
+                    |error sentencias LLAVEC                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitador");}
+                    |LLAVEA sentencias error                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitador");}
+                    |error sentencias error                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
                     ;
 
 sentencias          :sentencias sentencia PUNTOCOMA
                     |sentencia PUNTOCOMA
+                    |sentencia error                                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
                     ;
 
 sentencia           :asignaciones
@@ -32,6 +37,23 @@ sentencia           :asignaciones
                     |expresion_lambda                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
                     |PRINT PARENTESISA CADENA PARENTESISC                               {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
                     |PRINT PARENTESISA termino PARENTESISC                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+                    |PRINT PARENTESISA error PARENTESISC                                {System.out.println("LINEA: " + aLex.getNroLinea() + " ERROR SINTÁCTICO: argumento inválido en print");}
+                    |IF error condicion PARENTESISC bloque ENDIF                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
+                    |IF PARENTESISA condicion error bloque ENDIF                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
+                    |IF error condicion error bloque ENDIF                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
+                    |IF error condicion PARENTESISC bloque ELSE bloque ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
+                    |IF PARENTESISA condicion error bloque ELSE bloque ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
+                    |IF error condicion error bloque ELSE bloque ENDIF                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
+                    |WHILE error condicion PARENTESISC DO bloque                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
+                    |WHILE PARENTESISA condicion error DO bloque                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
+                    |WHILE error condicion error DO bloque                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
+                    |WHILE PARENTESISA condicion PARENTESISC DO error                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta cuerpo en la iteracion");}
+                    |IF PARENTESISA condicion PARENTESISC bloque error                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta 'endif'");}
+                    |IF PARENTESISA condicion PARENTESISC bloque ELSE bloque error      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta 'endif'");}
+                    |IF PARENTESISA condicion PARENTESISC error ENDIF                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta contenido en bloque");}
+                    |IF PARENTESISA condicion PARENTESISC error ELSE bloque ENDIF       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta contenido en bloque");}
+                    |IF PARENTESISA condicion PARENTESISC bloque ELSE error ENDIF       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta contenido en bloque");}
+                    |WHILE PARENTESISA condicion PARENTESISC error bloque               {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta 'do' en iteracion");}
                     ;
 
 
@@ -42,11 +64,13 @@ condicion           :expresiones MAYOR expresiones
                     |expresiones MENIG expresiones
                     |expresiones IGIG expresiones
                     |expresiones DIF expresiones
+                    |expresiones error expresiones                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta comparador en expresion");}
                     ;
 
 expresiones         :expresiones operador termino
                     |PARENTESISA expresiones PARENTESISC
                     |termino
+                    |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}
                     ;
 
 termino             :tipo_id
@@ -63,6 +87,7 @@ operador            :MAS
 declaracion         :tipo tipo_id
                     |tipo lista_id
                     |tipo ID PARENTESISA parametros_formales PARENTESISC bloque
+                    |tipo error PARENTESISA parametros_formales PARENTESISC bloque       {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
                     ;
 
 lista_id            :tipo_id COMA tipo_id                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); arreglo.add($3); $$ = new ParserVal(arreglo); }
@@ -74,6 +99,7 @@ tipo                :ULONG
 
 parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
                     |expresiones FLECHA tipo_id
+                    |expresiones FLECHA error                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta especificacion del parametro formal");}
                     ;
 
 parametros_formales :parametros_formales COMA parametro
@@ -82,6 +108,10 @@ parametros_formales :parametros_formales COMA parametro
 
 parametro           :CVR tipo tipo_id
                     |tipo tipo_id
+                    |tipo error                                                         {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta nombre del parametro formal");}
+                    |CVR tipo error                                                     {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta nombre del parametro formal");}
+                    |CVR error tipo_id                                                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta tipo del parametro formal");}
+                    |error tipo_id                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta tipo del parametro formal");}
                     ;
 
 asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}

@@ -7,7 +7,6 @@ public  class Main {
        Parser parser = new Parser();
        AnalisisLexico aLex = new AnalisisLexico("C:\\FACULTAD\\Cuarto\\compiladores\\TPE_Compiladores\\texto.txt");
         parser.setAlex(aLex);
-        parser.yydebug = true;
         parser.run();
         aLex.imprimirTabla();
 
