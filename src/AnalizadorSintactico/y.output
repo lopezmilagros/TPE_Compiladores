@@ -4,65 +4,69 @@
 
    2  bloque : LLAVEA sentencias LLAVEC
 
-   3  sentencias : sentencias sentencia
-   4             | sentencia
+   3  sentencias : sentencias sentencia PUNTOCOMA
+   4             | sentencia PUNTOCOMA
 
    5  sentencia : asignaciones
-   6            | IF PARENTESISA condicion PARENTESISC bloque ENDIF PUNTOCOMA
-   7            | IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF PUNTOCOMA
+   6            | IF PARENTESISA condicion PARENTESISC bloque ENDIF
+   7            | IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF
    8            | WHILE PARENTESISA condicion PARENTESISC DO bloque
-   9            | RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA
-  10            | declaracion
-  11            | expresion_lambda
+   9            | RETURN PARENTESISA lista_id PARENTESISC
+  10            | RETURN PARENTESISA expresiones PARENTESISC
+  11            | declaracion
+  12            | expresion_lambda
+  13            | PRINT PARENTESISA CADENA PARENTESISC
+  14            | PRINT PARENTESISA termino PARENTESISC
 
-  12  condicion : expresiones MAYOR expresiones
-  13            | expresiones MAYIG expresiones
-  14            | expresiones MENOR expresiones
-  15            | expresiones MENIG expresiones
-  16            | expresiones IGIG expresiones
-  17            | expresiones DIF expresiones
+  15  condicion : expresiones MAYOR expresiones
+  16            | expresiones MAYIG expresiones
+  17            | expresiones MENOR expresiones
+  18            | expresiones MENIG expresiones
+  19            | expresiones IGIG expresiones
+  20            | expresiones DIF expresiones
 
-  18  expresiones : expresiones operador termino
-  19              | PARENTESISA expresiones PARENTESISC
-  20              | termino
+  21  expresiones : expresiones operador termino
+  22              | PARENTESISA expresiones PARENTESISC
+  23              | termino
 
-  21  termino : tipo_id
-  22          | CTE
-  23          | ID PARENTESISA parametros_formales PARENTESISC
+  24  termino : tipo_id
+  25          | CTE
+  26          | ID PARENTESISA parametros_reales PARENTESISC
 
-  24  operador : MAS
-  25           | MENOS
-  26           | AST
-  27           | BARRA
+  27  operador : MAS
+  28           | MENOS
+  29           | AST
+  30           | BARRA
 
-  28  parametros_formales : parametros_formales ',' expresiones FLECHA tipo_id
-  29                      | expresiones FLECHA tipo_id
+  31  declaracion : tipo lista_id
+  32              | tipo ID PARENTESISA parametros_formales PARENTESISC bloque
 
-  30  declaracion : tipo lista_id PUNTOCOMA
-  31              | tipo ID PARENTESISA parametros PARENTESISC bloque
+  33  lista_id : tipo tipo_id
+  34           | lista_id COMA tipo_id
 
-  32  lista_id : tipo_id
-  33           | lista_id ',' tipo_id
+  35  tipo : ULONG
 
-  34  tipo : ULONG
+  36  parametros_reales : parametros_reales COMA expresiones FLECHA tipo_id
+  37                    | expresiones FLECHA tipo_id
 
-  35  parametros : parametros ',' parametro
-  36             | parametro
+  38  parametros_formales : parametros_formales COMA parametro
+  39                      | parametro
 
-  37  parametro : tipo tipo_id
-  38            | CVR tipo_id
+  40  parametro : CVR tipo tipo_id
+  41            | tipo tipo_id
 
-  39  asignaciones : tipo_id ASIGN expresiones PUNTOCOMA
-  40               | lista_id IGUAL lista_cte PUNTOCOMA
+  42  asignaciones : tipo ID ASIGN expresiones
+  43               | ID ASIGN expresiones
+  44               | lista_id IGUAL lista_cte
 
-  41  lista_cte : CTE
-  42            | lista_cte ',' CTE
+  45  lista_cte : CTE
+  46            | lista_cte COMA CTE
 
-  43  tipo_id : ID
-  44          | ID '.' ID
+  47  tipo_id : ID
+  48          | ID PUNTO ID
 
-  45  expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC
-  46                   | PARENTESISA tipo ID PARENTESISC bloque PARENTESISA CTE PARENTESISC
+  49  expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC
+  50                   | PARENTESISA tipo ID PARENTESISC bloque PARENTESISA CTE PARENTESISC
 
 state 0
 	$accept : . prog $end  (0)
@@ -92,21 +96,21 @@ state 3
 	bloque : LLAVEA . sentencias LLAVEC  (2)
 
 	IF  shift 5
-	RETURN  shift 6
-	ULONG  shift 7
-	WHILE  shift 8
-	ID  shift 9
-	PARENTESISA  shift 10
+	PRINT  shift 6
+	RETURN  shift 7
+	ULONG  shift 8
+	WHILE  shift 9
+	ID  shift 10
+	PARENTESISA  shift 11
 	.  error
 
-	sentencias  goto 11
-	sentencia  goto 12
-	asignaciones  goto 13
-	declaracion  goto 14
-	expresion_lambda  goto 15
-	tipo_id  goto 16
-	tipo  goto 17
-	lista_id  goto 18
+	sentencias  goto 12
+	sentencia  goto 13
+	asignaciones  goto 14
+	lista_id  goto 15
+	declaracion  goto 16
+	expresion_lambda  goto 17
+	tipo  goto 18
 
 
 state 4
@@ -116,597 +120,533 @@ state 4
 
 
 state 5
-	sentencia : IF . PARENTESISA condicion PARENTESISC bloque ENDIF PUNTOCOMA  (6)
-	sentencia : IF . PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF PUNTOCOMA  (7)
+	sentencia : IF . PARENTESISA condicion PARENTESISC bloque ENDIF  (6)
+	sentencia : IF . PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF  (7)
 
 	PARENTESISA  shift 19
 	.  error
 
 
 state 6
-	sentencia : RETURN . PARENTESISA expresiones PARENTESISC PUNTOCOMA  (9)
+	sentencia : PRINT . PARENTESISA CADENA PARENTESISC  (13)
+	sentencia : PRINT . PARENTESISA termino PARENTESISC  (14)
 
 	PARENTESISA  shift 20
 	.  error
 
 
 state 7
-	tipo : ULONG .  (34)
-
-	.  reduce 34
-
-
-state 8
-	sentencia : WHILE . PARENTESISA condicion PARENTESISC DO bloque  (8)
+	sentencia : RETURN . PARENTESISA lista_id PARENTESISC  (9)
+	sentencia : RETURN . PARENTESISA expresiones PARENTESISC  (10)
 
 	PARENTESISA  shift 21
 	.  error
 
 
-state 9
-	tipo_id : ID .  (43)
-	tipo_id : ID . '.' ID  (44)
+state 8
+	tipo : ULONG .  (35)
 
-	'.'  shift 22
-	ASIGN  reduce 43
-	IGUAL  reduce 43
-	PARENTESISC  reduce 43
-	PUNTOCOMA  reduce 43
-	','  reduce 43
+	.  reduce 35
+
+
+state 9
+	sentencia : WHILE . PARENTESISA condicion PARENTESISC DO bloque  (8)
+
+	PARENTESISA  shift 22
+	.  error
 
 
 state 10
-	expresion_lambda : PARENTESISA . tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC  (45)
-	expresion_lambda : PARENTESISA . tipo ID PARENTESISC bloque PARENTESISA CTE PARENTESISC  (46)
+	asignaciones : ID . ASIGN expresiones  (43)
 
-	ULONG  shift 7
+	ASIGN  shift 23
 	.  error
-
-	tipo  goto 23
 
 
 state 11
-	bloque : LLAVEA sentencias . LLAVEC  (2)
-	sentencias : sentencias . sentencia  (3)
+	expresion_lambda : PARENTESISA . tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC  (49)
+	expresion_lambda : PARENTESISA . tipo ID PARENTESISC bloque PARENTESISA CTE PARENTESISC  (50)
 
-	IF  shift 5
-	RETURN  shift 6
-	ULONG  shift 7
-	WHILE  shift 8
-	ID  shift 9
-	PARENTESISA  shift 10
-	LLAVEC  shift 24
+	ULONG  shift 8
 	.  error
 
-	sentencia  goto 25
-	asignaciones  goto 13
-	declaracion  goto 14
-	expresion_lambda  goto 15
-	tipo_id  goto 16
-	tipo  goto 17
-	lista_id  goto 18
+	tipo  goto 24
 
 
 state 12
-	sentencias : sentencia .  (4)
+	bloque : LLAVEA sentencias . LLAVEC  (2)
+	sentencias : sentencias . sentencia PUNTOCOMA  (3)
 
-	.  reduce 4
+	IF  shift 5
+	PRINT  shift 6
+	RETURN  shift 7
+	ULONG  shift 8
+	WHILE  shift 9
+	ID  shift 10
+	PARENTESISA  shift 11
+	LLAVEC  shift 25
+	.  error
+
+	sentencia  goto 26
+	asignaciones  goto 14
+	lista_id  goto 15
+	declaracion  goto 16
+	expresion_lambda  goto 17
+	tipo  goto 18
 
 
 state 13
+	sentencias : sentencia . PUNTOCOMA  (4)
+
+	PUNTOCOMA  shift 27
+	.  error
+
+
+state 14
 	sentencia : asignaciones .  (5)
 
 	.  reduce 5
 
 
-state 14
-	sentencia : declaracion .  (10)
-
-	.  reduce 10
-
-
 state 15
-	sentencia : expresion_lambda .  (11)
+	lista_id : lista_id . COMA tipo_id  (34)
+	asignaciones : lista_id . IGUAL lista_cte  (44)
+
+	IGUAL  shift 28
+	COMA  shift 29
+	.  error
+
+
+state 16
+	sentencia : declaracion .  (11)
 
 	.  reduce 11
 
 
-state 16
-	lista_id : tipo_id .  (32)
-	asignaciones : tipo_id . ASIGN expresiones PUNTOCOMA  (39)
-
-	ASIGN  shift 26
-	IGUAL  reduce 32
-	','  reduce 32
-
-
 state 17
-	declaracion : tipo . lista_id PUNTOCOMA  (30)
-	declaracion : tipo . ID PARENTESISA parametros PARENTESISC bloque  (31)
+	sentencia : expresion_lambda .  (12)
 
-	ID  shift 27
-	.  error
-
-	tipo_id  goto 28
-	lista_id  goto 29
+	.  reduce 12
 
 
 state 18
-	lista_id : lista_id . ',' tipo_id  (33)
-	asignaciones : lista_id . IGUAL lista_cte PUNTOCOMA  (40)
+	declaracion : tipo . lista_id  (31)
+	declaracion : tipo . ID PARENTESISA parametros_formales PARENTESISC bloque  (32)
+	lista_id : tipo . tipo_id  (33)
+	asignaciones : tipo . ID ASIGN expresiones  (42)
 
-	IGUAL  shift 30
-	','  shift 31
+	ULONG  shift 8
+	ID  shift 30
 	.  error
+
+	lista_id  goto 31
+	tipo_id  goto 32
+	tipo  goto 33
 
 
 state 19
-	sentencia : IF PARENTESISA . condicion PARENTESISC bloque ENDIF PUNTOCOMA  (6)
-	sentencia : IF PARENTESISA . condicion PARENTESISC bloque ELSE bloque ENDIF PUNTOCOMA  (7)
+	sentencia : IF PARENTESISA . condicion PARENTESISC bloque ENDIF  (6)
+	sentencia : IF PARENTESISA . condicion PARENTESISC bloque ELSE bloque ENDIF  (7)
 
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
 
-	condicion  goto 35
-	expresiones  goto 36
-	termino  goto 37
-	tipo_id  goto 38
+	condicion  goto 37
+	expresiones  goto 38
+	termino  goto 39
+	tipo_id  goto 40
 
 
 state 20
-	sentencia : RETURN PARENTESISA . expresiones PARENTESISC PUNTOCOMA  (9)
+	sentencia : PRINT PARENTESISA . CADENA PARENTESISC  (13)
+	sentencia : PRINT PARENTESISA . termino PARENTESISC  (14)
 
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
+	CTE  shift 34
+	CADENA  shift 41
+	ID  shift 35
 	.  error
 
-	expresiones  goto 39
-	termino  goto 37
-	tipo_id  goto 38
+	termino  goto 42
+	tipo_id  goto 40
 
 
 state 21
-	sentencia : WHILE PARENTESISA . condicion PARENTESISC DO bloque  (8)
+	sentencia : RETURN PARENTESISA . lista_id PARENTESISC  (9)
+	sentencia : RETURN PARENTESISA . expresiones PARENTESISC  (10)
 
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
+	ULONG  shift 8
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
 
-	condicion  goto 40
-	expresiones  goto 36
-	termino  goto 37
-	tipo_id  goto 38
+	lista_id  goto 43
+	expresiones  goto 44
+	termino  goto 39
+	tipo_id  goto 40
+	tipo  goto 33
 
 
 state 22
-	tipo_id : ID '.' . ID  (44)
+	sentencia : WHILE PARENTESISA . condicion PARENTESISC DO bloque  (8)
 
-	ID  shift 41
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
+
+	condicion  goto 45
+	expresiones  goto 38
+	termino  goto 39
+	tipo_id  goto 40
 
 
 state 23
-	expresion_lambda : PARENTESISA tipo . ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC  (45)
-	expresion_lambda : PARENTESISA tipo . ID PARENTESISC bloque PARENTESISA CTE PARENTESISC  (46)
+	asignaciones : ID ASIGN . expresiones  (43)
 
-	ID  shift 42
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
+
+	expresiones  goto 46
+	termino  goto 39
+	tipo_id  goto 40
 
 
 state 24
+	expresion_lambda : PARENTESISA tipo . ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC  (49)
+	expresion_lambda : PARENTESISA tipo . ID PARENTESISC bloque PARENTESISA CTE PARENTESISC  (50)
+
+	ID  shift 47
+	.  error
+
+
+state 25
 	bloque : LLAVEA sentencias LLAVEC .  (2)
 
 	.  reduce 2
 
 
-state 25
-	sentencias : sentencias sentencia .  (3)
-
-	.  reduce 3
-
-
 state 26
-	asignaciones : tipo_id ASIGN . expresiones PUNTOCOMA  (39)
+	sentencias : sentencias sentencia . PUNTOCOMA  (3)
 
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
+	PUNTOCOMA  shift 48
 	.  error
-
-	expresiones  goto 43
-	termino  goto 37
-	tipo_id  goto 38
 
 
 state 27
-	declaracion : tipo ID . PARENTESISA parametros PARENTESISC bloque  (31)
-	tipo_id : ID .  (43)
-	tipo_id : ID . '.' ID  (44)
+	sentencias : sentencia PUNTOCOMA .  (4)
 
-	PARENTESISA  shift 44
-	'.'  shift 22
-	PUNTOCOMA  reduce 43
-	','  reduce 43
+	.  reduce 4
 
 
 state 28
-	lista_id : tipo_id .  (32)
+	asignaciones : lista_id IGUAL . lista_cte  (44)
 
-	.  reduce 32
+	CTE  shift 49
+	.  error
+
+	lista_cte  goto 50
 
 
 state 29
-	declaracion : tipo lista_id . PUNTOCOMA  (30)
-	lista_id : lista_id . ',' tipo_id  (33)
+	lista_id : lista_id COMA . tipo_id  (34)
 
-	PUNTOCOMA  shift 45
-	','  shift 31
+	ID  shift 51
 	.  error
+
+	tipo_id  goto 52
 
 
 state 30
-	asignaciones : lista_id IGUAL . lista_cte PUNTOCOMA  (40)
+	declaracion : tipo ID . PARENTESISA parametros_formales PARENTESISC bloque  (32)
+	asignaciones : tipo ID . ASIGN expresiones  (42)
+	tipo_id : ID .  (47)
+	tipo_id : ID . PUNTO ID  (48)
 
-	CTE  shift 46
-	.  error
-
-	lista_cte  goto 47
+	ASIGN  shift 53
+	PARENTESISA  shift 54
+	PUNTO  shift 55
+	IGUAL  reduce 47
+	COMA  reduce 47
 
 
 state 31
-	lista_id : lista_id ',' . tipo_id  (33)
+	declaracion : tipo lista_id .  (31)
+	lista_id : lista_id . COMA tipo_id  (34)
 
-	ID  shift 9
-	.  error
-
-	tipo_id  goto 48
+	COMA  shift 29
+	PUNTOCOMA  reduce 31
 
 
 state 32
-	termino : CTE .  (22)
-
-	.  reduce 22
-
-
-state 33
-	termino : ID . PARENTESISA parametros_formales PARENTESISC  (23)
-	tipo_id : ID .  (43)
-	tipo_id : ID . '.' ID  (44)
-
-	PARENTESISA  shift 49
-	'.'  shift 22
-	MAS  reduce 43
-	MENOS  reduce 43
-	AST  reduce 43
-	BARRA  reduce 43
-	MAYIG  reduce 43
-	MENIG  reduce 43
-	MAYOR  reduce 43
-	MENOR  reduce 43
-	IGIG  reduce 43
-	DIF  reduce 43
-	PARENTESISC  reduce 43
-	PUNTOCOMA  reduce 43
-	FLECHA  reduce 43
-
-
-state 34
-	expresiones : PARENTESISA . expresiones PARENTESISC  (19)
-
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
-	.  error
-
-	expresiones  goto 50
-	termino  goto 37
-	tipo_id  goto 38
-
-
-state 35
-	sentencia : IF PARENTESISA condicion . PARENTESISC bloque ENDIF PUNTOCOMA  (6)
-	sentencia : IF PARENTESISA condicion . PARENTESISC bloque ELSE bloque ENDIF PUNTOCOMA  (7)
-
-	PARENTESISC  shift 51
-	.  error
-
-
-state 36
-	condicion : expresiones . MAYOR expresiones  (12)
-	condicion : expresiones . MAYIG expresiones  (13)
-	condicion : expresiones . MENOR expresiones  (14)
-	condicion : expresiones . MENIG expresiones  (15)
-	condicion : expresiones . IGIG expresiones  (16)
-	condicion : expresiones . DIF expresiones  (17)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	MAYIG  shift 56
-	MENIG  shift 57
-	MAYOR  shift 58
-	MENOR  shift 59
-	IGIG  shift 60
-	DIF  shift 61
-	.  error
-
-	operador  goto 62
-
-
-state 37
-	expresiones : termino .  (20)
-
-	.  reduce 20
-
-
-state 38
-	termino : tipo_id .  (21)
-
-	.  reduce 21
-
-
-state 39
-	sentencia : RETURN PARENTESISA expresiones . PARENTESISC PUNTOCOMA  (9)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  shift 63
-	.  error
-
-	operador  goto 62
-
-
-state 40
-	sentencia : WHILE PARENTESISA condicion . PARENTESISC DO bloque  (8)
-
-	PARENTESISC  shift 64
-	.  error
-
-
-state 41
-	tipo_id : ID '.' ID .  (44)
-
-	.  reduce 44
-
-
-state 42
-	expresion_lambda : PARENTESISA tipo ID . PARENTESISC bloque PARENTESISA tipo_id PARENTESISC  (45)
-	expresion_lambda : PARENTESISA tipo ID . PARENTESISC bloque PARENTESISA CTE PARENTESISC  (46)
-
-	PARENTESISC  shift 65
-	.  error
-
-
-state 43
-	expresiones : expresiones . operador termino  (18)
-	asignaciones : tipo_id ASIGN expresiones . PUNTOCOMA  (39)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PUNTOCOMA  shift 66
-	.  error
-
-	operador  goto 62
-
-
-state 44
-	declaracion : tipo ID PARENTESISA . parametros PARENTESISC bloque  (31)
-
-	ULONG  shift 7
-	CVR  shift 67
-	.  error
-
-	tipo  goto 68
-	parametros  goto 69
-	parametro  goto 70
-
-
-state 45
-	declaracion : tipo lista_id PUNTOCOMA .  (30)
-
-	.  reduce 30
-
-
-state 46
-	lista_cte : CTE .  (41)
-
-	.  reduce 41
-
-
-state 47
-	asignaciones : lista_id IGUAL lista_cte . PUNTOCOMA  (40)
-	lista_cte : lista_cte . ',' CTE  (42)
-
-	PUNTOCOMA  shift 71
-	','  shift 72
-	.  error
-
-
-state 48
-	lista_id : lista_id ',' tipo_id .  (33)
+	lista_id : tipo tipo_id .  (33)
 
 	.  reduce 33
 
 
-state 49
-	termino : ID PARENTESISA . parametros_formales PARENTESISC  (23)
+state 33
+	lista_id : tipo . tipo_id  (33)
 
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
+	ID  shift 51
 	.  error
 
-	expresiones  goto 73
-	termino  goto 37
-	tipo_id  goto 38
-	parametros_formales  goto 74
+	tipo_id  goto 32
 
 
-state 50
-	expresiones : expresiones . operador termino  (18)
-	expresiones : PARENTESISA expresiones . PARENTESISC  (19)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  shift 75
-	.  error
-
-	operador  goto 62
-
-
-state 51
-	sentencia : IF PARENTESISA condicion PARENTESISC . bloque ENDIF PUNTOCOMA  (6)
-	sentencia : IF PARENTESISA condicion PARENTESISC . bloque ELSE bloque ENDIF PUNTOCOMA  (7)
-
-	LLAVEA  shift 3
-	.  error
-
-	bloque  goto 76
-
-
-state 52
-	operador : MAS .  (24)
-
-	.  reduce 24
-
-
-state 53
-	operador : MENOS .  (25)
+state 34
+	termino : CTE .  (25)
 
 	.  reduce 25
 
 
-state 54
-	operador : AST .  (26)
+state 35
+	termino : ID . PARENTESISA parametros_reales PARENTESISC  (26)
+	tipo_id : ID .  (47)
+	tipo_id : ID . PUNTO ID  (48)
 
-	.  reduce 26
+	PARENTESISA  shift 56
+	PUNTO  shift 55
+	MAS  reduce 47
+	MENOS  reduce 47
+	AST  reduce 47
+	BARRA  reduce 47
+	MAYIG  reduce 47
+	MENIG  reduce 47
+	MAYOR  reduce 47
+	MENOR  reduce 47
+	IGIG  reduce 47
+	DIF  reduce 47
+	PARENTESISC  reduce 47
+	PUNTOCOMA  reduce 47
+	FLECHA  reduce 47
 
 
-state 55
-	operador : BARRA .  (27)
+state 36
+	expresiones : PARENTESISA . expresiones PARENTESISC  (22)
 
-	.  reduce 27
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
+	.  error
+
+	expresiones  goto 57
+	termino  goto 39
+	tipo_id  goto 40
 
 
-state 56
-	condicion : expresiones MAYIG . expresiones  (13)
+state 37
+	sentencia : IF PARENTESISA condicion . PARENTESISC bloque ENDIF  (6)
+	sentencia : IF PARENTESISA condicion . PARENTESISC bloque ELSE bloque ENDIF  (7)
 
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
+	PARENTESISC  shift 58
+	.  error
+
+
+state 38
+	condicion : expresiones . MAYOR expresiones  (15)
+	condicion : expresiones . MAYIG expresiones  (16)
+	condicion : expresiones . MENOR expresiones  (17)
+	condicion : expresiones . MENIG expresiones  (18)
+	condicion : expresiones . IGIG expresiones  (19)
+	condicion : expresiones . DIF expresiones  (20)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	MAYIG  shift 63
+	MENIG  shift 64
+	MAYOR  shift 65
+	MENOR  shift 66
+	IGIG  shift 67
+	DIF  shift 68
+	.  error
+
+	operador  goto 69
+
+
+state 39
+	expresiones : termino .  (23)
+
+	.  reduce 23
+
+
+state 40
+	termino : tipo_id .  (24)
+
+	.  reduce 24
+
+
+state 41
+	sentencia : PRINT PARENTESISA CADENA . PARENTESISC  (13)
+
+	PARENTESISC  shift 70
+	.  error
+
+
+state 42
+	sentencia : PRINT PARENTESISA termino . PARENTESISC  (14)
+
+	PARENTESISC  shift 71
+	.  error
+
+
+state 43
+	sentencia : RETURN PARENTESISA lista_id . PARENTESISC  (9)
+	lista_id : lista_id . COMA tipo_id  (34)
+
+	PARENTESISC  shift 72
+	COMA  shift 29
+	.  error
+
+
+state 44
+	sentencia : RETURN PARENTESISA expresiones . PARENTESISC  (10)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  shift 73
+	.  error
+
+	operador  goto 69
+
+
+state 45
+	sentencia : WHILE PARENTESISA condicion . PARENTESISC DO bloque  (8)
+
+	PARENTESISC  shift 74
+	.  error
+
+
+state 46
+	expresiones : expresiones . operador termino  (21)
+	asignaciones : ID ASIGN expresiones .  (43)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PUNTOCOMA  reduce 43
+
+	operador  goto 69
+
+
+state 47
+	expresion_lambda : PARENTESISA tipo ID . PARENTESISC bloque PARENTESISA tipo_id PARENTESISC  (49)
+	expresion_lambda : PARENTESISA tipo ID . PARENTESISC bloque PARENTESISA CTE PARENTESISC  (50)
+
+	PARENTESISC  shift 75
+	.  error
+
+
+state 48
+	sentencias : sentencias sentencia PUNTOCOMA .  (3)
+
+	.  reduce 3
+
+
+state 49
+	lista_cte : CTE .  (45)
+
+	.  reduce 45
+
+
+state 50
+	asignaciones : lista_id IGUAL lista_cte .  (44)
+	lista_cte : lista_cte . COMA CTE  (46)
+
+	COMA  shift 76
+	PUNTOCOMA  reduce 44
+
+
+state 51
+	tipo_id : ID .  (47)
+	tipo_id : ID . PUNTO ID  (48)
+
+	PUNTO  shift 55
+	IGUAL  reduce 47
+	PARENTESISC  reduce 47
+	PUNTOCOMA  reduce 47
+	COMA  reduce 47
+
+
+state 52
+	lista_id : lista_id COMA tipo_id .  (34)
+
+	.  reduce 34
+
+
+state 53
+	asignaciones : tipo ID ASIGN . expresiones  (42)
+
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
 
 	expresiones  goto 77
-	termino  goto 37
-	tipo_id  goto 38
+	termino  goto 39
+	tipo_id  goto 40
+
+
+state 54
+	declaracion : tipo ID PARENTESISA . parametros_formales PARENTESISC bloque  (32)
+
+	ULONG  shift 8
+	CVR  shift 78
+	.  error
+
+	tipo  goto 79
+	parametros_formales  goto 80
+	parametro  goto 81
+
+
+state 55
+	tipo_id : ID PUNTO . ID  (48)
+
+	ID  shift 82
+	.  error
+
+
+state 56
+	termino : ID PARENTESISA . parametros_reales PARENTESISC  (26)
+
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
+	.  error
+
+	expresiones  goto 83
+	termino  goto 39
+	tipo_id  goto 40
+	parametros_reales  goto 84
 
 
 state 57
-	condicion : expresiones MENIG . expresiones  (15)
+	expresiones : expresiones . operador termino  (21)
+	expresiones : PARENTESISA expresiones . PARENTESISC  (22)
 
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  shift 85
 	.  error
 
-	expresiones  goto 78
-	termino  goto 37
-	tipo_id  goto 38
+	operador  goto 69
 
 
 state 58
-	condicion : expresiones MAYOR . expresiones  (12)
-
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
-	.  error
-
-	expresiones  goto 79
-	termino  goto 37
-	tipo_id  goto 38
-
-
-state 59
-	condicion : expresiones MENOR . expresiones  (14)
-
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
-	.  error
-
-	expresiones  goto 80
-	termino  goto 37
-	tipo_id  goto 38
-
-
-state 60
-	condicion : expresiones IGIG . expresiones  (16)
-
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
-	.  error
-
-	expresiones  goto 81
-	termino  goto 37
-	tipo_id  goto 38
-
-
-state 61
-	condicion : expresiones DIF . expresiones  (17)
-
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
-	.  error
-
-	expresiones  goto 82
-	termino  goto 37
-	tipo_id  goto 38
-
-
-state 62
-	expresiones : expresiones operador . termino  (18)
-
-	CTE  shift 32
-	ID  shift 33
-	.  error
-
-	termino  goto 83
-	tipo_id  goto 38
-
-
-state 63
-	sentencia : RETURN PARENTESISA expresiones PARENTESISC . PUNTOCOMA  (9)
-
-	PUNTOCOMA  shift 84
-	.  error
-
-
-state 64
-	sentencia : WHILE PARENTESISA condicion PARENTESISC . DO bloque  (8)
-
-	DO  shift 85
-	.  error
-
-
-state 65
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC . bloque PARENTESISA tipo_id PARENTESISC  (45)
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC . bloque PARENTESISA CTE PARENTESISC  (46)
+	sentencia : IF PARENTESISA condicion PARENTESISC . bloque ENDIF  (6)
+	sentencia : IF PARENTESISA condicion PARENTESISC . bloque ELSE bloque ENDIF  (7)
 
 	LLAVEA  shift 3
 	.  error
@@ -714,400 +654,550 @@ state 65
 	bloque  goto 86
 
 
-state 66
-	asignaciones : tipo_id ASIGN expresiones PUNTOCOMA .  (39)
+state 59
+	operador : MAS .  (27)
 
-	.  reduce 39
+	.  reduce 27
+
+
+state 60
+	operador : MENOS .  (28)
+
+	.  reduce 28
+
+
+state 61
+	operador : AST .  (29)
+
+	.  reduce 29
+
+
+state 62
+	operador : BARRA .  (30)
+
+	.  reduce 30
+
+
+state 63
+	condicion : expresiones MAYIG . expresiones  (16)
+
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
+	.  error
+
+	expresiones  goto 87
+	termino  goto 39
+	tipo_id  goto 40
+
+
+state 64
+	condicion : expresiones MENIG . expresiones  (18)
+
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
+	.  error
+
+	expresiones  goto 88
+	termino  goto 39
+	tipo_id  goto 40
+
+
+state 65
+	condicion : expresiones MAYOR . expresiones  (15)
+
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
+	.  error
+
+	expresiones  goto 89
+	termino  goto 39
+	tipo_id  goto 40
+
+
+state 66
+	condicion : expresiones MENOR . expresiones  (17)
+
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
+	.  error
+
+	expresiones  goto 90
+	termino  goto 39
+	tipo_id  goto 40
 
 
 state 67
-	parametro : CVR . tipo_id  (38)
+	condicion : expresiones IGIG . expresiones  (19)
 
-	ID  shift 9
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
 
-	tipo_id  goto 87
+	expresiones  goto 91
+	termino  goto 39
+	tipo_id  goto 40
 
 
 state 68
-	parametro : tipo . tipo_id  (37)
+	condicion : expresiones DIF . expresiones  (20)
 
-	ID  shift 9
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
 
-	tipo_id  goto 88
+	expresiones  goto 92
+	termino  goto 39
+	tipo_id  goto 40
 
 
 state 69
-	declaracion : tipo ID PARENTESISA parametros . PARENTESISC bloque  (31)
-	parametros : parametros . ',' parametro  (35)
+	expresiones : expresiones operador . termino  (21)
 
-	PARENTESISC  shift 89
-	','  shift 90
+	CTE  shift 34
+	ID  shift 35
 	.  error
+
+	termino  goto 93
+	tipo_id  goto 40
 
 
 state 70
-	parametros : parametro .  (36)
+	sentencia : PRINT PARENTESISA CADENA PARENTESISC .  (13)
 
-	.  reduce 36
+	.  reduce 13
 
 
 state 71
-	asignaciones : lista_id IGUAL lista_cte PUNTOCOMA .  (40)
+	sentencia : PRINT PARENTESISA termino PARENTESISC .  (14)
 
-	.  reduce 40
+	.  reduce 14
 
 
 state 72
-	lista_cte : lista_cte ',' . CTE  (42)
-
-	CTE  shift 91
-	.  error
-
-
-state 73
-	expresiones : expresiones . operador termino  (18)
-	parametros_formales : expresiones . FLECHA tipo_id  (29)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	FLECHA  shift 92
-	.  error
-
-	operador  goto 62
-
-
-state 74
-	termino : ID PARENTESISA parametros_formales . PARENTESISC  (23)
-	parametros_formales : parametros_formales . ',' expresiones FLECHA tipo_id  (28)
-
-	PARENTESISC  shift 93
-	','  shift 94
-	.  error
-
-
-state 75
-	expresiones : PARENTESISA expresiones PARENTESISC .  (19)
-
-	.  reduce 19
-
-
-state 76
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque . ENDIF PUNTOCOMA  (6)
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque . ELSE bloque ENDIF PUNTOCOMA  (7)
-
-	ELSE  shift 95
-	ENDIF  shift 96
-	.  error
-
-
-state 77
-	condicion : expresiones MAYIG expresiones .  (13)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  reduce 13
-
-	operador  goto 62
-
-
-state 78
-	condicion : expresiones MENIG expresiones .  (15)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  reduce 15
-
-	operador  goto 62
-
-
-state 79
-	condicion : expresiones MAYOR expresiones .  (12)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  reduce 12
-
-	operador  goto 62
-
-
-state 80
-	condicion : expresiones MENOR expresiones .  (14)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  reduce 14
-
-	operador  goto 62
-
-
-state 81
-	condicion : expresiones IGIG expresiones .  (16)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  reduce 16
-
-	operador  goto 62
-
-
-state 82
-	condicion : expresiones DIF expresiones .  (17)
-	expresiones : expresiones . operador termino  (18)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	PARENTESISC  reduce 17
-
-	operador  goto 62
-
-
-state 83
-	expresiones : expresiones operador termino .  (18)
-
-	.  reduce 18
-
-
-state 84
-	sentencia : RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA .  (9)
+	sentencia : RETURN PARENTESISA lista_id PARENTESISC .  (9)
 
 	.  reduce 9
 
 
+state 73
+	sentencia : RETURN PARENTESISA expresiones PARENTESISC .  (10)
+
+	.  reduce 10
+
+
+state 74
+	sentencia : WHILE PARENTESISA condicion PARENTESISC . DO bloque  (8)
+
+	DO  shift 94
+	.  error
+
+
+state 75
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC . bloque PARENTESISA tipo_id PARENTESISC  (49)
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC . bloque PARENTESISA CTE PARENTESISC  (50)
+
+	LLAVEA  shift 3
+	.  error
+
+	bloque  goto 95
+
+
+state 76
+	lista_cte : lista_cte COMA . CTE  (46)
+
+	CTE  shift 96
+	.  error
+
+
+state 77
+	expresiones : expresiones . operador termino  (21)
+	asignaciones : tipo ID ASIGN expresiones .  (42)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PUNTOCOMA  reduce 42
+
+	operador  goto 69
+
+
+state 78
+	parametro : CVR . tipo tipo_id  (40)
+
+	ULONG  shift 8
+	.  error
+
+	tipo  goto 97
+
+
+state 79
+	parametro : tipo . tipo_id  (41)
+
+	ID  shift 51
+	.  error
+
+	tipo_id  goto 98
+
+
+state 80
+	declaracion : tipo ID PARENTESISA parametros_formales . PARENTESISC bloque  (32)
+	parametros_formales : parametros_formales . COMA parametro  (38)
+
+	PARENTESISC  shift 99
+	COMA  shift 100
+	.  error
+
+
+state 81
+	parametros_formales : parametro .  (39)
+
+	.  reduce 39
+
+
+state 82
+	tipo_id : ID PUNTO ID .  (48)
+
+	.  reduce 48
+
+
+state 83
+	expresiones : expresiones . operador termino  (21)
+	parametros_reales : expresiones . FLECHA tipo_id  (37)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	FLECHA  shift 101
+	.  error
+
+	operador  goto 69
+
+
+state 84
+	termino : ID PARENTESISA parametros_reales . PARENTESISC  (26)
+	parametros_reales : parametros_reales . COMA expresiones FLECHA tipo_id  (36)
+
+	PARENTESISC  shift 102
+	COMA  shift 103
+	.  error
+
+
 state 85
+	expresiones : PARENTESISA expresiones PARENTESISC .  (22)
+
+	.  reduce 22
+
+
+state 86
+	sentencia : IF PARENTESISA condicion PARENTESISC bloque . ENDIF  (6)
+	sentencia : IF PARENTESISA condicion PARENTESISC bloque . ELSE bloque ENDIF  (7)
+
+	ELSE  shift 104
+	ENDIF  shift 105
+	.  error
+
+
+state 87
+	condicion : expresiones MAYIG expresiones .  (16)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  reduce 16
+
+	operador  goto 69
+
+
+state 88
+	condicion : expresiones MENIG expresiones .  (18)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  reduce 18
+
+	operador  goto 69
+
+
+state 89
+	condicion : expresiones MAYOR expresiones .  (15)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  reduce 15
+
+	operador  goto 69
+
+
+state 90
+	condicion : expresiones MENOR expresiones .  (17)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  reduce 17
+
+	operador  goto 69
+
+
+state 91
+	condicion : expresiones IGIG expresiones .  (19)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  reduce 19
+
+	operador  goto 69
+
+
+state 92
+	condicion : expresiones DIF expresiones .  (20)
+	expresiones : expresiones . operador termino  (21)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	PARENTESISC  reduce 20
+
+	operador  goto 69
+
+
+state 93
+	expresiones : expresiones operador termino .  (21)
+
+	.  reduce 21
+
+
+state 94
 	sentencia : WHILE PARENTESISA condicion PARENTESISC DO . bloque  (8)
 
 	LLAVEA  shift 3
 	.  error
 
-	bloque  goto 97
-
-
-state 86
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque . PARENTESISA tipo_id PARENTESISC  (45)
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque . PARENTESISA CTE PARENTESISC  (46)
-
-	PARENTESISA  shift 98
-	.  error
-
-
-state 87
-	parametro : CVR tipo_id .  (38)
-
-	.  reduce 38
-
-
-state 88
-	parametro : tipo tipo_id .  (37)
-
-	.  reduce 37
-
-
-state 89
-	declaracion : tipo ID PARENTESISA parametros PARENTESISC . bloque  (31)
-
-	LLAVEA  shift 3
-	.  error
-
-	bloque  goto 99
-
-
-state 90
-	parametros : parametros ',' . parametro  (35)
-
-	ULONG  shift 7
-	CVR  shift 67
-	.  error
-
-	tipo  goto 68
-	parametro  goto 100
-
-
-state 91
-	lista_cte : lista_cte ',' CTE .  (42)
-
-	.  reduce 42
-
-
-state 92
-	parametros_formales : expresiones FLECHA . tipo_id  (29)
-
-	ID  shift 9
-	.  error
-
-	tipo_id  goto 101
-
-
-state 93
-	termino : ID PARENTESISA parametros_formales PARENTESISC .  (23)
-
-	.  reduce 23
-
-
-state 94
-	parametros_formales : parametros_formales ',' . expresiones FLECHA tipo_id  (28)
-
-	CTE  shift 32
-	ID  shift 33
-	PARENTESISA  shift 34
-	.  error
-
-	expresiones  goto 102
-	termino  goto 37
-	tipo_id  goto 38
+	bloque  goto 106
 
 
 state 95
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque ELSE . bloque ENDIF PUNTOCOMA  (7)
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque . PARENTESISA tipo_id PARENTESISC  (49)
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque . PARENTESISA CTE PARENTESISC  (50)
+
+	PARENTESISA  shift 107
+	.  error
+
+
+state 96
+	lista_cte : lista_cte COMA CTE .  (46)
+
+	.  reduce 46
+
+
+state 97
+	parametro : CVR tipo . tipo_id  (40)
+
+	ID  shift 51
+	.  error
+
+	tipo_id  goto 108
+
+
+state 98
+	parametro : tipo tipo_id .  (41)
+
+	.  reduce 41
+
+
+state 99
+	declaracion : tipo ID PARENTESISA parametros_formales PARENTESISC . bloque  (32)
 
 	LLAVEA  shift 3
 	.  error
 
-	bloque  goto 103
-
-
-state 96
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque ENDIF . PUNTOCOMA  (6)
-
-	PUNTOCOMA  shift 104
-	.  error
-
-
-state 97
-	sentencia : WHILE PARENTESISA condicion PARENTESISC DO bloque .  (8)
-
-	.  reduce 8
-
-
-state 98
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA . tipo_id PARENTESISC  (45)
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA . CTE PARENTESISC  (46)
-
-	CTE  shift 105
-	ID  shift 9
-	.  error
-
-	tipo_id  goto 106
-
-
-state 99
-	declaracion : tipo ID PARENTESISA parametros PARENTESISC bloque .  (31)
-
-	.  reduce 31
+	bloque  goto 109
 
 
 state 100
-	parametros : parametros ',' parametro .  (35)
+	parametros_formales : parametros_formales COMA . parametro  (38)
 
-	.  reduce 35
+	ULONG  shift 8
+	CVR  shift 78
+	.  error
+
+	tipo  goto 79
+	parametro  goto 110
 
 
 state 101
-	parametros_formales : expresiones FLECHA tipo_id .  (29)
+	parametros_reales : expresiones FLECHA . tipo_id  (37)
 
-	.  reduce 29
-
-
-state 102
-	expresiones : expresiones . operador termino  (18)
-	parametros_formales : parametros_formales ',' expresiones . FLECHA tipo_id  (28)
-
-	MAS  shift 52
-	MENOS  shift 53
-	AST  shift 54
-	BARRA  shift 55
-	FLECHA  shift 107
-	.  error
-
-	operador  goto 62
-
-
-state 103
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque ELSE bloque . ENDIF PUNTOCOMA  (7)
-
-	ENDIF  shift 108
-	.  error
-
-
-state 104
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque ENDIF PUNTOCOMA .  (6)
-
-	.  reduce 6
-
-
-state 105
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA CTE . PARENTESISC  (46)
-
-	PARENTESISC  shift 109
-	.  error
-
-
-state 106
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id . PARENTESISC  (45)
-
-	PARENTESISC  shift 110
-	.  error
-
-
-state 107
-	parametros_formales : parametros_formales ',' expresiones FLECHA . tipo_id  (28)
-
-	ID  shift 9
+	ID  shift 51
 	.  error
 
 	tipo_id  goto 111
 
 
-state 108
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF . PUNTOCOMA  (7)
+state 102
+	termino : ID PARENTESISA parametros_reales PARENTESISC .  (26)
 
-	PUNTOCOMA  shift 112
+	.  reduce 26
+
+
+state 103
+	parametros_reales : parametros_reales COMA . expresiones FLECHA tipo_id  (36)
+
+	CTE  shift 34
+	ID  shift 35
+	PARENTESISA  shift 36
 	.  error
+
+	expresiones  goto 112
+	termino  goto 39
+	tipo_id  goto 40
+
+
+state 104
+	sentencia : IF PARENTESISA condicion PARENTESISC bloque ELSE . bloque ENDIF  (7)
+
+	LLAVEA  shift 3
+	.  error
+
+	bloque  goto 113
+
+
+state 105
+	sentencia : IF PARENTESISA condicion PARENTESISC bloque ENDIF .  (6)
+
+	.  reduce 6
+
+
+state 106
+	sentencia : WHILE PARENTESISA condicion PARENTESISC DO bloque .  (8)
+
+	.  reduce 8
+
+
+state 107
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA . tipo_id PARENTESISC  (49)
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA . CTE PARENTESISC  (50)
+
+	CTE  shift 114
+	ID  shift 51
+	.  error
+
+	tipo_id  goto 115
+
+
+state 108
+	parametro : CVR tipo tipo_id .  (40)
+
+	.  reduce 40
 
 
 state 109
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA CTE PARENTESISC .  (46)
+	declaracion : tipo ID PARENTESISA parametros_formales PARENTESISC bloque .  (32)
 
-	.  reduce 46
+	.  reduce 32
 
 
 state 110
-	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC .  (45)
+	parametros_formales : parametros_formales COMA parametro .  (38)
 
-	.  reduce 45
+	.  reduce 38
 
 
 state 111
-	parametros_formales : parametros_formales ',' expresiones FLECHA tipo_id .  (28)
+	parametros_reales : expresiones FLECHA tipo_id .  (37)
 
-	.  reduce 28
+	.  reduce 37
 
 
 state 112
-	sentencia : IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF PUNTOCOMA .  (7)
+	expresiones : expresiones . operador termino  (21)
+	parametros_reales : parametros_reales COMA expresiones . FLECHA tipo_id  (36)
+
+	MAS  shift 59
+	MENOS  shift 60
+	AST  shift 61
+	BARRA  shift 62
+	FLECHA  shift 116
+	.  error
+
+	operador  goto 69
+
+
+state 113
+	sentencia : IF PARENTESISA condicion PARENTESISC bloque ELSE bloque . ENDIF  (7)
+
+	ENDIF  shift 117
+	.  error
+
+
+state 114
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA CTE . PARENTESISC  (50)
+
+	PARENTESISC  shift 118
+	.  error
+
+
+state 115
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id . PARENTESISC  (49)
+
+	PARENTESISC  shift 119
+	.  error
+
+
+state 116
+	parametros_reales : parametros_reales COMA expresiones FLECHA . tipo_id  (36)
+
+	ID  shift 51
+	.  error
+
+	tipo_id  goto 120
+
+
+state 117
+	sentencia : IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF .  (7)
 
 	.  reduce 7
 
 
+state 118
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA CTE PARENTESISC .  (50)
+
+	.  reduce 50
+
+
+state 119
+	expresion_lambda : PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC .  (49)
+
+	.  reduce 49
+
+
+state 120
+	parametros_reales : parametros_reales COMA expresiones FLECHA tipo_id .  (36)
+
+	.  reduce 36
+
+
 35 terminals, 19 nonterminals
-47 grammar rules, 113 states
+51 grammar rules, 121 states

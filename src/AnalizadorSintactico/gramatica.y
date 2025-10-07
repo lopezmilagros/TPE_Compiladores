@@ -7,7 +7,7 @@
 %}
 
 
-%token IF ELSE ENDIF PRINT RETURN ULONG WHILE DO CTE CADENA ID CVR ASIGN MAS MENOS AST BARRA IGUAL MAYIG MENIG MAYOR MENOR IGIG DIF PARENTESISA PARENTESISC LLAVEA LLAVEC GUIONB PUNTOCOMA FLECHA
+%token IF ELSE ENDIF PRINT RETURN ULONG WHILE DO CTE CADENA ID CVR ASIGN MAS MENOS AST BARRA IGUAL MAYIG MENIG MAYOR MENOR IGIG DIF PARENTESISA PARENTESISC LLAVEA LLAVEC GUIONB PUNTOCOMA FLECHA PUNTO COMA
 %left MAS MENOS
 %left AST BARRA
 
@@ -18,20 +18,23 @@ prog                :ID bloque
 bloque              : LLAVEA sentencias LLAVEC
                     ;
 
-sentencias          :sentencias sentencia
-                    |sentencia
+sentencias          :sentencias sentencia PUNTOCOMA
+                    |sentencia PUNTOCOMA
                     ;
 
-sentencia           :asignaciones                         {System.out.println("SENTENCIA: asignacion");}
-                    |IF PARENTESISA condicion PARENTESISC bloque ENDIF PUNTOCOMA    {System.out.println("SENTENCIA: if");}
-                    |IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF PUNTOCOMA  {System.out.println("SENTENCIA:if else");}
-                    |WHILE PARENTESISA condicion PARENTESISC DO bloque                 {System.out.println("SENTENCIA:while");}
-                    |RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA                     {System.out.println("SENTENCIA:return");}
-                    |declaracion                                      {System.out.println("SENTENCIA:declaracion");}
-                    |expresion_lambda                                   {System.out.println("SENTENCIA:lambda");}
-                    |PRINT PARENTESISA CADENA PARENTESISC PUNTOCOMA
-                    |PRINT PARENTESISA termino PARENTESISC PUNTOCOMA
+sentencia           :asignaciones
+                    |IF PARENTESISA condicion PARENTESISC bloque ENDIF                  {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA: if");}
+                    |IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF      {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:if else");}
+                    |WHILE PARENTESISA condicion PARENTESISC DO bloque                  {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:while");}
+                    |RETURN PARENTESISA lista_id PARENTESISC                            {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:return");}
+                    |RETURN PARENTESISA expresiones PARENTESISC                         {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:return");}
+                    |declaracion                                                        {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:declaracion");}
+                    |expresion_lambda                                                   {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:lambda");}
+                    |PRINT PARENTESISA CADENA PARENTESISC                               {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:print");}
+                    |PRINT PARENTESISA termino PARENTESISC                              {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:print");}
                     ;
+
+
 
 condicion           :expresiones MAYOR expresiones
                     |expresiones MAYIG expresiones
@@ -48,7 +51,7 @@ expresiones         :expresiones operador termino
 
 termino             :tipo_id
                     |CTE
-                    |ID PARENTESISA parametros_formales PARENTESISC
+                    |ID PARENTESISA parametros_reales PARENTESISC
                     ;
 
 operador            :MAS
@@ -57,39 +60,40 @@ operador            :MAS
                     |BARRA
                     ;
 
-parametros_formales : parametros_formales ',' expresiones FLECHA tipo_id
-                    |expresiones FLECHA tipo_id
+declaracion         :tipo lista_id
+                    |tipo ID PARENTESISA parametros_formales PARENTESISC bloque
                     ;
 
-declaracion         :tipo lista_id PUNTOCOMA
-                    |tipo ID PARENTESISA parametros PARENTESISC bloque
-                    ;
-
-lista_id            :tipo_id                 { ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo); }
-                    |lista_id ',' tipo_id    { ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo); }
+lista_id            :tipo tipo_id                                                             {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo); }
+                    |lista_id COMA tipo_id                                               {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo); }
                     ;
 
 tipo                :ULONG
                     ;
 
-parametros          :parametros ',' parametro
+parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
+                    |expresiones FLECHA tipo_id
+                    ;
+
+parametros_formales :parametros_formales COMA parametro
                     |parametro
                     ;
 
-parametro           :tipo tipo_id
-                    |CVR tipo_id
+parametro           :CVR tipo tipo_id
+                    |tipo tipo_id
                     ;
 
-asignaciones        :tipo_id ASIGN expresiones PUNTOCOMA
-                    |lista_id IGUAL lista_cte PUNTOCOMA         { verificar_cantidades ($1, $3); }
+asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA: declaracion y asignacion");}
+                    |ID ASIGN expresiones                                               {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA: asignacion");}
+                    |lista_id IGUAL lista_cte                                           {verificar_cantidades ($1, $3); }
                     ;
 
-lista_cte           :CTE                { ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
-                    |lista_cte ',' CTE  { ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo);}
+lista_cte           :CTE                                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
+                    |lista_cte COMA CTE                                                 {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo);}
                     ;
 
 tipo_id             :ID
-                    |ID'.'ID
+                    |ID PUNTO ID
                     ;
 
 expresion_lambda    :PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC
@@ -112,7 +116,9 @@ public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
         System.out.println("Linea: "+AnalisisLexico.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
 }
 
-void yyerror (String s){}
+void yyerror (String s){
+    System.out.ptrintln("ERROR yacc: " +s)
+}
 
 int yylex () throws IOException{
    return aLex.yylex();
