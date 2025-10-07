@@ -23,15 +23,15 @@ sentencias          :sentencias sentencia PUNTOCOMA
                     ;
 
 sentencia           :asignaciones
-                    |IF PARENTESISA condicion PARENTESISC bloque ENDIF                  {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA: if");}
-                    |IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF      {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:if else");}
-                    |WHILE PARENTESISA condicion PARENTESISC DO bloque                  {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:while");}
-                    |RETURN PARENTESISA lista_id PARENTESISC                            {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:return");}
-                    |RETURN PARENTESISA expresiones PARENTESISC                         {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:return");}
-                    |declaracion                                                        {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:declaracion");}
-                    |expresion_lambda                                                   {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:lambda");}
-                    |PRINT PARENTESISA CADENA PARENTESISC                               {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:print");}
-                    |PRINT PARENTESISA termino PARENTESISC                              {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA:print");}
+                    |IF PARENTESISA condicion PARENTESISC bloque ENDIF                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: if");}
+                    |IF PARENTESISA condicion PARENTESISC bloque ELSE bloque ENDIF      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:if else");}
+                    |WHILE PARENTESISA condicion PARENTESISC DO bloque                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:while");}
+                    |RETURN PARENTESISA lista_id PARENTESISC                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+                    |RETURN PARENTESISA expresiones PARENTESISC                         {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+                    |declaracion                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:declaracion");}
+                    |expresion_lambda                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
+                    |PRINT PARENTESISA CADENA PARENTESISC                               {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+                    |PRINT PARENTESISA termino PARENTESISC                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
                     ;
 
 
@@ -64,7 +64,7 @@ declaracion         :tipo lista_id
                     |tipo ID PARENTESISA parametros_formales PARENTESISC bloque
                     ;
 
-lista_id            :tipo tipo_id                                                             {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo); }
+lista_id            :tipo_id COMA tipo_id                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); arreglo.add($3); $$ = new ParserVal(arreglo); }
                     |lista_id COMA tipo_id                                               {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo); }
                     ;
 
@@ -83,8 +83,8 @@ parametro           :CVR tipo tipo_id
                     |tipo tipo_id
                     ;
 
-asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA: declaracion y asignacion");}
-                    |ID ASIGN expresiones                                               {System.out.println("LINEA: "+aLex.getNroLinea+" SENTENCIA: asignacion");}
+asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
+                    |tipo_id ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion");}
                     |lista_id IGUAL lista_cte                                           {verificar_cantidades ($1, $3); }
                     ;
 
@@ -113,11 +113,11 @@ public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
     ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
     ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
     if (l1.size() > l2.size() )
-        System.out.println("Linea: "+AnalisisLexico.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
+        System.out.println("Linea: "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
 }
 
 void yyerror (String s){
-    System.out.ptrintln("ERROR yacc: " +s)
+    System.out.println(s);
 }
 
 int yylex () throws IOException{
