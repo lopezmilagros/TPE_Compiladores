@@ -57,7 +57,6 @@ sentencia           :asignaciones
                     ;
 
 
-
 condicion           :expresiones MAYOR expresiones
                     |expresiones MAYIG expresiones
                     |expresiones MENOR expresiones
@@ -68,7 +67,6 @@ condicion           :expresiones MAYOR expresiones
                     ;
 
 expresiones         :expresiones operador termino
-                    |PARENTESISA expresiones PARENTESISC
                     |termino
                     |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}
                     ;
@@ -92,6 +90,8 @@ declaracion         :tipo tipo_id
 
 lista_id            :tipo_id COMA tipo_id                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); arreglo.add($3); $$ = new ParserVal(arreglo); }
                     |lista_id COMA tipo_id                                               {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo); }
+                    |lista_id tipo_id                                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
+                    |tipo_id tipo_id                                                     {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
                     ;
 
 tipo                :ULONG
@@ -116,11 +116,12 @@ parametro           :CVR tipo tipo_id
 
 asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
                     |tipo_id ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion");}
-                    |lista_id IGUAL lista_cte                                           {verificar_cantidades ($1, $3); }
+                    |lista_id IGUAL lista_cte                                           {verificar_cantidades ($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
                     ;
 
 lista_cte           :CTE                                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
                     |lista_cte COMA CTE                                                 {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo);}
+                    |lista_cte CTE                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
                     ;
 
 tipo_id             :ID
@@ -143,7 +144,7 @@ public void setAlex(AnalisisLexico a){
 public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
     ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
     ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
-    if (l1.size() > l2.size() )
+    if (l1.size() < l2.size() )
         System.out.println("Linea: "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
 }
 
