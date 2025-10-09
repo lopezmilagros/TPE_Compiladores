@@ -14,6 +14,7 @@
 %%
 prog                :ID bloque
                     |error bloque                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
+                    |error                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: "); yyerror(Parser.ERROR);}
                     ;
 
 bloque              :LLAVEA sentencias LLAVEC
@@ -72,7 +73,7 @@ expresiones         :expresiones operador termino
                     ;
 
 termino             :tipo_id
-                    |CTE
+                    |tipo_cte
                     |ID PARENTESISA parametros_reales PARENTESISC
                     ;
 
@@ -119,17 +120,21 @@ asignaciones        :tipo ID ASIGN expresiones                                  
                     |lista_id IGUAL lista_cte                                           {verificar_cantidades ($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
                     ;
 
-lista_cte           :CTE                                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
-                    |lista_cte COMA CTE                                                 {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo);}
-                    |lista_cte CTE                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
+lista_cte           :tipo_cte                                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
+                    |lista_cte COMA tipo_cte                                                 {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo);}
+                    |lista_cte tipo_cte                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
                     ;
 
 tipo_id             :ID
                     |ID PUNTO ID
                     ;
 
+tipo_cte            :CTE
+                    |MENOS CTE                                                               {verificarRango($2);}
+                    ;
+
 expresion_lambda    :PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC
-                    |PARENTESISA tipo ID PARENTESISC bloque PARENTESISA CTE PARENTESISC
+                    |PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_cte PARENTESISC
                     ;
 %%
 
@@ -141,6 +146,11 @@ AnalisisLexico aLex;
 public void setAlex(AnalisisLexico a){
     this.aLex = a;
 }
+
+public void verificar_rango(String s){
+    if (s)
+}
+
 public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
     ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
     ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
@@ -149,7 +159,7 @@ public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
 }
 
 void yyerror (String s){
-    System.out.println(s);
+    System.out.printf(s);
 }
 
 int yylex () throws IOException{
