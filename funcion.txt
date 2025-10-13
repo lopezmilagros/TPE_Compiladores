@@ -1,0 +1,18 @@
+PROGRAMA{
+    ulong SUMA(ulong A, ulong B) {
+        return (A + B);
+    };
+
+    ulong(ulong A, ulong B) {
+        return (A + B);
+    };
+
+    ulong SUMAR(ulong, ulong B) {
+        return (B);
+    };
+
+    ulong HOLA(A, ulong B) {
+        return (B);
+    };
+}
+

@@ -13,12 +13,13 @@
 
 %%
 prog                :ID bloque
-cd ..
+                    |error bloque                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Error antes del bloque");}
+                    |error                                                               {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
                     ;
 
 bloque              :LLAVEA sentencias LLAVEC
-                    |error sentencias LLAVEC                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitador");}
-                    |LLAVEA sentencias error                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitador");}
+                    |error sentencias LLAVEC                                                  {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitador");}
+                    |LLAVEA sentencias error                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitador");}
                     |error sentencias error                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
                     ;
 
@@ -42,10 +43,10 @@ sentencia           :asignaciones
                     |IF PARENTESISA condicion error bloque ENDIF                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
                     |IF error condicion error bloque ENDIF                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
                     |IF error condicion PARENTESISC bloque ELSE bloque ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
-                    |IF PARENTESISA condicion error bloque ELSE bloque ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
+                    |IF PARENTESISA condicion  bloque ELSE bloque ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
                     |IF error condicion error bloque ELSE bloque ENDIF                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
                     |WHILE error condicion PARENTESISC DO bloque                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
-                    |WHILE PARENTESISA condicion error DO bloque                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
+                    |WHILE PARENTESISA condicion  DO bloque                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
                     |WHILE error condicion error DO bloque                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
                     |WHILE PARENTESISA condicion PARENTESISC DO error                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta cuerpo en la iteracion");}
                     |IF PARENTESISA condicion PARENTESISC bloque error                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta 'endif'");}
@@ -68,7 +69,7 @@ condicion           :expresiones MAYOR expresiones
 
 expresiones         :expresiones operador termino
                     |termino
-                    |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}
+                    |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}
                     ;
 
 termino             :tipo_id
@@ -116,7 +117,7 @@ parametro           :CVR tipo tipo_id
 
 asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
                     |tipo_id ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion");}
-                    |lista_id IGUAL lista_cte                                           {verificar_cantidades ($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
+                    |lista_id IGUAL lista_cte                                           {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
                     ;
 
 lista_cte           :tipo_cte                                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
@@ -144,9 +145,10 @@ AnalisisLexico aLex;
 
 public void setAlex(AnalisisLexico a){
     this.aLex = a;
+
 }
 
-public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
+public void verificar_cantidades(ParserVal lista1, ParserVal lista2){
     ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
     ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
     if (l1.size() < l2.size() )
@@ -154,7 +156,7 @@ public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
 }
 
 void yyerror (String s){
-    System.out.printf(s);
+    //System.out.printf(s);
 }
 
 int yylex () throws IOException{

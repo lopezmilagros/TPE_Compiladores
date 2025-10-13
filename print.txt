@@ -1,0 +1,6 @@
+PROGRAMA{
+    print("Hola mundo");
+    print(X);
+    print(X, );
+}
+

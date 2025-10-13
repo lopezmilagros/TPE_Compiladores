@@ -5,9 +5,11 @@ import java.util.HashMap;
 
 public class AccionSem3 implements AccionSem{
     private HashMap<String, ArrayList<String>> tablaDeSimbolos;
+    private ArrayList<String> erroresLexicos;
 
-    public AccionSem3(HashMap<String, ArrayList<String>> tablaDeSimbolos){
+    public AccionSem3(HashMap<String, ArrayList<String>> tablaDeSimbolos, ArrayList<String> erroresLexicos){
         this.tablaDeSimbolos = tablaDeSimbolos;
+        this.erroresLexicos = erroresLexicos;
     }
 
     //
@@ -26,7 +28,7 @@ public class AccionSem3 implements AccionSem{
             return lexema;
         }
         else {
-            System.out.println("Linea "+nroLinea+": ERROR LEXICO el entero se exedio del rango "+lexema.getLexema());
+            erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO el entero se exedio del rango "+lexema.getLexema());
             return null;
         }
     }

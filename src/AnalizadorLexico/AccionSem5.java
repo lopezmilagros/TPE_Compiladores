@@ -1,15 +1,18 @@
 package AnalizadorLexico;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AccionSem5 implements AccionSem{
     //Devolver el ultimo caracter y chequear que sea palabra reservada
     private Buffer buffer;
     private HashMap<String, Integer> tablaTokens;
+    private ArrayList<String> erroresLexicos;
 
-    public AccionSem5(Buffer buffer, HashMap<String, Integer> tablaTokens){
+    public AccionSem5(Buffer buffer, HashMap<String, Integer> tablaTokens, ArrayList<String> erroresLexicos){
         this.buffer = buffer;
         this.tablaTokens = tablaTokens;
+        this.erroresLexicos = erroresLexicos;
     }
     @Override
     public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
@@ -21,7 +24,7 @@ public class AccionSem5 implements AccionSem{
         }
 
         else {
-            System.out.println("Linea "+nroLinea+":ERROR: no es una palabra reservada "+lexema.getLexema()+".");
+            erroresLexicos.add("Linea "+nroLinea+":ERROR: no es una palabra reservada "+lexema.getLexema()+".");
             return null;
         }
     }

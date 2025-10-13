@@ -1,6 +1,23 @@
-PROGRAMA{
-    X := 4UL;
-    X := -3UL;
-    X := 4.6;
-    X := 4.D-3;
+PROGRAMA1 {
+    ulong X := 5;
+    ulong Y := 10
+    print("Inicio del programa");
+    
+    if (X > Y {
+        print("x es mayor");
+    } endif;
+
+    while (X < Y) do {
+        x := x + 1;
+    }
+
+    ulong SUMAR(ulong a, ulong b) {
+        return (a + b);
+    }
+
+    Z := 3 + ; 
+    A, B := 1, 2, 3;
+    print(,);
+    print("Fin del programa");
 }
+

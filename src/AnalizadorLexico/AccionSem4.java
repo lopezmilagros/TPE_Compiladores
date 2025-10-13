@@ -7,9 +7,11 @@ public class AccionSem4 implements AccionSem{
 
     private Buffer buffer;
     private HashMap<String, ArrayList<String>> tablaDeSimbolos;
+    private ArrayList<String> erroresLexicos;
 
-    public AccionSem4(Buffer buffer, HashMap<String, ArrayList<String>> tablaDeSimbolos){
+    public AccionSem4(Buffer buffer, HashMap<String, ArrayList<String>> tablaDeSimbolos, ArrayList<String> erroresLexicos){
         this.tablaDeSimbolos = tablaDeSimbolos;
+        this.erroresLexicos = erroresLexicos;
         this.buffer = buffer;
     }
 
@@ -57,7 +59,7 @@ public class AccionSem4 implements AccionSem{
             tablaDeSimbolos.put(lexema.getLexema(), a);
             return lexema;
         }
-        System.out.println("Linea "+nroLinea+": ERROR LEXICO: float se exedio de rango "+lexema.getLexema());
+        erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: float se exedio de rango "+lexema.getLexema());
         return null;
     }
 }

@@ -13,8 +13,9 @@ public class AnalisisLexico {
     private AccionSem [][] accionesSem;
     private Buffer buffer;
     private ArrayList<String> palabrasReservadas;
+    private ArrayList<String> erroresLexicos;
     private HashMap<String, Integer> tablaTokens;
-    private HashMap<String, ArrayList<String>> tablaDeSimbolos;  //HACER UN HASMAP DE STRING, LISTA
+    private HashMap<String, ArrayList<String>> tablaDeSimbolos;
     private ParserVal yylval;
     private int nroLinea;
 
@@ -23,6 +24,7 @@ public class AnalisisLexico {
 
     public AnalisisLexico(String ruta) throws IOException {
         nroLinea = 1;
+        this.erroresLexicos = new ArrayList<>();
         this.tablaTokens = new HashMap<>();
         llenarTablaTokens();
 
@@ -34,6 +36,7 @@ public class AnalisisLexico {
         this.tablaDeSimbolos = new HashMap<>();
 
         llenarMatrices();
+
 
     }
 
@@ -78,10 +81,10 @@ public class AnalisisLexico {
         //Creamos instancias de las acciones semanticas para llenar la matriz
         AccionSem a1 = new AccionSem1();
         AccionSem a2 = new AccionSem2();
-        AccionSem a3 = new AccionSem3(tablaDeSimbolos);
-        AccionSem a4 = new AccionSem4(buffer, tablaDeSimbolos);
-        AccionSem a5 = new AccionSem5(buffer, tablaTokens);
-        AccionSem a6 = new AccionSem6(buffer, tablaDeSimbolos);
+        AccionSem a3 = new AccionSem3(tablaDeSimbolos, erroresLexicos);
+        AccionSem a4 = new AccionSem4(buffer, tablaDeSimbolos, erroresLexicos);
+        AccionSem a5 = new AccionSem5(buffer, tablaTokens, erroresLexicos);
+        AccionSem a6 = new AccionSem6(buffer, tablaDeSimbolos, erroresLexicos);
         AccionSem a7 = new AccionSem7(buffer);
         AccionSem a8 = new AccionSem8(tablaDeSimbolos);
 
@@ -241,6 +244,7 @@ public class AnalisisLexico {
         tokenLexema.setToken(-1);
 
         if (buffer.ArchivoVacio()){
+            System.out.println();
             System.out.println("Fin de archivo");
             return 0;}
 
@@ -261,7 +265,7 @@ public class AnalisisLexico {
                 estadoSiguiente = estados[estadoActual][columna];
                 if (estadoSiguiente == -1) {
                     //Una transicion invalida, reportar error
-                    AccionSem9 a9 = new AccionSem9(estadoActual, columna);
+                    AccionSem9 a9 = new AccionSem9(estadoActual, columna, erroresLexicos);
                     tokenLexema = a9.ejecutar(tokenLexema, caracter, nroLinea);
                 }
                 else{
@@ -402,6 +406,7 @@ public class AnalisisLexico {
         System.out.println();
     }
 
+
     public void imprimirTokensLeidos(){
         System.out.println();
         System.out.println("Lista de tokens leidos desde el analizador lexico:");
@@ -426,6 +431,14 @@ public class AnalisisLexico {
         //Si el lexema no esta en la tabla de simbolos lo agrega
         if (!tablaDeSimbolos.containsKey(lexema)) {
             tablaDeSimbolos.put(lexema, a);
+        }
+    }
+
+    public void imprimirErroresLexicos(){
+        System.out.println();
+        System.out.println("Errores lexicos:");
+        for (String s: erroresLexicos){
+            System.out.println(s);
         }
     }
 }

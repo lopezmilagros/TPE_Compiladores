@@ -1,0 +1,5 @@
+PROGRAMA1 {
+    ulong X := 5;
+    ulong X := 8
+}
+

@@ -1,0 +1,12 @@
+PROGRAMA1 {
+    X := 8UL;
+    Y := 5UL;
+    if (X > Y) {
+        print("ok");
+    } endif;
+
+    if (X Y) {
+        print("ok");
+    } endif;
+}
+
