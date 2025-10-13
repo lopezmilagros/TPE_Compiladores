@@ -493,6 +493,7 @@ AnalisisLexico aLex;
 public void setAlex(AnalisisLexico a){
     this.aLex = a;
 }
+
 public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
     ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
     ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
@@ -505,10 +506,11 @@ void yyerror (String s){
 }
 
 int yylex () throws IOException{
-   return aLex.yylex();
-
+    int token = aLex.yylex();
+    yylval = aLex.getYylval();
+    return token;
 }
-//#line 440 "Parser.java"
+//#line 442 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -861,7 +863,15 @@ case 80:
 //#line 125 "gramatica.y"
 {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
 break;
-//#line 789 "Parser.java"
+case 83:
+//#line 132 "gramatica.y"
+{aLex.agregarATablaDeSimbolos(val_peek(0).sval);}
+break;
+case 84:
+//#line 133 "gramatica.y"
+{String cte = "-" + val_peek(0).sval; System.out.println("estoy en gramatica "+ val_peek(0).sval + val_peek(0).obj + val_peek(0).dval + val_peek(0).ival); aLex.agregarATablaDeSimbolos(cte);}
+break;
+//#line 799 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

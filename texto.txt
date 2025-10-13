@@ -1,11 +1,6 @@
 PROGRAMA{
-    ulong X;
-    while ( X < Y) do { X := Y;};
-    X := 3UL;
-    ulong Y := 5UL;
-    if  Y < X ){
-        print ();
-
-    endif;
-    ulong X,Y;
+    X := 4UL;
+    X := -3UL;
+    X := 4.6;
+    X := 4.D-3;
 }

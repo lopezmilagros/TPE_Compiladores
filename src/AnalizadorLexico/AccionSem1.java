@@ -2,7 +2,7 @@ package AnalizadorLexico;
 
 public class AccionSem1 implements AccionSem{
 
-    //va a recibir el lexema null (a chequear)
+    //Crea un nuevo objeto TokenLexema vacío y asigna como lexema el primer carácter leído.
     public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         TokenLexema tokenLexema = new TokenLexema();
         tokenLexema.setLexema(caracter);

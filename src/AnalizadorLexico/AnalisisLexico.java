@@ -1,6 +1,7 @@
 package AnalizadorLexico;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,8 +16,10 @@ public class AnalisisLexico {
     private HashMap<String, Integer> tablaTokens;
     private HashMap<String, ArrayList<String>> tablaDeSimbolos;  //HACER UN HASMAP DE STRING, LISTA
     private ParserVal yylval;
-    private static int nroLinea;
+    private int nroLinea;
 
+    //Esta tabla es unicamente para imprimir los tokens
+    private ArrayList<String> tokensLeidos = new ArrayList<>();
 
     public AnalisisLexico(String ruta) throws IOException {
         nroLinea = 1;
@@ -31,8 +34,9 @@ public class AnalisisLexico {
         this.tablaDeSimbolos = new HashMap<>();
 
         llenarMatrices();
-        //llenarPalabrasReservadas();
+
     }
+
     public void llenarTablaTokens(){
         tablaTokens.put("if", 257);
         tablaTokens.put("else", 258);
@@ -40,7 +44,6 @@ public class AnalisisLexico {
         tablaTokens.put("print", 260);
         tablaTokens.put("return", 261);
         tablaTokens.put("ulong", 262);
-        tablaTokens.put("dfloat", 7);
         tablaTokens.put("while", 263);
         tablaTokens.put("do", 264);
         tablaTokens.put("cte", 265);
@@ -113,7 +116,7 @@ public class AnalisisLexico {
                         switch (j) {
                             case 0 -> {estados[i][j] = 1; accionesSem[i][j] = a2;}
                             case 1 -> {estados[i][j] = 2; accionesSem[i][j] = a3;}
-                            case 6 -> estados[i][j] = 4;
+                            case 6 -> {estados[i][j] = 4; accionesSem[i][j] = a2;}
                         }
                     }
                     case 2 -> {
@@ -253,7 +256,7 @@ public class AnalisisLexico {
 
             if (columna == -1)
                 //Un caracter invalido que no coincide con nincula columna de la matriz
-                System.out.println("Linea "+nroLinea+": Caracter invalido: " + caracter + ".");
+                System.out.println("Linea "+nroLinea+": ERROR LEXICO: Caracter invalido: " + caracter + ".");
             else {
                 estadoSiguiente = estados[estadoActual][columna];
                 if (estadoSiguiente == -1) {
@@ -277,9 +280,8 @@ public class AnalisisLexico {
             }
         }
 
-        //Llamamos de nuevo a la funcion porque el lexema anterior dio error y no termino el archivo.
         if (tokenLexema != null) {
-            if (tokenLexema.getToken() != 10 & tokenLexema.getToken() != 11 & tokenLexema.getToken() != 12) {
+            if (tokenLexema.getToken() != tablaTokens.get("cte") && tokenLexema.getToken() != tablaTokens.get("cadena") && tokenLexema.getToken() != tablaTokens.get("id")) {
                 if (tablaTokens.get(tokenLexema.getLexema()) != null)
                     tokenLexema.setToken(tablaTokens.get(tokenLexema.getLexema()));
             }
@@ -298,21 +300,12 @@ public class AnalisisLexico {
             //Es un caracter de error asi que ignoro el token y vuelvo a llamar
             return yylex();
 
-        System.out.println("Token: " + tokenLexema.getToken());
+        //Lo agregamos a una lista para luego imprimir todos los tokens
+        String tokenLeido = tokenLexema.getToken() + "      |       " + tokenLexema.getLexema();
+        tokensLeidos.add(tokenLeido);
+
         return tokenLexema.getToken();
     }
-
-    public void imprimirTabla() {
-        System.out.printf("%-20s | %s%n", "Clave", "Valores");
-        System.out.println("---------------------+--------------------");
-
-        for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
-            String clave = entry.getKey();
-            String valores = String.join(", ", entry.getValue());
-            System.out.printf("%-20s | %s%n", clave, valores);
-        }
-    }
-
 
     public int obtenerColumna(char c) {
         //Este metodo recibe un caracter y segun el tipo que sea, te devuelve el numero de columna correspondiente a las matrices
@@ -389,6 +382,51 @@ public class AnalisisLexico {
 
     public int getNroLinea(){
         return nroLinea;
+    }
+
+    public ParserVal getYylval() {
+        return this.yylval;
+    }
+
+    public void imprimirTabla() {
+        System.out.println();
+        System.out.println("Tabla de simbolos:");
+        System.out.printf("%-10s | %s%n", "Clave", "Valores");
+        System.out.println("--------------------------");
+
+        for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
+            String clave = entry.getKey();
+            String valores = String.join(", ", entry.getValue());
+            System.out.printf("%-10s | %s%n", clave, valores);
+        }
+        System.out.println();
+    }
+
+    public void imprimirTokensLeidos(){
+        System.out.println();
+        System.out.println("Lista de tokens leidos desde el analizador lexico:");
+        System.out.println("Token    |      Lexema");
+        System.out.println("--------------------------");
+        for (String token: tokensLeidos){
+            System.out.println(token);
+        }
+    }
+
+    public void agregarATablaDeSimbolos(String lexema){
+        //Por ahora asumimos que solo llegan ctes porque solo utilizamos este metodo para añadir ctes a la t. se simbolos
+
+        ArrayList<String> a = new ArrayList<>();
+        //Sacar solo el valor numerico si es UL
+        if(lexema.contains("UL")){
+            lexema = lexema.substring(0, lexema.length() - 2);
+            a.add("ULONG");
+        }
+        else
+            a.add("DFLOAT");
+        //Si el lexema no esta en la tabla de simbolos lo agrega
+        if (!tablaDeSimbolos.containsKey(lexema)) {
+            tablaDeSimbolos.put(lexema, a);
+        }
     }
 }
 

@@ -17,8 +17,8 @@ public class AccionSem4 implements AccionSem{
     @Override
     public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         String lex = lexema.getLexema();
-        String base = null;
-        String exponente = null;
+        String base = "";
+        String exponente = "";
         boolean d = false;
         for (int i = 0 ; i < lex.length(); i++){
             char c = lex.charAt(i);
@@ -31,25 +31,33 @@ public class AccionSem4 implements AccionSem{
             else
                 exponente = exponente + c;
         }
+        float base2;
+        if (base == null || base == "")
+            base2 = 1;
+        else
+            base2 = Float.parseFloat(base);
 
-        float base2 = Float.parseFloat(base);
-        float exponente2 = Float.parseFloat(exponente);
+        float exponente2;
+        if(exponente == null || exponente == "")
+            exponente2 = 0;
+        else
+            exponente2 = Float.parseFloat(exponente);
 
-        double resultado = Math.pow(base2, exponente2);
+        double resultado = base2 * Math.pow(10, exponente2);
 
-        double minP = 2.2250738585072014 * Math.pow(10, -308);
-        double maxP = 1.7976931348623157 * Math.pow(10, 308);
-        double minN = -1.7976931348623157 * Math.pow(10, 308);
-        double maxN = -2.2250738585072014 * Math.pow(10, -308);
-        if ((minP < resultado && resultado < maxP) | (minN < resultado && resultado < maxN ) | resultado == 0.0){
+        double minP = 2.2250738585072014 * Math.pow(10, -308);   //2.2250738585072014D-308
+        double maxP = 1.7976931348623157 * Math.pow(10, 308);    //1.7976931348623157D+308
+        //No se controlan los rangos negativos porque el lexico solo lee numeros positivos
+
+        if ((minP < resultado && resultado < maxP) | resultado == 0.0){
             buffer.agregarCaracter(caracter);
-            lexema.setToken(7);     //id de dfloat en tablaToken
+            lexema.setToken(265);
             ArrayList<String> a = new ArrayList<>();
             a.add("DFLOAT");
             tablaDeSimbolos.put(lexema.getLexema(), a);
             return lexema;
         }
-        System.out.println("Linea "+nroLinea+": ERROR: float se exedio de rango "+lexema.getLexema());
+        System.out.println("Linea "+nroLinea+": ERROR LEXICO: float se exedio de rango "+lexema.getLexema());
         return null;
     }
 }

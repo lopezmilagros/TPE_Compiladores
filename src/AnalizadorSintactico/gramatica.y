@@ -13,8 +13,7 @@
 
 %%
 prog                :ID bloque
-                    |error bloque                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
-                    |error                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: "); yyerror(Parser.ERROR);}
+cd ..
                     ;
 
 bloque              :LLAVEA sentencias LLAVEC
@@ -129,8 +128,8 @@ tipo_id             :ID
                     |ID PUNTO ID
                     ;
 
-tipo_cte            :CTE
-                    |MENOS CTE                                                               {verificarRango($2);}
+tipo_cte            :CTE                                                                     {aLex.agregarATablaDeSimbolos($1.sval);}
+                    |MENOS CTE                                                               {String cte = "-" + $2.sval; aLex.agregarATablaDeSimbolos(cte);}
                     ;
 
 expresion_lambda    :PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_id PARENTESISC
@@ -147,10 +146,6 @@ public void setAlex(AnalisisLexico a){
     this.aLex = a;
 }
 
-public void verificar_rango(String s){
-    if (s)
-}
-
 public void verificar_cantidades (ParserVal lista1, ParserVal lista2){
     ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
     ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
@@ -163,6 +158,7 @@ void yyerror (String s){
 }
 
 int yylex () throws IOException{
-   return aLex.yylex();
-
+    int token = aLex.yylex();
+    yylval = aLex.getYylval();
+    return token;
 }
