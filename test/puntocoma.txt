@@ -1,0 +1,15 @@
+PROGRAMA {
+    ulong X := 5UL;
+    ulong Y := 8UL;
+
+    ulong FUNC(ulong A, ulong B){
+        return (A + B)
+    };
+
+    if (Y > X){
+        FUNC(X->A,Y->B)
+    }endif;
+
+    ulong G := 3UL;
+}
+

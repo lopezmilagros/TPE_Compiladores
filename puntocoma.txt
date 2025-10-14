@@ -1,5 +1,0 @@
-PROGRAMA {
-    ulong X := 5UL;
-    ulong X := 8.;
-}
-

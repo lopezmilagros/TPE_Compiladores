@@ -443,8 +443,12 @@ public class AnalisisLexico {
     public void imprimirErroresLexicos(){
         System.out.println();
         System.out.println("Errores lexicos:");
-        for (String s: erroresLexicos){
-            System.out.println(s);
+        if (!erroresLexicos.isEmpty()) {
+            for (String s : erroresLexicos) {
+                System.out.println(s);
+            }
+        }else{
+            System.out.println("No hay errores lexicos.");
         }
     }
 }

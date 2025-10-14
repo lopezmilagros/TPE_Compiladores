@@ -17,7 +17,7 @@ prog                :ID LLAVEA sentencias LLAVEC
                     |ID sentencias LLAVEC                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
                     |ID LLAVEA sentencias                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
                     |ID sentencias                                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
-                    |error                                                                  {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
+                    |error PUNTOCOMA                                                                 {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
                     ;
 
 sentencias          :sentencias sentencia PUNTOCOMA
@@ -61,7 +61,7 @@ condicion           :expresiones MAYOR expresiones
                     |expresiones MENIG expresiones
                     |expresiones IGIG expresiones
                     |expresiones DIF expresiones
-                    |expresiones_error                                                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta comparador en expresion");}
+                    |expresiones_error                                                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta comparador en expresion");}
                     ;
 
 expresiones_error   :expresiones MAYOR
@@ -81,7 +81,7 @@ expresiones_error   :expresiones MAYOR
 
 expresiones         :expresiones operador termino
                     |termino
-                    |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}
+                    |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta operando en expresion");}
                     ;
 
 termino             :tipo_id
@@ -115,20 +115,20 @@ llamado_funcion     :ID PARENTESISA parametros_reales PARENTESISC
 
 parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
                     |expresiones FLECHA tipo_id
-                    |expresiones FLECHA error                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta especificacion del parametro formal");}
+                    |expresiones FLECHA error                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta especificacion del parametro formal");}
                     ;
 
 parametros_formales :parametros_formales COMA parametro
                     |parametro
-                    |parametros_formales parametro                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta ',' en declaracion de las variables");}
+                    |parametros_formales parametro                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta ',' en declaracion de las variables");}
                     ;
 
 parametro           :CVR tipo tipo_id
                     |tipo tipo_id
-                    |tipo error                                                         {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta nombre del parametro formal");}
-                    |CVR tipo error                                                     {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta nombre del parametro formal");}
-                    |CVR error tipo_id                                                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta tipo del parametro formal");}
-                    |error tipo_id                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta tipo del parametro formal");}
+                    |tipo error                                                         {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
+                    |CVR tipo error                                                     {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
+                    |CVR error tipo_id                                                  {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
+                    |error tipo_id                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
                     ;
 
 asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
