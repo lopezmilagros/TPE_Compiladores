@@ -1,16 +1,16 @@
 PROGRAMA{
-    X := 6UL;
-    if (X > 5UL {
+    if (X > 5UL) {
         print("ok");
-    } endif;
+    };
 
-    if (X > 3UL {
-         print("ok");
-    }endif;
+    if (X > 5UL)
+    endif;
 
     if (X > 8UL) {
         print("ok");
-    } endif;
+    }
+    else
+    endif;
 
 }
 

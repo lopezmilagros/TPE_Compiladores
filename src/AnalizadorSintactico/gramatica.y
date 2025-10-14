@@ -1,10 +1,10 @@
 %{
-    package AnalizadorSintactico;
-    import java.io.*;
-    import java.util.ArrayList;
-    import AnalizadorLexico.*;
-
+package AnalizadorSintactico;
+import java.io.*;
+import java.util.ArrayList;
+import AnalizadorLexico.*;
 %}
+
 
 
 %token IF ELSE ENDIF PRINT RETURN ULONG WHILE DO CTE CADENA ID CVR ASIGN MAS MENOS AST BARRA IGUAL MAYIG MENIG MAYOR MENOR IGIG DIF PARENTESISA PARENTESISC LLAVEA LLAVEC GUIONB PUNTOCOMA FLECHA PUNTO COMA
@@ -13,6 +13,7 @@
 
 %%
 prog                :ID LLAVEA sentencias LLAVEC
+                    |LLAVEA sentencias LLAVEC
                     |ID sentencias LLAVEC                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
                     |ID LLAVEA sentencias                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
                     |ID sentencias                                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
@@ -21,7 +22,7 @@ prog                :ID LLAVEA sentencias LLAVEC
 
 sentencias          :sentencias sentencia PUNTOCOMA
                     |sentencia PUNTOCOMA
-                    |sentencia error                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+                    |sentencia error                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
                     ;
 
 sentencia           :asignaciones
@@ -29,28 +30,29 @@ sentencia           :asignaciones
                     |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:if else");}
                     |WHILE PARENTESISA condicion PARENTESISC DO LLAVEA sentencias LLAVEC                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:while");}
                     |RETURN PARENTESISA lista_id PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
-                    |RETURN PARENTESISA expresiones PARENTESISC                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
-                    |declaracion                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:declaracion");}
-                    |expresion_lambda                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
-                    |PRINT PARENTESISA CADENA PARENTESISC                               {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
-                    |PRINT PARENTESISA termino PARENTESISC                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
-                    |PRINT PARENTESISA error PARENTESISC                                {System.out.println("LINEA: " + aLex.getNroLinea() + " ERROR SINTÁCTICO: argumento inválido en print");}
-                    |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
-                    |IF PARENTESISA condicion LLAVEA sentencias LLAVEC ENDIF                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
-                    |IF error condicion error LLAVEA sentencias LLAVEC ENDIF                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
-                    |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
-                    |IF PARENTESISA condicion  LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
-                    |IF error condicion error LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
-                    |WHILE error condicion PARENTESISC DO LLAVEA sentencias LLAVEC                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de apertura de la condicion");}
-                    |WHILE PARENTESISA condicion  DO LLAVEA sentencias LLAVEC                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta parentesis de cierre de la condicion");}
-                    |WHILE error condicion error DO LLAVEA sentencias LLAVEC                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: faltan parentesis de la condicion");}
-                    |WHILE PARENTESISA condicion PARENTESISC DO error                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta cuerpo en la iteracion");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC error                  {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta 'endif'");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC error      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta 'endif'");}
-                    |IF PARENTESISA condicion PARENTESISC error ENDIF                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta contenido en bloque");}
-                    |IF PARENTESISA condicion PARENTESISC error ELSE LLAVEA sentencias LLAVEC ENDIF       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta contenido en bloque");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE error ENDIF       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta contenido en bloque");}
-                    |WHILE PARENTESISA condicion PARENTESISC error LLAVEA sentencias LLAVEC               {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta 'do' en iteracion");}
+                    |RETURN PARENTESISA expresiones PARENTESISC                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+                    |declaracion                                                                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:declaracion");}
+                    |llamado_funcion                                                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:llamado de funcion");}
+                    |expresion_lambda                                                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
+                    |PRINT PARENTESISA CADENA PARENTESISC                                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+                    |PRINT PARENTESISA expresiones PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+                    |PRINT PARENTESISA error PARENTESISC                                                                    {System.out.println("LINEA: " + aLex.getNroLinea() + " ERROR SINTÁCTICO: argumento inválido en print");}
+                    |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+                    |IF PARENTESISA condicion LLAVEA sentencias LLAVEC ENDIF                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+                    |IF error condicion error LLAVEA sentencias LLAVEC ENDIF                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+                    |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF            {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+                    |IF PARENTESISA condicion  LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF                 {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+                    |IF error condicion error LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF                  {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+                    |WHILE error condicion PARENTESISC DO LLAVEA sentencias LLAVEC                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+                    |WHILE PARENTESISA condicion  DO LLAVEA sentencias LLAVEC                                               {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+                    |WHILE error condicion error DO LLAVEA sentencias LLAVEC                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+                    |WHILE PARENTESISA condicion PARENTESISC DO error                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta cuerpo en la iteracion");}
+                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC            {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+                    |IF PARENTESISA condicion PARENTESISC ENDIF                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
+                    |IF PARENTESISA condicion PARENTESISC ELSE LLAVEA sentencias LLAVEC ENDIF                               {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
+                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE ENDIF                               {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
+                    |WHILE PARENTESISA condicion PARENTESISC error LLAVEA sentencias LLAVEC                                 {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
                     ;
 
 condicion           :expresiones MAYOR expresiones
@@ -59,7 +61,7 @@ condicion           :expresiones MAYOR expresiones
                     |expresiones MENIG expresiones
                     |expresiones IGIG expresiones
                     |expresiones DIF expresiones
-                    |expresiones_error                                         {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta comparador en expresion");}
+                    |expresiones_error                                                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta comparador en expresion");}
                     ;
 
 expresiones_error   :expresiones MAYOR
@@ -84,7 +86,7 @@ expresiones         :expresiones operador termino
 
 termino             :tipo_id
                     |tipo_cte
-                    |ID PARENTESISA parametros_reales PARENTESISC
+                    |llamado_funcion
                     ;
 
 operador            :MAS
@@ -108,6 +110,9 @@ lista_id            :tipo_id COMA tipo_id                                       
 tipo                :ULONG
                     ;
 
+llamado_funcion     :ID PARENTESISA parametros_reales PARENTESISC
+                    ;
+
 parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
                     |expresiones FLECHA tipo_id
                     |expresiones FLECHA error                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta especificacion del parametro formal");}
@@ -115,6 +120,7 @@ parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
 
 parametros_formales :parametros_formales COMA parametro
                     |parametro
+                    |parametros_formales parametro                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta ',' en declaracion de las variables");}
                     ;
 
 parametro           :CVR tipo tipo_id
@@ -145,6 +151,9 @@ tipo_cte            :CTE                                                        
 
 expresion_lambda    :PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PARENTESISA tipo_id PARENTESISC
                     |PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PARENTESISA tipo_cte PARENTESISC
+                    |PARENTESISA tipo ID PARENTESISC sentencias LLAVEC PARENTESISA tipo_cte PARENTESISC         {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura en funcion lambda");}
+                    |PARENTESISA tipo ID PARENTESISC LLAVEA sentencias PARENTESISA tipo_cte PARENTESISC         {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de cierre en funcion lambda");}
+                    |PARENTESISA tipo ID PARENTESISC sentencias PARENTESISA tipo_cte PARENTESISC                {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores en funcion lambda");}
                     ;
 %%
 
@@ -169,8 +178,14 @@ void yyerror (String s){
     //System.out.printf(s);
 }
 
-int yylex () throws IOException{
-    int token = aLex.yylex();
-    yylval = aLex.getYylval();
-    return token;
+int yylex (){
+    try {
+        int token = aLex.yylex();
+        yylval = aLex.getYylval();
+        return token;
+    } catch (IOException e) {
+        System.err.println("Error de lectura en el analizador léxico: " + e.getMessage());
+        return 0; //Devuelvo 0 como si fuera fin de archivo
+    }
+
 }

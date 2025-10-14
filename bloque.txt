@@ -1,9 +1,0 @@
-##PROGRAMA{
-    print("Hola");
-    ulong X := 8UL;
-}##
-
-PROGRAMA{
-    Y, X, Z = 8UL, 2UL;
-    print("Hola")
-}

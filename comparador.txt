@@ -1,6 +1,4 @@
-PROGRAMA1 {
-    X := 8UL;
-    Y := 5UL;
+PROGRAMA {
     if (X > Y) {
         print("ok");
     } endif;

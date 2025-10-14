@@ -19,7 +19,7 @@ public class AccionSem6 implements AccionSem{
         buffer.agregarCaracter(caracter);
         if(lexema.getLexema().length() > 20){
             String nuevoLexema = lexema.getLexema().substring(0,20);
-            erroresLexicos.add("Linea "+nroLinea+":WARNING: El identificador "+lexema.getLexema()+" fue truncado a: "+nuevoLexema);
+            erroresLexicos.add("Linea "+nroLinea+":WARNING LEXICO: El identificador "+lexema.getLexema()+" fue truncado a: "+nuevoLexema);
             lexema.reescribirLexema(nuevoLexema);
         }
         if (!tablaDeSimbolos.containsKey(lexema.getLexema())){

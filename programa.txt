@@ -1,0 +1,8 @@
+PROGRAMA
+    X := 6UL;
+}
+PROGRAMA{
+    X := 6UL;
+
+PROGRAMA
+    X := 6UL;

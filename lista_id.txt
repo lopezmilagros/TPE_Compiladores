@@ -1,8 +1,11 @@
-programa1 {
-    X, Y, Z = 1, 2, 3;
+PROGRAMA {
+    X, Y, Z = 1., 2., 3.;
 
-    X Y Z = 1, 2, 3;
+    X Y Z = 1UL, 2UL, 3UL;
 
-    X, Y = 1;
+    X, Y = 2UL 3UL;
+
+    X = 1UL, 3UL;
+
 }
 

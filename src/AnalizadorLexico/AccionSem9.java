@@ -25,39 +25,39 @@ public class AccionSem9 implements AccionSem {
         switch (fila) {
 
             case 1:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: se esperaba una 'U', un digito o un '.'  y llegó '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba una 'U', un digito o un '.'  y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 2:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: en el estado 2 se esperaba una 'L' y llegó '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: en el estado 2 se esperaba una 'L' y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 3:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: se esperaba un número y llegó '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba un número y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 5:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: se esperaba '+' o '-' y llegó  '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba '+' o '-' y llegó  '" + simbolos[columna] + "'");
                 break;
 
             case 6:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: se esperaba un digito y llegó '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba un digito y llegó '" + simbolos[columna] + "'");
                 break;
 
             case 8:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: salto de linea inválido '");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: salto de linea inválido '");
                 break;
 
             case 13:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: se esperaba '=' y llegó  '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba '=' y llegó  '" + simbolos[columna] + "'");
                 break;
 
             case 15,17:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR: se esperaba '#' y llegó  ' '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba '#' y llegó  ' '" + simbolos[columna] + "'");
                 break;
 
             default:
-                System.out.println("Linea "+nroLinea+": ERROR: caracter invalido: '" + simbolos[columna] + "'");
+                System.out.println("Linea "+nroLinea+": ERROR LEXICO: caracter invalido: '" + simbolos[columna] + "'");
                 break;
         }
         return null;

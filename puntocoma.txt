@@ -1,5 +1,5 @@
-PROGRAMA1 {
-    ulong X := 5;
-    ulong X := 8
+PROGRAMA {
+    ulong X := 5UL;
+    ulong X := 8.
 }
 

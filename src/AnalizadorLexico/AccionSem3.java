@@ -28,7 +28,7 @@ public class AccionSem3 implements AccionSem{
             return lexema;
         }
         else {
-            erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO el entero se exedio del rango "+lexema.getLexema());
+            erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: el entero se exedio del rango "+lexema.getLexema());
             return null;
         }
     }

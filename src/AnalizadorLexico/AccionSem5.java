@@ -24,7 +24,7 @@ public class AccionSem5 implements AccionSem{
         }
 
         else {
-            erroresLexicos.add("Linea "+nroLinea+":ERROR: no es una palabra reservada "+lexema.getLexema()+".");
+            erroresLexicos.add("Linea "+nroLinea+":ERROR LEXICO: no es una palabra reservada "+lexema.getLexema()+".");
             return null;
         }
     }
