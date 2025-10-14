@@ -13,7 +13,7 @@ import AnalizadorLexico.*;
 
 %%
 prog                :ID LLAVEA sentencias LLAVEC
-                    |LLAVEA sentencias LLAVEC
+                    |LLAVEA sentencias LLAVEC                                               {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
                     |ID sentencias LLAVEC                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
                     |ID LLAVEA sentencias                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
                     |ID sentencias                                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
@@ -22,7 +22,7 @@ prog                :ID LLAVEA sentencias LLAVEC
 
 sentencias          :sentencias sentencia PUNTOCOMA
                     |sentencia PUNTOCOMA
-                    |sentencia error                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+                    |sentencia error                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
                     ;
 
 sentencia           :asignaciones
@@ -35,7 +35,7 @@ sentencia           :asignaciones
                     |llamado_funcion                                                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:llamado de funcion");}
                     |expresion_lambda                                                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
                     |PRINT PARENTESISA CADENA PARENTESISC                                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
-                    |PRINT PARENTESISA expresiones PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+                    |PRINT PARENTESISA expresiones PARENTESISC                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
                     |PRINT PARENTESISA error PARENTESISC                                                                    {System.out.println("LINEA: " + aLex.getNroLinea() + " ERROR SINTÁCTICO: argumento inválido en print");}
                     |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
                     |IF PARENTESISA condicion LLAVEA sentencias LLAVEC ENDIF                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
@@ -81,7 +81,7 @@ expresiones_error   :expresiones MAYOR
 
 expresiones         :expresiones operador termino
                     |termino
-                    |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}
+                    |expresiones operador error                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta operando en expresion");}
                     ;
 
 termino             :tipo_id
@@ -131,9 +131,10 @@ parametro           :CVR tipo tipo_id
                     |error tipo_id                                                      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: falta tipo del parametro formal");}
                     ;
 
-asignaciones        :tipo ID ASIGN expresiones PUNTOCOMA                                         {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
-                    |tipo_id ASIGN expresiones PUNTOCOMA                                         {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion");}
-                    |lista_id IGUAL lista_cte  PUNTOCOMA                                         {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
+asignaciones        :tipo ID ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
+                    |tipo_id ASIGN expresiones                                          {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion");}
+                    |lista_id IGUAL lista_cte                                           {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
+                    |tipo_id IGUAL lista_cte                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
                     ;
 
 lista_cte           :tipo_cte                                                                {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
@@ -170,8 +171,10 @@ public void setAlex(AnalisisLexico a){
 public void verificar_cantidades(ParserVal lista1, ParserVal lista2){
     ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
     ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
-    if (l1.size() < l2.size() )
+    if (l1 != null && l2 != null){
+    if (l1.size() > l2.size() )
         System.out.println("Linea: "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
+    }
 }
 
 void yyerror (String s){

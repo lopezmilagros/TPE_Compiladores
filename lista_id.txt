@@ -1,11 +1,7 @@
 PROGRAMA {
+    X, Y  = 1.;
+    X Y = 1., .2;
+    X = 1., 2UL 4UL;
     X, Y, Z = 1., 2., 3.;
-
-    X Y Z = 1UL, 2UL, 3UL;
-
-    X, Y = 2UL 3UL;
-
-    X = 1UL, 3UL;
-
 }
 

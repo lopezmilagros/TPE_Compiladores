@@ -1,5 +1,5 @@
-PROGRAMA{
-    (ulong X){ print(X) } (3UL);
+PROG{
+    (ulong X){ print(X); } (3UL);
     (ulong X) print(X) } (3UL);
     (ulong X){ print(X)  (3UL);
     (ulong X) print(X)  (3UL);

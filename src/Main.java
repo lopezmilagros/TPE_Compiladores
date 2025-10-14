@@ -5,7 +5,7 @@ import AnalizadorSintactico.*;
 public  class Main {
    public static void main (String []args) throws IOException{
        Parser parser = new Parser();
-       AnalisisLexico aLex = new AnalisisLexico("C:\\FACULTAD\\Cuarto\\compiladores\\TPE_Compiladores\\lambda.txt");
+       AnalisisLexico aLex = new AnalisisLexico("/home/eugenia/Documentos/Facultad/Compiladores/tp_especial/TPE_Compiladores/operando.txt");
         parser.setAlex(aLex);
         parser.run();
         aLex.imprimirErroresLexicos();

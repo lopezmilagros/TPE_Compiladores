@@ -1,0 +1,3 @@
+PRORAMA{
+    X := 6UL;
+    Y := 5UL;

@@ -1,5 +1,5 @@
 PROGRAMA {
     ulong X := 5UL;
-    ulong X := 8.
+    ulong X := 8.;
 }
 

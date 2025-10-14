@@ -28,8 +28,8 @@ public class AnalisisLexico {
         this.tablaTokens = new HashMap<>();
         llenarTablaTokens();
 
-        estados = new int[18][28];
-        accionesSem = new AccionSem[18][28];
+        estados = new int[19][28];
+        accionesSem = new AccionSem[19][28];
         this.buffer = new Buffer(ruta);
 
         this.palabrasReservadas = new ArrayList<>();
@@ -88,9 +88,9 @@ public class AnalisisLexico {
         AccionSem a7 = new AccionSem7(buffer);
         AccionSem a8 = new AccionSem8(tablaDeSimbolos);
 
-        //El estado final sera el numero 18, el estado de error sera -1
+        //El estado final sera el numero 19, el estado de error sera -1
 
-        for (int i = 0; i <= 17; i++) {
+        for (int i = 0; i <= 18; i++) {
             for (int j = 0; j <= 27; j++) {
                 // primero le pongo valor de error
                 estados[i][j] = -1;
@@ -103,7 +103,7 @@ public class AnalisisLexico {
                             case 1, 2, 3, 5 -> estados[i][j] = 10;
                             case 4 -> estados[i][j] = 11;
                             case 6 -> estados[i][j] = 3;
-                            case 7, 9, 10, 14, 16, 17, 18, 19, 20, 21, 27 -> estados[i][j] = 18;
+                            case 7, 9, 10, 14, 16, 17, 18, 19, 20, 21, 27 -> estados[i][j] = 19;
                             case 8 -> estados[i][j] = 9;
                             case 11 -> estados[i][j] = 13;
                             case 12, 13 -> estados[i][j] = 14;
@@ -124,7 +124,7 @@ public class AnalisisLexico {
                     }
                     case 2 -> {
                         if(j == 2) {
-                            estados[i][j] = 18;
+                            estados[i][j] = 19;
                             accionesSem[i][j] = a2;
                         }
                     }
@@ -138,7 +138,7 @@ public class AnalisisLexico {
                         switch (j) {
                             case 0 -> {estados[i][j] = 4; accionesSem[i][j] = a2;}
                             case 3 -> {estados[i][j] = 5; accionesSem[i][j] = a2;}
-                            default -> {estados[i][j] = 18; accionesSem[i][j] = a4;} //todos los demas los envio a finalizado
+                            default -> {estados[i][j] = 19; accionesSem[i][j] = a4;} //todos los demas los envio a finalizado
                         }
                     }
                     case 5 -> {
@@ -159,13 +159,13 @@ public class AnalisisLexico {
                             accionesSem[i][j] = a2;
                         }
                         else {
-                            estados[i][j] = 18;
+                            estados[i][j] = 19;
                             accionesSem[i][j] = a4;
                         }
                     }
                     case 8 -> {
                         if(j == 22) {
-                            estados[i][j] = 18;
+                            estados[i][j] = 19;
                             accionesSem[i][j] = a8;
                         }
                         else if (j != 23) {
@@ -174,7 +174,7 @@ public class AnalisisLexico {
                         }
                     }
                     case 9 -> {
-                        estados[i][j] = 18;
+                        estados[i][j] = 19;
                         if (j == 12)
                             accionesSem[i][j] = a2;
                         else
@@ -183,7 +183,8 @@ public class AnalisisLexico {
                     case 10 -> {
                         switch (j) {
                             case 1, 2, 3, 5 ->{ estados[i][j] = 10; accionesSem[i][j] = a2;}
-                            default ->{ estados[i][j] = 18; accionesSem[i][j] = a6;}
+                            case 6 -> { estados[i][j] = 18; accionesSem[i][j] = a2;}
+                            default ->{ estados[i][j] = 19; accionesSem[i][j] = a6;}
                         }
                     }
                     case 11 -> {
@@ -192,12 +193,12 @@ public class AnalisisLexico {
                             accionesSem[i][j] = a2;
                         }
                         else {
-                            estados[i][j] = 18;
+                            estados[i][j] = 19;
                             accionesSem[i][j] = a5;
                         }
                     }
                     case 12 -> {
-                        estados[i][j] = 18;
+                        estados[i][j] = 19;
                         if (j == 15 | j == 14)
                             accionesSem[i][j] = a2;
                         else
@@ -205,12 +206,12 @@ public class AnalisisLexico {
                     }
                     case 13 -> {
                         if (j == 15) {
-                            estados[i][j] = 18;
+                            estados[i][j] = 19;
                             accionesSem[i][j] = a2;
                         }
                     }
                     case 14 ->{
-                        estados[i][j] = 18;
+                        estados[i][j] = 19;
                         if ( j == 15)
                             accionesSem[i][j] = a2;
                         else
@@ -230,6 +231,12 @@ public class AnalisisLexico {
                         if(j == 24)
                             estados [i][j] = 0;
                     }
+                    case 18 -> {
+                        switch (j){
+                            case 1, 2, 3, 5 ->{ estados[i][j] = 18; accionesSem[i][j] = a2;}
+                            default ->{ estados[i][j] = 19; accionesSem[i][j] = a6;}
+                        }
+                    }
                 }
             }
         }
@@ -248,7 +255,7 @@ public class AnalisisLexico {
             System.out.println("Fin de archivo");
             return 0;}
 
-        while (!buffer.ArchivoVacio() & estadoActual < 18) {
+        while (!buffer.ArchivoVacio() & estadoActual < 19) {
             char caracter = buffer.obtenerCaracter();
 
             //ir reccorriendo las matrices para ver estados y acciones semanticas
@@ -279,10 +286,12 @@ public class AnalisisLexico {
                     estadoActual = estadoSiguiente;
                 else
                     //Hubo un error de transicion y se debe finalizar el token
-                    estadoActual = 18;
+                    estadoActual = 19;
 
             }
         }
+        //ini
+        yylval = new ParserVal();
 
         if (tokenLexema != null) {
             if (tokenLexema.getToken() != tablaTokens.get("cte") && tokenLexema.getToken() != tablaTokens.get("cadena") && tokenLexema.getToken() != tablaTokens.get("id")) {
@@ -291,7 +300,7 @@ public class AnalisisLexico {
             }
             else{
                 //Enviamos la referencia a el lexema a traves de la variable yylval
-                yylval = new ParserVal(tokenLexema.getLexema());
+                yylval.sval = (tokenLexema.getLexema());
             }
         }
         else{
@@ -422,15 +431,12 @@ public class AnalisisLexico {
 
         ArrayList<String> a = new ArrayList<>();
         //Sacar solo el valor numerico si es UL
-        if(lexema.contains("UL")){
-            lexema = lexema.substring(0, lexema.length() - 2);
-            a.add("ULONG");
-        }
-        else
+        if(!lexema.contains("UL")) {
             a.add("DFLOAT");
-        //Si el lexema no esta en la tabla de simbolos lo agrega
-        if (!tablaDeSimbolos.containsKey(lexema)) {
-            tablaDeSimbolos.put(lexema, a);
+            //Si el lexema no esta en la tabla de simbolos lo agrega
+            if (!tablaDeSimbolos.containsKey(lexema)) {
+                tablaDeSimbolos.put(lexema, a);
+            }
         }
     }
 
