@@ -611,7 +611,6 @@ AnalisisLexico aLex;
 
 public void setAlex(AnalisisLexico a){
     this.aLex = a;
-
 }
 
 public void verificar_cantidades(ParserVal lista1, ParserVal lista2){
@@ -638,7 +637,25 @@ int yylex (){
     }
 
 }
-//#line 570 "Parser.java"
+
+ArrayList<String> errores = new ArrayList<>();
+
+void agregarError(String s){
+    errores.add(s);
+}
+
+public void imprimirErrores(){
+    System.out.println("");
+    System.out.println("Errores sintacticos: ");
+    if (!errores.isEmpty()){
+        for (String error: errores){
+            System.out.println(error);
+        }
+    }else{
+        System.out.println("No se encontraron errores sintacticos");
+    }
+}
+//#line 587 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -794,27 +811,27 @@ boolean doaction;
 //########## USER-SUPPLIED ACTIONS ##########
 case 2:
 //#line 16 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
 break;
 case 3:
 //#line 17 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
 break;
 case 4:
 //#line 18 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
 break;
 case 5:
 //#line 19 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
 break;
 case 6:
 //#line 20 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
 break;
 case 9:
 //#line 25 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
 break;
 case 11:
 //#line 29 "gramatica.y"
@@ -822,119 +839,119 @@ case 11:
 break;
 case 12:
 //#line 30 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:if else");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: if else");}
 break;
 case 13:
 //#line 31 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:while");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: while");}
 break;
 case 14:
 //#line 32 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: return");}
 break;
 case 15:
 //#line 33 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: return");}
 break;
 case 16:
 //#line 34 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:declaracion");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion");}
 break;
 case 17:
 //#line 35 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:llamado de funcion");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: llamado de funcion");}
 break;
 case 18:
 //#line 36 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: lambda");}
 break;
 case 19:
 //#line 37 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: print");}
 break;
 case 20:
 //#line 38 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: print");}
 break;
 case 21:
 //#line 39 "gramatica.y"
-{System.out.println("LINEA: " + aLex.getNroLinea() + " ERROR SINTÁCTICO: argumento inválido en print");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: argumento inválido en print");}
 break;
 case 22:
 //#line 40 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
 break;
 case 23:
 //#line 41 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
 break;
 case 24:
 //#line 42 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
 break;
 case 25:
 //#line 43 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
 break;
 case 26:
 //#line 44 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
 break;
 case 27:
 //#line 45 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
 break;
 case 28:
 //#line 46 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
 break;
 case 29:
 //#line 47 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
 break;
 case 30:
 //#line 48 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
 break;
 case 31:
 //#line 49 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta cuerpo en la iteracion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta cuerpo en la iteracion");}
 break;
 case 32:
 //#line 50 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
 break;
 case 33:
 //#line 51 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
 break;
 case 34:
 //#line 52 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
 break;
 case 35:
 //#line 53 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
 break;
 case 36:
 //#line 54 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
 break;
 case 37:
 //#line 55 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
 break;
 case 44:
 //#line 64 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta comparador en expresion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta comparador en expresion");}
 break;
 case 60:
 //#line 84 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta operando en expresion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta operando en expresion");}
 break;
 case 71:
 //#line 101 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
 break;
 case 72:
 //#line 104 "gramatica.y"
@@ -946,39 +963,39 @@ case 73:
 break;
 case 74:
 //#line 106 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
 break;
 case 75:
 //#line 107 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
 break;
 case 80:
 //#line 118 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta especificacion del parametro formal");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta especificacion del parametro formal");}
 break;
 case 83:
 //#line 123 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta ',' en declaracion de las variables");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta ',' en declaracion de las variables");}
 break;
 case 86:
 //#line 128 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta nombre del parametro formal");}
 break;
 case 87:
 //#line 129 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta nombre del parametro formal");}
 break;
 case 88:
 //#line 130 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta tipo del parametro formal");}
 break;
 case 89:
 //#line 131 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta tipo del parametro formal");}
 break;
 case 90:
 //#line 134 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
 break;
 case 91:
 //#line 135 "gramatica.y"
@@ -1002,7 +1019,7 @@ case 95:
 break;
 case 96:
 //#line 142 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
 break;
 case 99:
 //#line 149 "gramatica.y"
@@ -1014,17 +1031,17 @@ case 100:
 break;
 case 103:
 //#line 155 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura en funcion lambda");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura en funcion lambda");}
 break;
 case 104:
 //#line 156 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de cierre en funcion lambda");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de cierre en funcion lambda");}
 break;
 case 105:
 //#line 157 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores en funcion lambda");}
+{agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores en funcion lambda");}
 break;
-//#line 951 "Parser.java"
+//#line 968 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
