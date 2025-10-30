@@ -1,6 +1,11 @@
 PROGRAMA{
     ulong SUMA(ulong A ulong B) {
         return (A + B);
+
+        ulong ADENTRO(ulong C, ulong F){
+        ulong X;
+            print(C);
+        };
     };
 
     ulong(ulong A, ulong B) {

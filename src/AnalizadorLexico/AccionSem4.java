@@ -55,7 +55,8 @@ public class AccionSem4 implements AccionSem{
             buffer.agregarCaracter(caracter);
             lexema.setToken(265);
             ArrayList<String> a = new ArrayList<>();
-            a.add("DFLOAT");
+            a.add(0, "CTE");
+            a.add(1,"DFLOAT");
             tablaDeSimbolos.put(lexema.getLexema(), a);
             return lexema;
         }

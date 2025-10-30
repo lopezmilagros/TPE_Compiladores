@@ -3,6 +3,7 @@ package AnalizadorSintactico;
 import java.io.*;
 import java.util.ArrayList;
 import AnalizadorLexico.*;
+import java.util.HashMap;
 %}
 
 
@@ -12,30 +13,41 @@ import AnalizadorLexico.*;
 %left AST BARRA
 
 %%
-prog                :ID LLAVEA sentencias LLAVEC
-                    |LLAVEA sentencias LLAVEC                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
-                    |ID sentencias LLAVEC                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
-                    |ID LLAVEA sentencias                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
-                    |ID sentencias                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
-                    |error PUNTOCOMA                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
+prog                :ID LLAVEA sentencias LLAVEC                                                                            {aLex.modificarUsoTS($1.sval, "Nombre de programa"); ambito = $1.sval;}
+                    |LLAVEA sentencias LLAVEC                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
+                    |ID sentencias LLAVEC                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
+                    |ID LLAVEA sentencias                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
+                    |ID sentencias                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
+                    |error PUNTOCOMA                                                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
                     ;
 
-sentencias          :sentencias sentencia PUNTOCOMA
-                    |sentencia PUNTOCOMA
-                    |sentencia error                                                         {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+sentencias          :sentencias sentencia
+                    |sentencia
                     ;
 
-sentencia           :asignaciones
+sentencia           :sentencia_declarativa PUNTOCOMA
+                    |sentencia_ejecutable PUNTOCOMA
+                    |sentencia_error                                                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+                    ;
+
+sentencia_error     :sentencia_declarativa error
+                    |sentencia_ejecutable error
+                    ;
+
+
+sentencia_declarativa :declaracion                                                                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:declaracion");}
+                      ;
+
+sentencia_ejecutable:asignaciones
                     |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: if");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: if else");}
-                    |WHILE PARENTESISA condicion PARENTESISC DO LLAVEA sentencias LLAVEC                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: while");}
-                    |RETURN PARENTESISA lista_id PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: return");}
-                    |RETURN PARENTESISA expresiones PARENTESISC                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: return");}
-                    |declaracion                                                                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion");}
-                    |llamado_funcion                                                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: llamado de funcion");}
-                    |expresion_lambda                                                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: lambda");}
-                    |PRINT PARENTESISA CADENA PARENTESISC                                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: print");}
-                    |PRINT PARENTESISA expresiones PARENTESISC                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: print");}
+                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:if else");}
+                    |WHILE PARENTESISA condicion PARENTESISC DO LLAVEA sentencias LLAVEC                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:while");}
+                    |RETURN PARENTESISA lista_id PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+                    |RETURN PARENTESISA expresiones PARENTESISC                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+                    |llamado_funcion                                                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:llamado de funcion");}
+                    |expresion_lambda                                                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
+                    |PRINT PARENTESISA CADENA PARENTESISC                                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+                    |PRINT PARENTESISA expresiones PARENTESISC                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
                     |PRINT PARENTESISA error PARENTESISC                                                                    {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: argumento inválido en print");}
                     |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
                     |IF PARENTESISA condicion LLAVEA sentencias LLAVEC ENDIF                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
@@ -95,19 +107,22 @@ operador            :MAS
                     |BARRA
                     ;
 
-declaracion         :tipo tipo_id
-                    |tipo lista_id
-                    |tipo ID PARENTESISA parametros_formales PARENTESISC LLAVEA sentencias LLAVEC
+declaracion         :tipo tipo_id                                                                                           {ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); aLex.modificarTipoTS(b, $1.sval); aLex.modificarUsoTS($2.sval, "Nombre de variable"); aLex.modificarAmbitoTS($2.sval, ambito);}
+                    |tipo lista_id                                                                                          {ArrayList<String> a = (ArrayList<String>)$2.obj; aLex.modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); modificarAmbitos(a);}
+                    |header_funcion LLAVEA sentencias LLAVEC                                                                {borrarAmbito();}
                     |tipo error PARENTESISA parametros_formales PARENTESISC LLAVEA sentencias LLAVEC                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
                     ;
 
-lista_id            :tipo_id COMA tipo_id                                                                                   {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); arreglo.add($3); $$ = new ParserVal(arreglo); }
-                    |lista_id COMA tipo_id                                                                                  {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo); }
+header_funcion      :tipo ID PARENTESISA parametros_formales PARENTESISC                                                    {aLex.modificarUsoTS($2.sval, "Nombre de funcion"); aLex.modificarAmbitoTS($2.sval, ambito); ambito = ambito + ":" + $2.sval; }
+                    ;
+
+lista_id            :tipo_id COMA tipo_id                                                                                   {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); arreglo.add($3.sval); $$ = new ParserVal(crearArregloId($1.sval, $3.sval)); }
+                    |lista_id COMA tipo_id                                                                                  {ArrayList<String> arreglo = (ArrayList<String>) $1.obj; arreglo.add($3.sval); $$ = new ParserVal(arreglo);}
                     |lista_id tipo_id                                                                                       {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
                     |tipo_id tipo_id                                                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
                     ;
 
-tipo                :ULONG
+tipo                :ULONG                                                                                                  {$$ = new ParserVal("ULONG");}
                     ;
 
 llamado_funcion     :ID PARENTESISA parametros_reales PARENTESISC
@@ -115,23 +130,23 @@ llamado_funcion     :ID PARENTESISA parametros_reales PARENTESISC
 
 parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
                     |expresiones FLECHA tipo_id
-                    |expresiones FLECHA error                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta especificacion del parametro formal");}
+                    |expresiones FLECHA error                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta especificacion del parametro formal");}
                     ;
 
 parametros_formales :parametros_formales COMA parametro
                     |parametro
-                    |parametros_formales parametro                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta ',' en declaracion de las variables");}
+                    |parametros_formales parametro                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta ',' en declaracion de las variables");}
                     ;
 
-parametro           :CVR tipo tipo_id
-                    |tipo tipo_id
-                    |tipo error                                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta nombre del parametro formal");}
-                    |CVR tipo error                                                                                         {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta nombre del parametro formal");}
-                    |CVR error tipo_id                                                                                      {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta tipo del parametro formal");}
-                    |error tipo_id                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: Falta tipo del parametro formal");}
+parametro           :CVR tipo tipo_id                                                                                       {aLex.modificarUsoTS($3.sval, "Nombre de parametro");}
+                    |tipo tipo_id                                                                                           {aLex.modificarUsoTS($2.sval, "Nombre de parametro");}
+                    |tipo error                                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
+                    |CVR tipo error                                                                                         {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
+                    |CVR error tipo_id                                                                                      {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
+                    |error tipo_id                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
                     ;
 
-asignaciones        :tipo ID ASIGN expresiones                                                                              {agregarError("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
+asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
                     |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion");}
                     |lista_id IGUAL lista_cte                                                                               {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
                     |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
@@ -142,12 +157,12 @@ lista_cte           :tipo_cte                                                   
                     |lista_cte tipo_cte                                                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
                     ;
 
-tipo_id             :ID
-                    |ID PUNTO ID
+tipo_id             :ID                                                                                                     {$$ = new ParserVal($1.sval);}
+                    |ID PUNTO ID                                                                                            {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name);}
                     ;
 
-tipo_cte            :CTE                                                                                                    {aLex.agregarATablaDeSimbolos($1.sval);}
-                    |MENOS CTE                                                                                              {String cte = "-" + $2.sval; aLex.agregarATablaDeSimbolos(cte);}
+tipo_cte            :CTE                                                                                                    {aLex.agregarCteNegativaTablaDeSimbolos($1.sval); }
+                    |MENOS CTE                                                                                              {String cte = "-" + $2.sval; aLex.agregarCteNegativaTablaDeSimbolos(cte); }
                     ;
 
 expresion_lambda    :PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PARENTESISA tipo_id PARENTESISC
@@ -160,19 +175,19 @@ expresion_lambda    :PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PA
 
 /* CODIGO AUXILIAR */
 
-
 AnalisisLexico aLex;
 
 public void setAlex(AnalisisLexico a){
     this.aLex = a;
+
 }
 
 public void verificar_cantidades(ParserVal lista1, ParserVal lista2){
-    ArrayList<ParserVal> l1 = (ArrayList<ParserVal>)lista1.obj;
-    ArrayList<ParserVal> l2 = (ArrayList<ParserVal>)lista2.obj;
+    ArrayList<String> l1 = (ArrayList<String>)lista1.obj;
+    ArrayList<String> l2 = (ArrayList<String>)lista2.obj;
     if (l1 != null && l2 != null){
     if (l1.size() > l2.size() )
-        System.out.println("Linea: "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
+        agregarError("Linea: "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
     }
 }
 
@@ -192,6 +207,7 @@ int yylex (){
 
 }
 
+//ERRORES SINTACTICOS
 ArrayList<String> errores = new ArrayList<>();
 
 void agregarError(String s){
@@ -209,3 +225,35 @@ public void imprimirErrores(){
         System.out.println("No se encontraron errores sintacticos");
     }
 }
+
+//CODIGO INTERMEDIO
+//private HashMap<String, ArrayList<String>> polacaInversa = new HashMap<String, ArrayList<String>>();
+private String ambito;
+
+public ArrayList<String> crearArregloId(String v1, String v2){
+        ArrayList<String> listaNombres = new ArrayList<String>();
+        listaNombres.add(v1);
+        listaNombres.add(v2);
+        return listaNombres;
+}
+
+public void modificarUsos(ArrayList<String> lista, String uso){
+        for (String a: lista){
+            aLex.modificarUsoTS(a, uso);
+        }
+}
+
+public void modificarAmbitos(ArrayList<String> lista){
+        for (String a: lista){
+            aLex.modificarAmbitoTS(a, ambito);
+        }
+}
+
+    public void borrarAmbito(){
+        int index = ambito.lastIndexOf(":");
+        if (index != -1) {
+             String texto = ambito;
+            texto = texto.substring(0, index);
+            ambito = texto;
+        }
+            }

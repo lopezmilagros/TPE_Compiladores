@@ -1,7 +1,6 @@
 package AnalizadorLexico;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +17,7 @@ public class AnalisisLexico {
     private HashMap<String, ArrayList<String>> tablaDeSimbolos;
     private ParserVal yylval;
     private int nroLinea;
-
-    //Esta tabla es unicamente para imprimir los tokens
-    private ArrayList<String> tokensLeidos = new ArrayList<>();
+    private ArrayList<String> tokensLeidos = new ArrayList<>();//Esta tabla es unicamente para imprimir los tokens
 
     public AnalisisLexico(String ruta) throws IOException {
         nroLinea = 1;
@@ -404,7 +401,7 @@ public class AnalisisLexico {
     public void imprimirTabla() {
         System.out.println();
         System.out.println("Tabla de simbolos:");
-        System.out.printf("%-10s | %s%n", "Clave", "Valores");
+        System.out.printf("%-10s | %s%n", "Clave", "Tipo");
         System.out.println("--------------------------");
 
         for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
@@ -426,18 +423,78 @@ public class AnalisisLexico {
         }
     }
 
-    public void agregarATablaDeSimbolos(String lexema){
+    public void agregarCteNegativaTablaDeSimbolos(String lexema){
         //Por ahora asumimos que solo llegan ctes porque solo utilizamos este metodo para añadir ctes a la t. se simbolos
 
         ArrayList<String> a = new ArrayList<>();
         //Sacar solo el valor numerico si es UL
         if(!lexema.contains("UL")) {
-            a.add("DFLOAT");
+            a.add(0, "CTE");
+            a.add(1,"DFLOAT");
             //Si el lexema no esta en la tabla de simbolos lo agrega
             if (!tablaDeSimbolos.containsKey(lexema)) {
                 tablaDeSimbolos.put(lexema, a);
             }
         }
+    }
+
+
+
+    public void modificarTipoTS(ArrayList<String> clave, String tipo){
+        for (String name: clave){
+            if (tablaDeSimbolos.containsKey(name)) {
+                ArrayList<String> fila = tablaDeSimbolos.get(name);
+                fila.add(1, tipo);
+            }else{
+                System.out.println("(modificarTipoTS) Error, la clave" + name + " no existe en la tabla de simbolos");
+            }
+        }
+    }
+
+    public void modificarUsoTS(String clave, String uso){
+        if (tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> fila = tablaDeSimbolos.get(clave);
+            if (fila.size() == 2){
+                fila.add(2, uso);
+            }else{
+                if (fila.size() > 2)
+                    fila.set(2, uso);
+                else {
+                    fila.add(1, " ");
+                    fila.add(2, uso);
+                }
+            }
+
+        }else{
+            System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+        }
+    }
+
+    public void modificarAmbitoTS(String clave, String ambito){
+        if (tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> fila = tablaDeSimbolos.get(clave);
+            if (fila.size() == 3){
+                fila.add(3, ambito);
+            }else{
+                if (fila.size() == 2){
+                    fila.add(2, " ");
+                    fila.add(3, ambito);
+                }else{
+                    if (fila.size() == 1){
+                        fila.add(1," ");
+                        fila.add(2," ");
+                        fila.add(3,ambito);
+                    }else{
+                        fila.set(3, ambito);
+                    }
+                }
+
+            }
+
+        }else{
+            System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+        }
+
     }
 
     public void imprimirErroresLexicos(){
@@ -451,5 +508,7 @@ public class AnalisisLexico {
             System.out.println("No hay errores lexicos.");
         }
     }
+
 }
+
 

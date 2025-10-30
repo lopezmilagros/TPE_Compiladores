@@ -21,7 +21,8 @@ public class AccionSem3 implements AccionSem{
         if ( numero <= max & numero >= min){
             lexema.setToken(265);
             ArrayList<String> a = new ArrayList<>();
-            a.add("ULONG");
+            a.add(0, "CTE");
+            a.add(1,"ULONG");
             tablaDeSimbolos.put(lexema.getLexema(), a);
             lexema.setLexema(caracter);
 
