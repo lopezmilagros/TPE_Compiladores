@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import AnalizadorLexico.*;
 import java.util.HashMap;
+import java.util.Map;
 %}
 
 
@@ -13,7 +14,7 @@ import java.util.HashMap;
 %left AST BARRA
 
 %%
-prog                :ID LLAVEA sentencias LLAVEC                                                                            {aLex.modificarUsoTS($1.sval, "Nombre de programa"); ambito = $1.sval;}
+prog                :ID LLAVEA sentencias LLAVEC                                                                            {aLex.modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put($1.sval, mainArreglo); }
                     |LLAVEA sentencias LLAVEC                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
                     |ID sentencias LLAVEC                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
                     |ID LLAVEA sentencias                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
@@ -113,7 +114,7 @@ declaracion         :tipo tipo_id                                               
                     |tipo error PARENTESISA parametros_formales PARENTESISC LLAVEA sentencias LLAVEC                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
                     ;
 
-header_funcion      :tipo ID PARENTESISA parametros_formales PARENTESISC                                                    {aLex.modificarUsoTS($2.sval, "Nombre de funcion"); aLex.modificarAmbitoTS($2.sval, ambito); ambito = ambito + ":" + $2.sval; }
+header_funcion      :tipo ID PARENTESISA parametros_formales PARENTESISC                                                    {aLex.modificarUsoTS($2.sval, "Nombre de funcion"); aLex.modificarAmbitoTS($2.sval, ambito); ambito = ambito + ":" + $2.sval; polacaInversa.put(ambito, new ArrayList<String>()); }
                     ;
 
 lista_id            :tipo_id COMA tipo_id                                                                                   {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); arreglo.add($3.sval); $$ = new ParserVal(crearArregloId($1.sval, $3.sval)); }
@@ -146,10 +147,10 @@ parametro           :CVR tipo tipo_id                                           
                     |error tipo_id                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
                     ;
 
-asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion");}
-                    |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion");}
-                    |lista_id IGUAL lista_cte                                                                               {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
-                    |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple");}
+asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca(":=");}
+                    |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); agregarAPolaca(":=");}
+                    |lista_id IGUAL lista_cte                                                                               {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
+                    |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
                     ;
 
 lista_cte           :tipo_cte                                                                                               {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
@@ -157,12 +158,12 @@ lista_cte           :tipo_cte                                                   
                     |lista_cte tipo_cte                                                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
                     ;
 
-tipo_id             :ID                                                                                                     {$$ = new ParserVal($1.sval);}
-                    |ID PUNTO ID                                                                                            {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name);}
+tipo_id             :ID                                                                                                     {$$ = new ParserVal($1.sval); agregarAPolaca($1.sval);}
+                    |ID PUNTO ID                                                                                            {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name); agregarAPolaca(name);}
                     ;
 
-tipo_cte            :CTE                                                                                                    {aLex.agregarCteNegativaTablaDeSimbolos($1.sval); }
-                    |MENOS CTE                                                                                              {String cte = "-" + $2.sval; aLex.agregarCteNegativaTablaDeSimbolos(cte); }
+tipo_cte            :CTE                                                                                                    {aLex.agregarCteNegativaTablaDeSimbolos($1.sval); agregarAPolaca($1.sval); }
+                    |MENOS CTE                                                                                              {String cte = "-" + $2.sval; aLex.agregarCteNegativaTablaDeSimbolos(cte); agregarAPolaca(cte);}
                     ;
 
 expresion_lambda    :PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PARENTESISA tipo_id PARENTESISC
@@ -227,8 +228,9 @@ public void imprimirErrores(){
 }
 
 //CODIGO INTERMEDIO
-//private HashMap<String, ArrayList<String>> polacaInversa = new HashMap<String, ArrayList<String>>();
-private String ambito;
+private ArrayList<String> mainArreglo = new ArrayList<String>();
+private HashMap<String, ArrayList<String>> polacaInversa = new HashMap<String, ArrayList<String>>();
+private String ambito = "MAIN";
 
 public ArrayList<String> crearArregloId(String v1, String v2){
         ArrayList<String> listaNombres = new ArrayList<String>();
@@ -249,11 +251,35 @@ public void modificarAmbitos(ArrayList<String> lista){
         }
 }
 
-    public void borrarAmbito(){
-        int index = ambito.lastIndexOf(":");
-        if (index != -1) {
-             String texto = ambito;
-            texto = texto.substring(0, index);
-            ambito = texto;
-        }
-            }
+public void borrarAmbito(){
+    int index = ambito.lastIndexOf(":");
+    if (index != -1) {
+         String texto = ambito;
+        texto = texto.substring(0, index);
+        ambito = texto;
+    }
+}
+
+public void agregarAPolaca(String valor){
+    System.out.println("Entro a agregar "+valor);
+    if (polacaInversa.containsKey(ambito)) {
+        polacaInversa.get(ambito).add(valor);
+    }
+    else{
+        mainArreglo.add(valor);
+    }
+}
+
+public void imprimirPolaca() {
+    System.out.println();
+    System.out.println("Tabla Polaca :");
+    System.out.printf("%-10s | %s%n", "Clave", "Tipo");
+    System.out.println("--------------------------");
+
+    for (Map.Entry<String, ArrayList<String>> entry : polacaInversa.entrySet()) {
+        String clave = entry.getKey();
+        String valores = String.join(", ", entry.getValue());
+        System.out.printf("%-10s | %s%n", clave, valores);
+    }
+    System.out.println();
+}
