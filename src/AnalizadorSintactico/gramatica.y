@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import AnalizadorLexico.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Iterator;
 %}
 
 
@@ -14,7 +15,7 @@ import java.util.Map;
 %left AST BARRA
 
 %%
-prog                :ID LLAVEA sentencias LLAVEC                                                                            {aLex.modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put($1.sval, mainArreglo); }
+prog                :ID LLAVEA sentencias LLAVEC                                                                            {modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo);}
                     |LLAVEA sentencias LLAVEC                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
                     |ID sentencias LLAVEC                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
                     |ID LLAVEA sentencias                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
@@ -94,7 +95,7 @@ expresiones_error   :expresiones MAYOR
 
 expresiones         :expresiones operador termino
                     |termino
-                    |expresiones operador error                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta operando en expresion");}
+                    |expresiones operador error                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
                     ;
 
 termino             :tipo_id
@@ -108,13 +109,13 @@ operador            :MAS
                     |BARRA
                     ;
 
-declaracion         :tipo tipo_id                                                                                           {ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); aLex.modificarTipoTS(b, $1.sval); aLex.modificarUsoTS($2.sval, "Nombre de variable"); aLex.modificarAmbitoTS($2.sval, ambito);}
-                    |tipo lista_id                                                                                          {ArrayList<String> a = (ArrayList<String>)$2.obj; aLex.modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); modificarAmbitos(a);}
-                    |header_funcion LLAVEA sentencias LLAVEC                                                                {borrarAmbito();}
+declaracion         :tipo tipo_id                                                                                           {ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); modificarTipoTS(b, $1.sval); modificarUsoTS($2.sval, "Nombre de variable");}
+                    |tipo lista_id                                                                                          {ArrayList<String> a = (ArrayList<String>)$2.obj; modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable");}
+                    |header_funcion LLAVEA sentencias LLAVEC                                                                {String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
                     |tipo error PARENTESISA parametros_formales PARENTESISC LLAVEA sentencias LLAVEC                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
                     ;
 
-header_funcion      :tipo ID PARENTESISA parametros_formales PARENTESISC                                                    {aLex.modificarUsoTS($2.sval, "Nombre de funcion"); aLex.modificarAmbitoTS($2.sval, ambito); ambito = ambito + ":" + $2.sval; polacaInversa.put(ambito, new ArrayList<String>()); }
+header_funcion      :tipo ID PARENTESISA parametros_formales PARENTESISC                                                    {modificarUsoTS($2.sval, "Nombre de funcion"); ambito = ambito + ":" + $2.sval; modificarAmbitosTS((ArrayList<String>)$4.obj); polacaInversa.put(ambito, (ArrayList<String>) $4.obj); }
                     ;
 
 lista_id            :tipo_id COMA tipo_id                                                                                   {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); arreglo.add($3.sval); $$ = new ParserVal(crearArregloId($1.sval, $3.sval)); }
@@ -134,13 +135,13 @@ parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
                     |expresiones FLECHA error                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta especificacion del parametro formal");}
                     ;
 
-parametros_formales :parametros_formales COMA parametro
-                    |parametro
+parametros_formales :parametros_formales COMA parametro                                                                     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); $$ = new ParserVal(a);}
+                    |parametro                                                                                              {ArrayList<String> a = new ArrayList<String>(); a.add($1.sval); $$ = new ParserVal(a);}
                     |parametros_formales parametro                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta ',' en declaracion de las variables");}
                     ;
 
-parametro           :CVR tipo tipo_id                                                                                       {aLex.modificarUsoTS($3.sval, "Nombre de parametro");}
-                    |tipo tipo_id                                                                                           {aLex.modificarUsoTS($2.sval, "Nombre de parametro");}
+parametro           :CVR tipo tipo_id                                                                                       {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal($3.sval);}
+                    |tipo tipo_id                                                                                           {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($2.sval);}
                     |tipo error                                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
                     |CVR tipo error                                                                                         {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
                     |CVR error tipo_id                                                                                      {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
@@ -177,6 +178,7 @@ expresion_lambda    :PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PA
 /* CODIGO AUXILIAR */
 
 AnalisisLexico aLex;
+private HashMap<String, ArrayList<String>> tablaDeSimbolos = new HashMap<String, ArrayList<String>>();
 
 public void setAlex(AnalisisLexico a){
     this.aLex = a;
@@ -200,15 +202,19 @@ int yylex (){
     try {
         int token = aLex.yylex();
         yylval = aLex.getYylval();
+
+        //Actualizamos la ts del analizador sintactico
+        if(token == 265 || token == 266 || token == 267){
+            copiarTS(yylval.sval, token);
+        }
+
         return token;
     } catch (IOException e) {
         System.err.println("Error de lectura en el analizador léxico: " + e.getMessage());
         return 0; //Devuelvo 0 como si fuera fin de archivo
     }
-
 }
-
-//ERRORES SINTACTICOS
+//------------------------------------------------------------------------------------------------------------ERRORES SINTACTICOS
 ArrayList<String> errores = new ArrayList<>();
 
 void agregarError(String s){
@@ -227,7 +233,91 @@ public void imprimirErrores(){
     }
 }
 
-//CODIGO INTERMEDIO
+//------------------------------------------------------------------------------------------------------------MODIFICAR TS
+public void modificarTipoTS(ArrayList<String> claves, String tipo){
+    for (String name: claves){
+        String clave = ambito+":"+name;
+        if (tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> fila = tablaDeSimbolos.get(clave);
+            fila.add(1, tipo);
+        }else{
+            System.out.println("(modificarTipoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+        }
+    }
+}
+
+public void modificarUsos(ArrayList<String> lista, String uso){
+        for (String a: lista){
+            modificarUsoTS(a, uso);
+        }
+}
+
+public void modificarUsoTS(String aux, String uso){
+    String clave = ambito+":"+aux;
+    if (tablaDeSimbolos.containsKey(clave)) {
+        ArrayList<String> fila = tablaDeSimbolos.get(clave);
+        //Se agrega el uso en el indice = 2
+        fila.add(uso);
+    }else{
+        System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+    }
+}
+public void modificarAmbitosTS(ArrayList<String> a){
+    int index = ambito.lastIndexOf(":");
+    String ambitoAfuera = ambito.substring(0, index);
+
+    for (String parametro : a){
+        //Lo busco en la ts y modifico su clave para que incluya el ambito de la funcion definida
+        ArrayList<String> aux = tablaDeSimbolos.get(ambitoAfuera+":"+parametro);
+        tablaDeSimbolos.remove(ambitoAfuera+":"+parametro);
+        tablaDeSimbolos.put(ambito+":"+parametro, aux);
+    }
+}
+public void copiarTS(String clave, int token){
+    String aux = ambito+":"+yylval.sval;
+    if(!tablaDeSimbolos.containsKey(aux)){
+        String tipo = aLex.getTipoTS(clave);
+        ArrayList<String> a = new ArrayList<String>();
+        a.add(tipo);
+        //Se agrega el tipo en el indice = 1
+        if(token == 265){
+            String tipoCte = aLex.getTipoCteTS(yylval.sval);
+            a.add(tipoCte);
+        }else{
+            a.add(" ");
+        }
+        tablaDeSimbolos.put(aux, a);
+        System.out.println("Agregue a la ts: "+aux);
+        System.out.println("con el tipo: "+tipo);
+   }
+}
+
+public void limpiarPolaca(String ambitoFuncion) {
+    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
+    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
+
+    ArrayList<String> a;
+    if (polacaInversa.containsKey(ambito)) {
+        a = polacaInversa.get(ambito);
+    } else {
+        a = mainArreglo;
+    }
+
+    // Usamos Iterator para poder eliminar mientras iteramos
+    Iterator<String> it = a.iterator();
+    while (it.hasNext()) {
+        String s = it.next();
+        String clave = ambitoFuncion + ":" + s;
+        ArrayList<String> ts = tablaDeSimbolos.get(clave);
+        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
+            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
+        }
+    }
+
+    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
+}
+
+//-------------------------------------------------------------------------------------------------------------CODIGO INTERMEDIO
 private ArrayList<String> mainArreglo = new ArrayList<String>();
 private HashMap<String, ArrayList<String>> polacaInversa = new HashMap<String, ArrayList<String>>();
 private String ambito = "MAIN";
@@ -237,18 +327,6 @@ public ArrayList<String> crearArregloId(String v1, String v2){
         listaNombres.add(v1);
         listaNombres.add(v2);
         return listaNombres;
-}
-
-public void modificarUsos(ArrayList<String> lista, String uso){
-        for (String a: lista){
-            aLex.modificarUsoTS(a, uso);
-        }
-}
-
-public void modificarAmbitos(ArrayList<String> lista){
-        for (String a: lista){
-            aLex.modificarAmbitoTS(a, ambito);
-        }
 }
 
 public void borrarAmbito(){
@@ -261,19 +339,25 @@ public void borrarAmbito(){
 }
 
 public void agregarAPolaca(String valor){
-    System.out.println("Entro a agregar "+valor);
     if (polacaInversa.containsKey(ambito)) {
-        polacaInversa.get(ambito).add(valor);
+        ArrayList<String> a = tablaDeSimbolos.get(valor);
+        if (a!= null && a.size() == 3){
+            String uso = a.get(2);
+            if(uso != "Nombre de parametro")
+                polacaInversa.get(ambito).add(valor);
+            //Los parametros formales los agregamos a la polaca inversa manualmente en las reglas
+        }else
+            polacaInversa.get(ambito).add(valor);
     }
     else{
         mainArreglo.add(valor);
     }
 }
-
+//----------------------------------------------------------------------------------------------------------IMPRESIONES
 public void imprimirPolaca() {
     System.out.println();
     System.out.println("Tabla Polaca :");
-    System.out.printf("%-10s | %s%n", "Clave", "Tipo");
+    System.out.printf("%-10s | %s%n", "Clave", "Polaca Inversa");
     System.out.println("--------------------------");
 
     for (Map.Entry<String, ArrayList<String>> entry : polacaInversa.entrySet()) {
@@ -283,3 +367,17 @@ public void imprimirPolaca() {
     }
     System.out.println();
 }
+
+ public void imprimirTabla() {
+        System.out.println();
+        System.out.println("Tabla de simbolos:");
+        System.out.printf("%-10s | %-10s | %-10s | %-10s%n", "ambito", "Tipo Token", "Tipo", "Uso");
+        System.out.println("--------------------------");
+
+        for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
+            String clave = entry.getKey();
+            String valores = String.join(" | ", entry.getValue());
+            System.out.printf("%-10s | %s%n", clave, valores);
+        }
+        System.out.println();
+    }

@@ -1,14 +1,7 @@
 PROGRAMA{
-
-    X:= 3UL + 2UL;
-
-    X := 5. + .3 -  + 5UL;
-
-    X := 5. + ;
-
-    X :=  + .3;
-    ulong SUMA(ulong A ulong B) {
+    ulong SUMA(ulong A,ulong B) {
        ulong Y;
     };
+    ##SUMA(A -> X,B -> Y);##
 }
 

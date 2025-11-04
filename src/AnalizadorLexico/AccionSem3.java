@@ -25,7 +25,6 @@ public class AccionSem3 implements AccionSem{
             a.add(1,"ULONG");
             tablaDeSimbolos.put(lexema.getLexema(), a);
             lexema.setLexema(caracter);
-
             return lexema;
         }
         else {

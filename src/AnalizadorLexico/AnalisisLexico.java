@@ -296,7 +296,10 @@ public class AnalisisLexico {
                     tokenLexema.setToken(tablaTokens.get(tokenLexema.getLexema()));
             }
             else{
-                //Enviamos la referencia a el lexema a traves de la variable yylval
+                //Si es un ULONG le sacamos el UL que se concateno
+                if (tokenLexema.getToken() == tablaTokens.get("cte") && tokenLexema.getLexema().contains("UL"))
+                    tokenLexema.reescribirLexema(cutUL(tokenLexema.getLexema()));
+                // Enviamos la referencia a el lexema a traves de la variable yylval
                 yylval.sval = (tokenLexema.getLexema());
             }
         }
@@ -398,6 +401,15 @@ public class AnalisisLexico {
         return this.yylval;
     }
 
+    public String cutUL(String ulong){
+        int index = ulong.lastIndexOf("U");
+        if (index != -1) {
+            String texto = ulong;
+            texto = texto.substring(0, index);
+            ulong = texto;
+        }
+        return ulong;
+    }
     public void imprimirTabla() {
         System.out.println();
         System.out.println("Tabla de simbolos:");
@@ -411,7 +423,6 @@ public class AnalisisLexico {
         }
         System.out.println();
     }
-
 
     public void imprimirTokensLeidos(){
         System.out.println();
@@ -438,38 +449,7 @@ public class AnalisisLexico {
         }
     }
 
-
-
-    public void modificarTipoTS(ArrayList<String> clave, String tipo){
-        for (String name: clave){
-            if (tablaDeSimbolos.containsKey(name)) {
-                ArrayList<String> fila = tablaDeSimbolos.get(name);
-                fila.add(1, tipo);
-            }else{
-                System.out.println("(modificarTipoTS) Error, la clave" + name + " no existe en la tabla de simbolos");
-            }
-        }
-    }
-
-    public void modificarUsoTS(String clave, String uso){
-        if (tablaDeSimbolos.containsKey(clave)) {
-            ArrayList<String> fila = tablaDeSimbolos.get(clave);
-            if (fila.size() == 2){
-                fila.add(2, uso);
-            }else{
-                if (fila.size() > 2)
-                    fila.set(2, uso);
-                else {
-                    fila.add(1, " ");
-                    fila.add(2, uso);
-                }
-            }
-
-        }else{
-            System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
-        }
-    }
-
+    //BORRAR MODIFICAR AMBITO
     public void modificarAmbitoTS(String clave, String ambito){
         if (tablaDeSimbolos.containsKey(clave)) {
             ArrayList<String> fila = tablaDeSimbolos.get(clave);
@@ -509,7 +489,27 @@ public class AnalisisLexico {
         }
     }
 
+    public String getTipoTS(String lexema){
+        if(tablaDeSimbolos.containsKey(lexema)){
+            ArrayList<String> a = tablaDeSimbolos.get(lexema);
+            return(a.get(0));
+        }
+        else {
+            System.out.println("NO ESTA EN TS "+lexema);
+            return ("NO");
+        }
+    }
 
+    public String getTipoCteTS(String lexema){
+        if(tablaDeSimbolos.containsKey(lexema)){
+            ArrayList<String> a = tablaDeSimbolos.get(lexema);
+            return(a.get(1));
+        }
+        else {
+            System.out.println("NO ESTA EN TS "+lexema);
+            return ("NO");
+        }
+    }
 
 }
 

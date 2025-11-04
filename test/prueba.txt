@@ -1,0 +1,4 @@
+PROGRAMA{
+    ulong ADENTROMAIN;
+    ADENTROMAIN := 3UL;
+}
