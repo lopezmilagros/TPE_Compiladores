@@ -93,20 +93,23 @@ expresiones_error   :expresiones MAYOR
                     |expresiones
                     ;
 
-expresiones         :expresiones operador termino
+expresiones         :expresiones MAS termino    {agregarAPolaca("+");}
+                    |expresiones MENOS termino  {agregarAPolaca("-");}
+                    |expresiones AST termino    {agregarAPolaca("*");}
+                    |expresiones BARRA termino  {agregarAPolaca("/");}
                     |termino
                     |expresiones operador error                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
                     ;
 
-termino             :tipo_id
-                    |tipo_cte
+termino             :tipo_id    {agregarAPolaca($1.sval);}
+                    |tipo_cte   {agregarAPolaca($1.sval);}
                     |llamado_funcion
                     ;
 
-operador            :MAS
-                    |MENOS
-                    |AST
-                    |BARRA
+operador            :MAS                                                                                                    {agregarAPolaca("+");}
+                    |MENOS                                                                                                  {agregarAPolaca("-");}
+                    |AST                                                                                                    {agregarAPolaca("*");}
+                    |BARRA                                                                                                  {agregarAPolaca("/");}
                     ;
 
 declaracion         :tipo tipo_id                                                                                           {ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); modificarTipoTS(b, $1.sval); modificarUsoTS($2.sval, "Nombre de variable");}
@@ -148,8 +151,8 @@ parametro           :CVR tipo tipo_id                                           
                     |error tipo_id                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
                     ;
 
-asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca(":=");}
-                    |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); agregarAPolaca(":=");}
+asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca($2.sval);agregarAPolaca(":=");}
+                    |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); gregarAPolaca($2.sval);agregarAPolaca(":=");}
                     |lista_id IGUAL lista_cte                                                                               {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
                     |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
                     ;
@@ -159,12 +162,12 @@ lista_cte           :tipo_cte                                                   
                     |lista_cte tipo_cte                                                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
                     ;
 
-tipo_id             :ID                                                                                                     {$$ = new ParserVal($1.sval); agregarAPolaca($1.sval);}
-                    |ID PUNTO ID                                                                                            {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name); agregarAPolaca(name);}
+tipo_id             :ID                                                                                                     {$$ = new ParserVal($1.sval); }
+                    |ID PUNTO ID                                                                                            {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name);}
                     ;
 
-tipo_cte            :CTE                                                                                                    {aLex.agregarCteNegativaTablaDeSimbolos($1.sval); agregarAPolaca($1.sval); }
-                    |MENOS CTE                                                                                              {String cte = "-" + $2.sval; aLex.agregarCteNegativaTablaDeSimbolos(cte); agregarAPolaca(cte);}
+tipo_cte            :CTE                                                                                                    {aLex.agregarCteNegativaTablaDeSimbolos($1.sval); }
+                    |MENOS CTE                                                                                              {String cte = "-" + $2.sval; aLex.agregarCteNegativaTablaDeSimbolos(cte); }
                     ;
 
 expresion_lambda    :PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PARENTESISA tipo_id PARENTESISC
@@ -287,8 +290,6 @@ public void copiarTS(String clave, int token){
             a.add(" ");
         }
         tablaDeSimbolos.put(aux, a);
-        System.out.println("Agregue a la ts: "+aux);
-        System.out.println("con el tipo: "+tipo);
    }
 }
 

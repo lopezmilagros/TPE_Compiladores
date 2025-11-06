@@ -1,7 +1,12 @@
 PROGRAMA{
     ulong SUMA(ulong A,ulong B) {
-       ulong Y;
+       ulong Y := 5.;
+       ulong RESTA(ulong C){
+            C:= C + 1.;
+       }
+       RESTA(C -> Y);
     };
-    ##SUMA(A -> X,B -> Y);##
+    SUMA(A -> X,B -> Y);
+
 }
 
