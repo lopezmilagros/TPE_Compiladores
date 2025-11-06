@@ -1246,11 +1246,11 @@ case 97:
 break;
 case 98:
 //#line 154 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca(val_peek(2).sval);agregarAPolaca(":=");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca(val_peek(2).sval); agregarAPolaca(":=");}
 break;
 case 99:
 //#line 155 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); gregarAPolaca(val_peek(1).sval);agregarAPolaca(":=");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); agregarAPolaca(val_peek(2).sval); agregarAPolaca(":=");}
 break;
 case 100:
 //#line 156 "gramatica.y"

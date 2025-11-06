@@ -151,8 +151,8 @@ parametro           :CVR tipo tipo_id                                           
                     |error tipo_id                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
                     ;
 
-asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca($2.sval);agregarAPolaca(":=");}
-                    |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); gregarAPolaca($2.sval);agregarAPolaca(":=");}
+asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
+                    |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); agregarAPolaca($1.sval); agregarAPolaca(":=");}
                     |lista_id IGUAL lista_cte                                                                               {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
                     |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
                     ;
