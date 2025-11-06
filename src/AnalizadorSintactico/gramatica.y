@@ -151,7 +151,7 @@ parametro           :CVR tipo tipo_id                                           
                     |error tipo_id                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
                     ;
 
-asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
+asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
                     |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); agregarAPolaca($1.sval); agregarAPolaca(":=");}
                     |lista_id IGUAL lista_cte                                                                               {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
                     |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
@@ -242,7 +242,7 @@ public void modificarTipoTS(ArrayList<String> claves, String tipo){
         String clave = ambito+":"+name;
         if (tablaDeSimbolos.containsKey(clave)) {
             ArrayList<String> fila = tablaDeSimbolos.get(clave);
-            fila.add(1, tipo);
+            fila.set(1, tipo);
         }else{
             System.out.println("(modificarTipoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
         }

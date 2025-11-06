@@ -686,7 +686,7 @@ public void modificarTipoTS(ArrayList<String> claves, String tipo){
         String clave = ambito+":"+name;
         if (tablaDeSimbolos.containsKey(clave)) {
             ArrayList<String> fila = tablaDeSimbolos.get(clave);
-            fila.add(1, tipo);
+            fila.set(1, tipo);
         }else{
             System.out.println("(modificarTipoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
         }
@@ -1246,7 +1246,7 @@ case 97:
 break;
 case 98:
 //#line 154 "gramatica.y"
-{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); agregarAPolaca(val_peek(2).sval); agregarAPolaca(":=");}
+{System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add(val_peek(2).sval); modificarTipoTS(a, val_peek(3).sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca(val_peek(2).sval); agregarAPolaca(":=");}
 break;
 case 99:
 //#line 155 "gramatica.y"
