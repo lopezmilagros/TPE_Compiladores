@@ -1,3 +1,15 @@
 PROGRAMA{
     ulong ADENTROMAIN := 3UL + 5UL;
+    ADENTROMAIN := 7UL + 1UL;
+    ADENTROMAIN, X = 9UL, 10UL;
+
+    ulong SUMA(ulong X){
+        if (X > 5UL){
+            ulong Z := 5UL;
+        }else{
+            ulong B := 9UL;
+        } endif;
+    };
+
+    SUMA(X -> ADENTROMAIN, Y -> Z, A -> Q);
 }

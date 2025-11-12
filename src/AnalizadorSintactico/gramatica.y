@@ -41,15 +41,14 @@ sentencia_declarativa :declaracion                                              
                       ;
 
 sentencia_ejecutable:asignaciones
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: if");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF      {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:if else");}
+                    |sentencia_if                                                                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: if"); agregarAPolaca("if");}
                     |WHILE PARENTESISA condicion PARENTESISC DO LLAVEA sentencias LLAVEC                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:while");}
-                    |RETURN PARENTESISA lista_id PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
-                    |RETURN PARENTESISA expresiones PARENTESISC                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");}
+                    |RETURN PARENTESISA lista_id PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
+                    |RETURN PARENTESISA expresiones PARENTESISC                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return"); agregarAPolaca("return");}
                     |llamado_funcion                                                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:llamado de funcion");}
                     |expresion_lambda                                                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
-                    |PRINT PARENTESISA CADENA PARENTESISC                                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
-                    |PRINT PARENTESISA expresiones PARENTESISC                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print");}
+                    |PRINT PARENTESISA CADENA PARENTESISC                                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print"); agregarAPolaca($3.sval); agregarAPolaca("print");}
+                    |PRINT PARENTESISA expresiones PARENTESISC                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print"); agregarAPolaca("print");}
                     |PRINT PARENTESISA error PARENTESISC                                                                    {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: argumento inválido en print");}
                     |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
                     |IF PARENTESISA condicion LLAVEA sentencias LLAVEC ENDIF                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
@@ -61,20 +60,27 @@ sentencia_ejecutable:asignaciones
                     |WHILE PARENTESISA condicion  DO LLAVEA sentencias LLAVEC                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
                     |WHILE error condicion error DO LLAVEA sentencias LLAVEC                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
                     |WHILE PARENTESISA condicion PARENTESISC DO error                                                       {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta cuerpo en la iteracion");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC            {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+                    |header_if                                                                                              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+                    |header_if ELSE LLAVEA sentencias LLAVEC                                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
                     |IF PARENTESISA condicion PARENTESISC ENDIF                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
                     |IF PARENTESISA condicion PARENTESISC ELSE LLAVEA sentencias LLAVEC ENDIF                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
-                    |IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE ENDIF                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
+                    |header_if ELSE ENDIF                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
                     |WHILE PARENTESISA condicion PARENTESISC error LLAVEA sentencias LLAVEC                                 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
                     ;
 
-condicion           :expresiones MAYOR expresiones
-                    |expresiones MAYIG expresiones
-                    |expresiones MENOR expresiones
-                    |expresiones MENIG expresiones
-                    |expresiones IGIG expresiones
-                    |expresiones DIF expresiones
+sentencia_if        :header_if ELSE LLAVEA sentencias LLAVEC  ENDIF                                                         {agregarAPolaca("else"); agregarBifurcacion("then"); agregarAPolaca("cuerpo");}
+                    |header_if ENDIF                                                                                        {agregarAPolaca("cuerpo"); acomodarBifurcacion();}
+                    ;
+
+header_if           :IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC                                          {agregarAPolaca("then"); agregarBifurcacion("cond");}
+                    ;
+
+condicion           :expresiones MAYOR expresiones                                                                          {agregarAPolaca(">"); agregarAPolaca("cond");}
+                    |expresiones MAYIG expresiones                                                                          {agregarAPolaca(">="); agregarAPolaca("cond");}
+                    |expresiones MENOR expresiones                                                                          {agregarAPolaca("<"); agregarAPolaca("cond");}
+                    |expresiones MENIG expresiones                                                                          {agregarAPolaca(">="); agregarAPolaca("cond");}
+                    |expresiones IGIG expresiones                                                                           {agregarAPolaca("=="); agregarAPolaca("cond");}
+                    |expresiones DIF expresiones                                                                            {agregarAPolaca("=!"); agregarAPolaca("cond");}
                     |expresiones_error                                                                                      {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta comparador en expresion");}
                     ;
 
@@ -101,8 +107,8 @@ expresiones         :expresiones MAS termino    {agregarAPolaca("+");}
                     |expresiones operador error                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
                     ;
 
-termino             :tipo_id    {agregarAPolaca($1.sval);}
-                    |tipo_cte   {agregarAPolaca($1.sval);}
+termino             :tipo_id                                                                                                {agregarAPolaca($1.sval);}
+                    |tipo_cte                                                                                               {agregarAPolaca($1.sval);}
                     |llamado_funcion
                     ;
 
@@ -121,7 +127,7 @@ declaracion         :tipo tipo_id                                               
 header_funcion      :tipo ID PARENTESISA parametros_formales PARENTESISC                                                    {modificarUsoTS($2.sval, "Nombre de funcion"); ambito = ambito + ":" + $2.sval; modificarAmbitosTS((ArrayList<String>)$4.obj); polacaInversa.put(ambito, (ArrayList<String>) $4.obj); }
                     ;
 
-lista_id            :tipo_id COMA tipo_id                                                                                   {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); arreglo.add($3.sval); $$ = new ParserVal(crearArregloId($1.sval, $3.sval)); }
+lista_id            :tipo_id COMA tipo_id                                                                                   {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); arreglo.add($3.sval); $$ = new ParserVal(arreglo); }
                     |lista_id COMA tipo_id                                                                                  {ArrayList<String> arreglo = (ArrayList<String>) $1.obj; arreglo.add($3.sval); $$ = new ParserVal(arreglo);}
                     |lista_id tipo_id                                                                                       {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
                     |tipo_id tipo_id                                                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
@@ -130,11 +136,11 @@ lista_id            :tipo_id COMA tipo_id                                       
 tipo                :ULONG                                                                                                  {$$ = new ParserVal("ULONG");}
                     ;
 
-llamado_funcion     :ID PARENTESISA parametros_reales PARENTESISC
+llamado_funcion     :ID PARENTESISA parametros_reales PARENTESISC                                                           {agregarAPolaca($1.sval); agregarAPolaca("call");}
                     ;
 
-parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id
-                    |expresiones FLECHA tipo_id
+parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id                                                      {agregarAPolaca($5.sval); agregarAPolaca("->");}
+                    |expresiones FLECHA tipo_id                                                                             {agregarAPolaca($3.sval); agregarAPolaca("->");}
                     |expresiones FLECHA error                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta especificacion del parametro formal");}
                     ;
 
@@ -153,12 +159,12 @@ parametro           :CVR tipo tipo_id                                           
 
 asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
                     |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); agregarAPolaca($1.sval); agregarAPolaca(":=");}
-                    |lista_id IGUAL lista_cte                                                                               {verificar_cantidades($1, $3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
-                    |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarAPolaca("=");}
+                    |lista_id IGUAL lista_cte                                                                               {ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; verificar_cantidades(l1, l3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}
+                    |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarListaAPolaca((ArrayList<String>)$3.obj); agregarAPolaca($1.sval); agregarAPolaca("=");}
                     ;
 
-lista_cte           :tipo_cte                                                                                               {ArrayList<ParserVal> arreglo = new ArrayList<ParserVal>(); arreglo.add($1); $$ = new ParserVal(arreglo);}
-                    |lista_cte COMA tipo_cte                                                                                {ArrayList<ParserVal> arreglo = (ArrayList<ParserVal>) $1.obj; arreglo.add($3); $$ = new ParserVal(arreglo);}
+lista_cte           :tipo_cte                                                                                               {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); $$ = new ParserVal(arreglo);}
+                    |lista_cte COMA tipo_cte                                                                                {ArrayList<String> arreglo = (ArrayList<String>) $1.obj; arreglo.add($3.sval); $$ = new ParserVal(arreglo);}
                     |lista_cte tipo_cte                                                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
                     ;
 
@@ -188,9 +194,7 @@ public void setAlex(AnalisisLexico a){
 
 }
 
-public void verificar_cantidades(ParserVal lista1, ParserVal lista2){
-    ArrayList<String> l1 = (ArrayList<String>)lista1.obj;
-    ArrayList<String> l2 = (ArrayList<String>)lista2.obj;
+public void verificar_cantidades(ArrayList<String> l1, ArrayList<String> l2){
     if (l1 != null && l2 != null){
     if (l1.size() > l2.size() )
         agregarError("Linea: "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
@@ -323,13 +327,6 @@ private ArrayList<String> mainArreglo = new ArrayList<String>();
 private HashMap<String, ArrayList<String>> polacaInversa = new HashMap<String, ArrayList<String>>();
 private String ambito = "MAIN";
 
-public ArrayList<String> crearArregloId(String v1, String v2){
-        ArrayList<String> listaNombres = new ArrayList<String>();
-        listaNombres.add(v1);
-        listaNombres.add(v2);
-        return listaNombres;
-}
-
 public void borrarAmbito(){
     int index = ambito.lastIndexOf(":");
     if (index != -1) {
@@ -353,6 +350,51 @@ public void agregarAPolaca(String valor){
     else{
         mainArreglo.add(valor);
     }
+}
+
+public void agregarListaAPolaca(ArrayList<String> a){
+    for (String s: a){
+        agregarAPolaca(s);
+    }
+}
+
+public void agregarBifurcacion(String flag){
+    ArrayList<String> a = new ArrayList<String>();
+    if (polacaInversa.containsKey(ambito)) {
+        a = polacaInversa.get(ambito);
+    }else{
+        a = mainArreglo;
+    }
+    int i = a.size() - 1;
+    while ( i >= 0 && !flag.equals(a.get(i)) ){
+        i--;
+    }
+    Integer saltoBF = a.size() - 1 + 3;
+    Integer saltoBI = a.size() - 1 + 1;
+
+    if (flag.equals("cond")) {
+       a.set(i, (saltoBF).toString());  //porque agregamos dos bifurcaciones
+       a.add(i + 1, "BF");
+    }else{
+        a.set(i, (saltoBI).toString());  //porque agregamos una bifurcaciones
+        a.add(i + 1, "BI");
+    }
+}
+
+public void acomodarBifurcacion(){
+    ArrayList<String> a = new ArrayList<String>();
+    if (polacaInversa.containsKey(ambito)) {
+        a = polacaInversa.get(ambito);
+    }else{
+        a = mainArreglo;
+    }
+    int i = a.size() - 1;
+    while ( i >= 0 && !a.get(i).equals("BF")  ){
+        i--;
+    }
+    Integer num = Integer.parseInt(a.get(i - 1)) - 2;
+
+    a.set(i-1,num.toString());
 }
 //----------------------------------------------------------------------------------------------------------IMPRESIONES
 public void imprimirPolaca() {
