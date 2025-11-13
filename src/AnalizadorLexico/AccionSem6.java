@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AccionSem6 implements AccionSem{
-    //Devuelve el ultimo caracter u chequea si el identificador esta en la tabla de simbolos, sino lo agrega
+    //Devuelve el ultimo caracter y chequea si el identificador esta en la tabla de simbolos, sino lo agrega
     private Buffer buffer;
     private HashMap<String, ArrayList<String>> tablaDeSimbolos;
     private ArrayList<String> erroresLexicos;
@@ -19,7 +19,7 @@ public class AccionSem6 implements AccionSem{
         buffer.agregarCaracter(caracter);
         if(lexema.getLexema().length() > 20){
             String nuevoLexema = lexema.getLexema().substring(0,20);
-            erroresLexicos.add("Linea "+nroLinea+":WARNING LEXICO: El identificador "+lexema.getLexema()+" fue truncado a: "+nuevoLexema);
+            erroresLexicos.add("Linea "+nroLinea+" WARNING LEXICO: El identificador "+lexema.getLexema()+" fue truncado a: "+nuevoLexema);
             lexema.reescribirLexema(nuevoLexema);
         }
         if (!tablaDeSimbolos.containsKey(lexema.getLexema())){

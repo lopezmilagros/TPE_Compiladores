@@ -33,17 +33,17 @@ public class AccionSem4 implements AccionSem{
             else
                 exponente = exponente + c;
         }
-        float base2;
+        double base2;
         if (base == null || base == "")
             base2 = 1;
         else
-            base2 = Float.parseFloat(base);
+            base2 = Double.parseDouble(base);
 
-        float exponente2;
+        double exponente2;
         if(exponente == null || exponente == "")
             exponente2 = 0;
         else
-            exponente2 = Float.parseFloat(exponente);
+            exponente2 = Double.parseDouble(exponente);
 
         double resultado = base2 * Math.pow(10, exponente2);
 
@@ -60,7 +60,7 @@ public class AccionSem4 implements AccionSem{
             tablaDeSimbolos.put(lexema.getLexema(), a);
             return lexema;
         }
-        erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: float se exedio de rango "+lexema.getLexema());
+        erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: dfloat se exedio de rango "+lexema.getLexema());
         return null;
     }
 }

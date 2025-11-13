@@ -25,8 +25,8 @@ public class AnalisisLexico {
         this.tablaTokens = new HashMap<>();
         llenarTablaTokens();
 
-        estados = new int[19][28];
-        accionesSem = new AccionSem[19][28];
+        estados = new int[19][29];
+        accionesSem = new AccionSem[19][29];
         this.buffer = new Buffer(ruta);
 
         this.palabrasReservadas = new ArrayList<>();
@@ -88,7 +88,7 @@ public class AnalisisLexico {
         //El estado final sera el numero 19, el estado de error sera -1
 
         for (int i = 0; i <= 18; i++) {
-            for (int j = 0; j <= 27; j++) {
+            for (int j = 0; j <= 28; j++) {
                 // primero le pongo valor de error
                 estados[i][j] = -1;
                 accionesSem[i][j] = null;
@@ -179,7 +179,7 @@ public class AnalisisLexico {
                     }
                     case 10 -> {
                         switch (j) {
-                            case 1, 2, 3, 5 ->{ estados[i][j] = 10; accionesSem[i][j] = a2;}
+                            case 0, 1, 2, 3, 5, 28 ->{ estados[i][j] = 10; accionesSem[i][j] = a2;}
                             case 6 -> { estados[i][j] = 18; accionesSem[i][j] = a2;}
                             default ->{ estados[i][j] = 19; accionesSem[i][j] = a6;}
                         }
@@ -230,7 +230,7 @@ public class AnalisisLexico {
                     }
                     case 18 -> {
                         switch (j){
-                            case 1, 2, 3, 5 ->{ estados[i][j] = 18; accionesSem[i][j] = a2;}
+                            case 0, 1, 2, 3, 5, 28 ->{ estados[i][j] = 18; accionesSem[i][j] = a2;}
                             default ->{ estados[i][j] = 19; accionesSem[i][j] = a6;}
                         }
                     }
@@ -287,7 +287,12 @@ public class AnalisisLexico {
 
             }
         }
-        //ini
+
+        //chequeo de cierre de comentarios
+        if (buffer.ArchivoVacio() & (estadoActual == 16 | estadoActual == 17)){
+            erroresLexicos.add("Linea "+nroLinea+" WARNING LEXICO: falta cerrar comentario");
+            System.out.println("agg warning");
+        }
         yylval = new ParserVal();
 
         if (tokenLexema != null) {
@@ -388,6 +393,8 @@ public class AnalisisLexico {
                 return 26;
             case ',':
                 return 27;
+            case '%':
+                return 28;
             default:
                 return -1;    // no encontrado
         }
@@ -434,7 +441,7 @@ public class AnalisisLexico {
         }
     }
 
-    public void agregarCteNegativaTablaDeSimbolos(String lexema){
+    public void agregarCteNegativaTS(String lexema){
         //Por ahora asumimos que solo llegan ctes porque solo utilizamos este metodo para añadir ctes a la t. se simbolos
 
         ArrayList<String> a = new ArrayList<>();
@@ -447,34 +454,6 @@ public class AnalisisLexico {
                 tablaDeSimbolos.put(lexema, a);
             }
         }
-    }
-
-    //BORRAR MODIFICAR AMBITO
-    public void modificarAmbitoTS(String clave, String ambito){
-        if (tablaDeSimbolos.containsKey(clave)) {
-            ArrayList<String> fila = tablaDeSimbolos.get(clave);
-            if (fila.size() == 3){
-                fila.add(3, ambito);
-            }else{
-                if (fila.size() == 2){
-                    fila.add(2, " ");
-                    fila.add(3, ambito);
-                }else{
-                    if (fila.size() == 1){
-                        fila.add(1," ");
-                        fila.add(2," ");
-                        fila.add(3,ambito);
-                    }else{
-                        fila.set(3, ambito);
-                    }
-                }
-
-            }
-
-        }else{
-            System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
-        }
-
     }
 
     public void imprimirErroresLexicos(){

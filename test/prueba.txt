@@ -1,5 +1,5 @@
 PROGRAMA{
-    ulong ADENTROMAIN := 3UL + 5UL;
+    ulong E4% := 3UL + 5UL;
     ADENTROMAIN := 7UL + 1UL;
     ADENTROMAIN, X = 9UL, 10UL;
 

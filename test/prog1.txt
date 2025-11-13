@@ -1,0 +1,8 @@
+PRORAMA{
+    ulong K:= 9UL;
+
+        if (X > 9UL) {ulong H; }else endif
+
+
+
+}

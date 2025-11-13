@@ -15,8 +15,8 @@ public class AccionSem3 implements AccionSem{
     //
     @Override
     public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
-        int numero = Integer.parseInt(lexema.getLexema());
-        long max = 4294967295L; // 2^32 -1
+        long numero = Long.parseLong(lexema.getLexema());
+        long max = 4294967295L; // 2^32 -1    2147483648
         int min = 0;
         if ( numero <= max & numero >= min){
             lexema.setToken(265);
@@ -28,7 +28,7 @@ public class AccionSem3 implements AccionSem{
             return lexema;
         }
         else {
-            erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: el entero se exedio del rango "+lexema.getLexema());
+            erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: el ulong se exedio del rango "+lexema.getLexema());
             return null;
         }
     }

@@ -15,176 +15,237 @@ import java.util.Iterator;
 %left AST BARRA
 
 %%
-prog                :ID LLAVEA sentencias LLAVEC                                                                            {modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo);}
-                    |LLAVEA sentencias LLAVEC                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
-                    |ID sentencias LLAVEC                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura");}
-                    |ID LLAVEA sentencias                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
-                    |ID sentencias                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
-                    |error PUNTOCOMA                                                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO");}
-                    ;
+prog
+    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); }
+    | bloque        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
+    ;
 
-sentencias          :sentencias sentencia
-                    |sentencia
-                    ;
+bloque
+    : LLAVEA sentencias LLAVEC
+    | LLAVEA sentencias error            {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
+    | error sentencias LLAVEC             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador inicial");}
+    | error sentencias error              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
+    ;
 
-sentencia           :sentencia_declarativa PUNTOCOMA
-                    |sentencia_ejecutable PUNTOCOMA
-                    |sentencia_error                                                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
-                    ;
+sentencias
+    : sentencias sentencia
+    | sentencia
+    ;
 
-sentencia_error     :sentencia_declarativa error
-                    |sentencia_ejecutable error
-                    ;
+sentencia
+    : sentencia_declarativa
+    | sentencia_ejecutable
+    ;
 
+sentencia_ejecutable
+    : asignacion
+    | sentencia_return
+    | sentencia_print
+    | sentencia_if                                    {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: if"); agregarAPolaca("if");}
+    ;
 
-sentencia_declarativa :declaracion                                                                                            {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:declaracion");}
-                      ;
+sentencia_return
+    :RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Return"); ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
+    |RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Return"); agregarAPolaca("return");}
+    |RETURN PARENTESISA lista_id PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    |RETURN PARENTESISA expresiones PARENTESISC               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    ;
 
-sentencia_ejecutable:asignaciones
-                    |sentencia_if                                                                                           {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: if"); agregarAPolaca("if");}
-                    |WHILE PARENTESISA condicion PARENTESISC DO LLAVEA sentencias LLAVEC                                    {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:while");}
-                    |RETURN PARENTESISA lista_id PARENTESISC                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return");ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
-                    |RETURN PARENTESISA expresiones PARENTESISC                                                             {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:return"); agregarAPolaca("return");}
-                    |llamado_funcion                                                                                        {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:llamado de funcion");}
-                    |expresion_lambda                                                                                       {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:lambda");}
-                    |PRINT PARENTESISA CADENA PARENTESISC                                                                   {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print"); agregarAPolaca($3.sval); agregarAPolaca("print");}
-                    |PRINT PARENTESISA expresiones PARENTESISC                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA:print"); agregarAPolaca("print");}
-                    |PRINT PARENTESISA error PARENTESISC                                                                    {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: argumento inválido en print");}
-                    |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ENDIF                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
-                    |IF PARENTESISA condicion LLAVEA sentencias LLAVEC ENDIF                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
-                    |IF error condicion error LLAVEA sentencias LLAVEC ENDIF                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
-                    |IF error condicion PARENTESISC LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF            {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
-                    |IF PARENTESISA condicion  LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF                 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
-                    |IF error condicion error LLAVEA sentencias LLAVEC ELSE LLAVEA sentencias LLAVEC ENDIF                  {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
-                    |WHILE error condicion PARENTESISC DO LLAVEA sentencias LLAVEC                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
-                    |WHILE PARENTESISA condicion  DO LLAVEA sentencias LLAVEC                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
-                    |WHILE error condicion error DO LLAVEA sentencias LLAVEC                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
-                    |WHILE PARENTESISA condicion PARENTESISC DO error                                                       {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta cuerpo en la iteracion");}
-                    |header_if                                                                                              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
-                    |header_if ELSE LLAVEA sentencias LLAVEC                                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
-                    |IF PARENTESISA condicion PARENTESISC ENDIF                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
-                    |IF PARENTESISA condicion PARENTESISC ELSE LLAVEA sentencias LLAVEC ENDIF                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
-                    |header_if ELSE ENDIF                                                                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
-                    |WHILE PARENTESISA condicion PARENTESISC error LLAVEA sentencias LLAVEC                                 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
-                    ;
+sentencia_print
+    : PRINT PARENTESISA CADENA PARENTESISC PUNTOCOMA            {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Print"); agregarAPolaca($3.sval); agregarAPolaca("print");}
+    | PRINT PARENTESISA expresiones PARENTESISC PUNTOCOMA       {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Print"); agregarAPolaca("print");}
+    | sentencia_print_error
+    ;
 
-sentencia_if        :header_if ELSE LLAVEA sentencias LLAVEC  ENDIF                                                         {agregarAPolaca("else"); agregarBifurcacion("then"); agregarAPolaca("cuerpo");}
-                    |header_if ENDIF                                                                                        {agregarAPolaca("cuerpo"); acomodarBifurcacion();}
-                    ;
+sentencia_print_error
+    : PRINT PARENTESISA CADENA PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    | PRINT PARENTESISA expresiones PARENTESISC             {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    | PRINT PARENTESISA  PARENTESISC PUNTOCOMA              {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTÁCTICO: Falta argumento en print");}
+    | PRINT PARENTESISA  PARENTESISC                        {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTÁCTICO: Falta argumento en print y falta ';' ");}
+    ;
 
-header_if           :IF PARENTESISA condicion PARENTESISC LLAVEA sentencias LLAVEC                                          {agregarAPolaca("then"); agregarBifurcacion("cond");}
-                    ;
+sentencia_if
+    : header_if ELSE bloque ENDIF PUNTOCOMA                 {agregarAPolaca("else"); agregarBifurcacion("then"); agregarAPolaca("cuerpo");}
+    | header_if ENDIF PUNTOCOMA                             {agregarAPolaca("cuerpo"); acomodarBifurcacion();}
+    | sentencia_if_error
+    ;
 
-condicion           :expresiones MAYOR expresiones                                                                          {agregarAPolaca(">"); agregarAPolaca("cond");}
-                    |expresiones MAYIG expresiones                                                                          {agregarAPolaca(">="); agregarAPolaca("cond");}
-                    |expresiones MENOR expresiones                                                                          {agregarAPolaca("<"); agregarAPolaca("cond");}
-                    |expresiones MENIG expresiones                                                                          {agregarAPolaca(">="); agregarAPolaca("cond");}
-                    |expresiones IGIG expresiones                                                                           {agregarAPolaca("=="); agregarAPolaca("cond");}
-                    |expresiones DIF expresiones                                                                            {agregarAPolaca("=!"); agregarAPolaca("cond");}
-                    |expresiones_error                                                                                      {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta comparador en expresion");}
-                    ;
+header_if
+    : IF PARENTESISA condicion PARENTESISC bloque        {agregarAPolaca("then"); agregarBifurcacion("cond");}
+    ;
 
-expresiones_error   :expresiones MAYOR
-                    |expresiones MAYIG
-                    |expresiones MENOR
-                    |expresiones MENIG
-                    |expresiones IGIG
-                    |expresiones DIF
-                    |MAYOR expresiones
-                    |MAYIG expresiones
-                    |MENOR expresiones
-                    |MENIG expresiones
-                    |IGIG expresiones
-                    |DIF expresiones
-                    |expresiones
-                    ;
+sentencia_if_error
+    :IF  condicion PARENTESISC bloque ENDIF PUNTOCOMA                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+    |IF PARENTESISA condicion bloque ENDIF PUNTOCOMA                                    {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+    |IF condicion bloque ENDIF PUNTOCOMA                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+    |IF condicion PARENTESISC bloque ELSE bloque ENDIF PUNTOCOMA                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+    |IF PARENTESISA condicion  bloque ELSE bloque ENDIF PUNTOCOMA                       {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+    |IF condicion bloque ELSE bloque ENDIF PUNTOCOMA                                    {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+    |header_if PUNTOCOMA                                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+    |header_if ELSE bloque PUNTOCOMA                                                    {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif'");}
+    |IF PARENTESISA condicion PARENTESISC ENDIF PUNTOCOMA                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
+    |IF PARENTESISA condicion PARENTESISC ELSE bloque ENDIF PUNTOCOMA                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
+    |header_if ELSE ENDIF PUNTOCOMA                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
+    |IF PARENTESISA condicion PARENTESISC ELSE ENDIF PUNTOCOMA                           {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else', 'then'");}
+    |header_if ELSE bloque ENDIF                                                        {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    |header_if ENDIF                                                                    {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    |IF  condicion PARENTESISC bloque ENDIF                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion y falta ';' ");}
+    |IF PARENTESISA condicion bloque ENDIF                                              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion y falta ';' ");}
+    |IF condicion bloque ENDIF                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion y falta ';' ");}
+    |IF condicion PARENTESISC bloque ELSE bloque ENDIF                                  {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion y falta ';' ");}
+    |IF PARENTESISA condicion  bloque ELSE bloque ENDIF                                 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion y falta ';' ");}
+    |IF condicion bloque ELSE bloque ENDIF                                              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion y falta ';' ");}
+    |header_if                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif' y falta ';' ");}
+    |header_if ELSE bloque                                                              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'endif' y falta ';' ");}
+    |IF PARENTESISA condicion PARENTESISC ENDIF                                         {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then' y falta ';' ");}
+    |IF PARENTESISA condicion PARENTESISC ELSE bloque ENDIF                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then' y falta ';' ");}
+    |header_if ELSE ENDIF                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else' y falta ';' ");}
+    |IF PARENTESISA condicion PARENTESISC ELSE ENDIF                                    {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else', 'then' y falta ';' ");}
+    ;
 
-expresiones         :expresiones MAS termino    {agregarAPolaca("+");}
-                    |expresiones MENOS termino  {agregarAPolaca("-");}
-                    |expresiones AST termino    {agregarAPolaca("*");}
-                    |expresiones BARRA termino  {agregarAPolaca("/");}
-                    |termino
-                    |expresiones operador error                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
-                    ;
+condicion
+    : expresiones MAYOR expresiones                 {agregarAPolaca(">"); agregarAPolaca("cond");}
+    | expresiones MAYIG expresiones                 {agregarAPolaca(">="); agregarAPolaca("cond");}
+    | expresiones MENOR expresiones                 {agregarAPolaca("<"); agregarAPolaca("cond");}
+    | expresiones MENIG expresiones                 {agregarAPolaca(">="); agregarAPolaca("cond");}
+    | expresiones IGIG expresiones                  {agregarAPolaca("=="); agregarAPolaca("cond");}
+    | expresiones DIF expresiones                   {agregarAPolaca("=!"); agregarAPolaca("cond");}
+    | condicion_error                               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Condicion incompleta");}
+    ;
 
-termino             :tipo_id                                                                                                {agregarAPolaca($1.sval);}
-                    |tipo_cte                                                                                               {agregarAPolaca($1.sval);}
-                    |llamado_funcion
-                    ;
+condicion_error
+    : expresiones MAYOR
+    | expresiones MAYIG
+    | expresiones MENOR
+    | expresiones MENIG
+    | expresiones IGIG
+    | expresiones DIF
+    | MAYOR expresiones
+    | MAYIG expresiones
+    | MENOR expresiones
+    | MENIG expresiones
+    | IGIG expresiones
+    | DIF expresiones
+    | expresiones
+    ;
 
-operador            :MAS                                                                                                    {agregarAPolaca("+");}
-                    |MENOS                                                                                                  {agregarAPolaca("-");}
-                    |AST                                                                                                    {agregarAPolaca("*");}
-                    |BARRA                                                                                                  {agregarAPolaca("/");}
-                    ;
+asignacion
+    : tipo ID ASIGN expresiones PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
+    | identificador ASIGN expresiones PUNTOCOMA         {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); agregarAPolaca($1.sval); agregarAPolaca(":=");}
+    | lista_id IGUAL lista_cte PUNTOCOMA                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; verificar_cantidades(l1, l3); agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}
+    | identificador IGUAL lista_cte PUNTOCOMA           {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); agregarListaAPolaca((ArrayList<String>)$3.obj); agregarAPolaca($1.sval); agregarAPolaca("=");}
+    | asignacion_error                                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    ;
 
-declaracion         :tipo tipo_id                                                                                           {ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); modificarTipoTS(b, $1.sval); modificarUsoTS($2.sval, "Nombre de variable");}
-                    |tipo lista_id                                                                                          {ArrayList<String> a = (ArrayList<String>)$2.obj; modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable");}
-                    |header_funcion LLAVEA sentencias LLAVEC                                                                {String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
-                    |tipo error PARENTESISA parametros_formales PARENTESISC LLAVEA sentencias LLAVEC                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
-                    ;
+asignacion_error
+    :tipo ID ASIGN expresiones
+    |identificador ASIGN expresiones
+    |lista_id IGUAL lista_cte
+    |identificador IGUAL lista_cte
+    ;
 
-header_funcion      :tipo ID PARENTESISA parametros_formales PARENTESISC                                                    {modificarUsoTS($2.sval, "Nombre de funcion"); ambito = ambito + ":" + $2.sval; modificarAmbitosTS((ArrayList<String>)$4.obj); polacaInversa.put(ambito, (ArrayList<String>) $4.obj); }
-                    ;
+expresiones
+    : expresiones MAS termino       {agregarAPolaca("+");}
+    | expresiones MENOS termino     {agregarAPolaca("-");}
+    | expresiones AST termino       {agregarAPolaca("*");}
+    | expresiones BARRA termino     {agregarAPolaca("/");}
+    | termino
+    | expresiones operador error         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
+    ;
 
-lista_id            :tipo_id COMA tipo_id                                                                                   {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); arreglo.add($3.sval); $$ = new ParserVal(arreglo); }
-                    |lista_id COMA tipo_id                                                                                  {ArrayList<String> arreglo = (ArrayList<String>) $1.obj; arreglo.add($3.sval); $$ = new ParserVal(arreglo);}
-                    |lista_id tipo_id                                                                                       {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
-                    |tipo_id tipo_id                                                                                        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
-                    ;
+termino
+    : identificador         {agregarAPolaca($1.sval);}
+    | tipo_cte              {agregarAPolaca($1.sval);}
+    | llamado_funcion
+    ;
 
-tipo                :ULONG                                                                                                  {$$ = new ParserVal("ULONG");}
-                    ;
+llamado_funcion
+    :ID PARENTESISA parametros_reales PARENTESISC       {agregarAPolaca($1.sval); agregarAPolaca("call");}
+    ;
 
-llamado_funcion     :ID PARENTESISA parametros_reales PARENTESISC                                                           {agregarAPolaca($1.sval); agregarAPolaca("call");}
-                    ;
+operador
+    :MAS            {agregarAPolaca("+");}
+    |MENOS          {agregarAPolaca("-");}
+    |AST            {agregarAPolaca("*");}
+    |BARRA          {agregarAPolaca("/");}
+    ;
 
-parametros_reales   :parametros_reales COMA expresiones FLECHA tipo_id                                                      {agregarAPolaca($5.sval); agregarAPolaca("->");}
-                    |expresiones FLECHA tipo_id                                                                             {agregarAPolaca($3.sval); agregarAPolaca("->");}
-                    |expresiones FLECHA error                                                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta especificacion del parametro formal");}
-                    ;
+sentencia_declarativa
+    : tipo ID PUNTOCOMA                     {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variable"); ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); modificarTipoTS(b, $1.sval); modificarUsoTS($2.sval, "Nombre de variable");}
+    | tipo lista_id PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variables"); ArrayList<String> a = (ArrayList<String>)$2.obj; modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable");}
+    | funcion                               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de funcion");}
+    | tipo ID error                         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    | tipo lista_id error                   {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    ;
 
-parametros_formales :parametros_formales COMA parametro                                                                     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); $$ = new ParserVal(a);}
-                    |parametro                                                                                              {ArrayList<String> a = new ArrayList<String>(); a.add($1.sval); $$ = new ParserVal(a);}
-                    |parametros_formales parametro                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta ',' en declaracion de las variables");}
-                    ;
+funcion
+    :  header_funcion bloque                {String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
+    ;
 
-parametro           :CVR tipo tipo_id                                                                                       {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal($3.sval);}
-                    |tipo tipo_id                                                                                           {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($2.sval);}
-                    |tipo error                                                                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
-                    |CVR tipo error                                                                                         {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta nombre del parametro formal");}
-                    |CVR error tipo_id                                                                                      {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
-                    |error tipo_id                                                                                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta tipo del parametro formal");}
-                    ;
+header_funcion
+    : tipo ID PARENTESISA parametros_formales PARENTESISC       {modificarUsoTS($2.sval, "Nombre de funcion"); ambito = ambito + ":" + $2.sval; modificarAmbitosTS((ArrayList<String>)$4.obj); polacaInversa.put(ambito, (ArrayList<String>) $4.obj); }
+    | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
+    ;
 
-asignaciones        :tipo ID ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
-                    |tipo_id ASIGN expresiones                                                                              {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion"); agregarAPolaca($1.sval); agregarAPolaca(":=");}
-                    |lista_id IGUAL lista_cte                                                                               {ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; verificar_cantidades(l1, l3); System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}
-                    |tipo_id IGUAL lista_cte                                                                                {System.out.println("LINEA: "+aLex.getNroLinea()+" SENTENCIA: asignacion multiple"); agregarListaAPolaca((ArrayList<String>)$3.obj); agregarAPolaca($1.sval); agregarAPolaca("=");}
-                    ;
+parametros_formales
+    :parametros_formales COMA parametro_formal   {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); $$ = new ParserVal(a);}
+    |parametro_formal                            {ArrayList<String> a = new ArrayList<String>(); a.add($1.sval); $$ = new ParserVal(a);}
+    |parametros_formales parametro_formal               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta ',' en declaracion de las variables");}
+    ;
 
-lista_cte           :tipo_cte                                                                                               {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); $$ = new ParserVal(arreglo);}
-                    |lista_cte COMA tipo_cte                                                                                {ArrayList<String> arreglo = (ArrayList<String>) $1.obj; arreglo.add($3.sval); $$ = new ParserVal(arreglo);}
-                    |lista_cte tipo_cte                                                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
-                    ;
+parametro_formal
+    :CVR tipo identificador                      {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal($3.sval);}
+    |tipo identificador                          {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($2.sval);}
+    |parametro_formal_error                      {$$ = new ParserVal();}
+    ;
 
-tipo_id             :ID                                                                                                     {$$ = new ParserVal($1.sval); }
-                    |ID PUNTO ID                                                                                            {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name);}
-                    ;
+parametro_formal_error
+    :tipo error                              {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
+    |CVR tipo                                {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
+    |CVR identificador                       {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
+    |error identificador                     {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
+    ;
 
-tipo_cte            :CTE                                                                                                    {aLex.agregarCteNegativaTablaDeSimbolos($1.sval); }
-                    |MENOS CTE                                                                                              {String cte = "-" + $2.sval; aLex.agregarCteNegativaTablaDeSimbolos(cte); }
-                    ;
+parametros_reales
+    :parametros_reales COMA expresiones FLECHA identificador       {agregarAPolaca($5.sval); agregarAPolaca("->");}
+    |expresiones FLECHA identificador                              {agregarAPolaca($3.sval); agregarAPolaca("->");}
+    |expresiones FLECHA                                            {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
+    ;
 
-expresion_lambda    :PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PARENTESISA tipo_id PARENTESISC
-                    |PARENTESISA tipo ID PARENTESISC LLAVEA sentencias LLAVEC PARENTESISA tipo_cte PARENTESISC
-                    |PARENTESISA tipo ID PARENTESISC sentencias LLAVEC PARENTESISA tipo_cte PARENTESISC                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de apertura en funcion lambda");}
-                    |PARENTESISA tipo ID PARENTESISC LLAVEA sentencias PARENTESISA tipo_cte PARENTESISC                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador de cierre en funcion lambda");}
-                    |PARENTESISA tipo ID PARENTESISC sentencias PARENTESISA tipo_cte PARENTESISC                            {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores en funcion lambda");}
-                    ;
+lista_id
+    : lista_id COMA identificador           {ArrayList<String> arreglo = (ArrayList<String>) $1.obj; arreglo.add($3.sval); $$ = new ParserVal(arreglo);}
+    | identificador COMA identificador      {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); arreglo.add($3.sval); $$ = new ParserVal(arreglo); }
+    | lista_id_error                         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
+    ;
+
+lista_id_error
+    : lista_id  identificador
+    | identificador  identificador
+    ;
+
+lista_cte
+    : tipo_cte                          {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add($1.sval); $$ = new ParserVal(arreglo);}
+    | lista_cte COMA tipo_cte           {ArrayList<String> arreglo = (ArrayList<String>) $1.obj; arreglo.add($3.sval); $$ = new ParserVal(arreglo);}
+    | lista_cte tipo_cte                {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
+    ;
+
+identificador
+    :ID                 {$$ = new ParserVal($1.sval); }
+    |ID PUNTO ID        {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name);}
+    ;
+
+tipo
+    :ULONG              {$$ = new ParserVal("ULONG");}
+    ;
+
+tipo_cte
+    : CTE               {aLex.agregarCteNegativaTS($1.sval);}
+    | MENOS CTE         {String cte = "-" + $2.sval; aLex.agregarCteNegativaTS(cte);}
+    ;
+
 %%
 
-/* CODIGO AUXILIAR */
+/* -------------------------------------------------------------------------------------------------------------CODIGO AUXILIAR ----------------------------------------------------*/
 
 AnalisisLexico aLex;
 private HashMap<String, ArrayList<String>> tablaDeSimbolos = new HashMap<String, ArrayList<String>>();
@@ -221,6 +282,10 @@ int yylex (){
         return 0; //Devuelvo 0 como si fuera fin de archivo
     }
 }
+ArrayList<String> sentencias = new ArrayList<String>();
+public void agregarSentencia(String s){
+    sentencias.add(s);
+}
 //------------------------------------------------------------------------------------------------------------ERRORES SINTACTICOS
 ArrayList<String> errores = new ArrayList<>();
 
@@ -243,12 +308,14 @@ public void imprimirErrores(){
 //------------------------------------------------------------------------------------------------------------MODIFICAR TS
 public void modificarTipoTS(ArrayList<String> claves, String tipo){
     for (String name: claves){
-        String clave = ambito+":"+name;
-        if (tablaDeSimbolos.containsKey(clave)) {
-            ArrayList<String> fila = tablaDeSimbolos.get(clave);
-            fila.set(1, tipo);
-        }else{
-            System.out.println("(modificarTipoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+        if (name != null){
+            String clave = ambito+":"+name;
+            if (tablaDeSimbolos.containsKey(clave)) {
+                ArrayList<String> fila = tablaDeSimbolos.get(clave);
+                fila.set(1, tipo);
+            }else{
+                System.out.println("(modificarTipoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+            }
         }
     }
 }
@@ -260,13 +327,15 @@ public void modificarUsos(ArrayList<String> lista, String uso){
 }
 
 public void modificarUsoTS(String aux, String uso){
-    String clave = ambito+":"+aux;
-    if (tablaDeSimbolos.containsKey(clave)) {
-        ArrayList<String> fila = tablaDeSimbolos.get(clave);
-        //Se agrega el uso en el indice = 2
-        fila.add(uso);
-    }else{
-        System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+    if (aux != null){
+        String clave = ambito+":"+aux;
+        if (tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> fila = tablaDeSimbolos.get(clave);
+            //Se agrega el uso en el indice = 2
+            fila.add(uso);
+        }else{
+            System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
+        }
     }
 }
 public void modificarAmbitosTS(ArrayList<String> a){
@@ -274,12 +343,15 @@ public void modificarAmbitosTS(ArrayList<String> a){
     String ambitoAfuera = ambito.substring(0, index);
 
     for (String parametro : a){
-        //Lo busco en la ts y modifico su clave para que incluya el ambito de la funcion definida
-        ArrayList<String> aux = tablaDeSimbolos.get(ambitoAfuera+":"+parametro);
-        tablaDeSimbolos.remove(ambitoAfuera+":"+parametro);
-        tablaDeSimbolos.put(ambito+":"+parametro, aux);
+        if (parametro != null){
+            //Lo busco en la ts y modifico su clave para que incluya el ambito de la funcion definida
+            ArrayList<String> aux = tablaDeSimbolos.get(ambitoAfuera+":"+parametro);
+            tablaDeSimbolos.remove(ambitoAfuera+":"+parametro);
+            tablaDeSimbolos.put(ambito+":"+parametro, aux);
+        }
     }
 }
+
 public void copiarTS(String clave, int token){
     String aux = ambito+":"+yylval.sval;
     if(!tablaDeSimbolos.containsKey(aux)){
@@ -397,6 +469,18 @@ public void acomodarBifurcacion(){
     a.set(i-1,num.toString());
 }
 //----------------------------------------------------------------------------------------------------------IMPRESIONES
+
+public void imprimirSentencias(){
+    if (!sentencias.isEmpty()) {
+        for (String s : sentencias) {
+            System.out.println(s);
+        }
+    }else{
+        System.out.println("El programa esta vacio");
+    }
+}
+
+
 public void imprimirPolaca() {
     System.out.println();
     System.out.println("Tabla Polaca :");
@@ -411,7 +495,7 @@ public void imprimirPolaca() {
     System.out.println();
 }
 
- public void imprimirTabla() {
+public void imprimirTabla() {
         System.out.println();
         System.out.println("Tabla de simbolos:");
         System.out.printf("%-10s | %-10s | %-10s | %-10s%n", "ambito", "Tipo Token", "Tipo", "Uso");
@@ -423,4 +507,4 @@ public void imprimirPolaca() {
             System.out.printf("%-10s | %s%n", clave, valores);
         }
         System.out.println();
-    }
+}
