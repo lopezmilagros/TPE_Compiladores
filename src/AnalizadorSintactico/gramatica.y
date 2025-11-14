@@ -39,20 +39,22 @@ sentencia
 
 sentencia_ejecutable
     : asignacion
-    | sentencia_return
-    | sentencia_print
-    | sentencia_if                                    {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: if"); agregarAPolaca("if");}
+    | sentencia_return                                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Return");}
+    | sentencia_print                                 {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Print");}
+    | sentencia_if                                    {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: If"); agregarAPolaca("if");}
+    | sentencia_while                                 {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: While");}
+    | expresion_lambda                                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Lambda");}
     ;
 
 sentencia_return
-    :RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Return"); ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
-    |RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Return"); agregarAPolaca("return");}
+    :RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
+    |RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {agregarAPolaca("return");}
     |RETURN PARENTESISA lista_id PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     |RETURN PARENTESISA expresiones PARENTESISC               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     ;
 
 sentencia_print
-    : PRINT PARENTESISA CADENA PARENTESISC PUNTOCOMA            {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Print"); agregarAPolaca($3.sval); agregarAPolaca("print");}
+    : PRINT PARENTESISA CADENA PARENTESISC PUNTOCOMA            {agregarAPolaca($3.sval); agregarAPolaca("print");}
     | PRINT PARENTESISA expresiones PARENTESISC PUNTOCOMA       {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Print"); agregarAPolaca("print");}
     | sentencia_print_error
     ;
@@ -63,6 +65,23 @@ sentencia_print_error
     | PRINT PARENTESISA  PARENTESISC PUNTOCOMA              {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTÁCTICO: Falta argumento en print");}
     | PRINT PARENTESISA  PARENTESISC                        {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTÁCTICO: Falta argumento en print y falta ';' ");}
     ;
+
+sentencia_while
+    : header_while DO bloque PUNTOCOMA
+    | sentencia_while_error
+    ;
+
+header_while
+    : WHILE PARENTESISA condicion PARENTESISC              {}
+    ;
+
+sentencia_while_error
+    : WHILE condicion PARENTESISC DO bloque PUNTOCOMA                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+    | WHILE PARENTESISA condicion DO bloque PUNTOCOMA                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+    | WHILE condicion DO bloque PUNTOCOMA                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+    | header_while bloque PUNTOCOMA        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
+    | header_while DO PUNTOCOMA                                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTÁCTICO: Falta cuerpo de la iteracion");}
+;
 
 sentencia_if
     : header_if ELSE bloque ENDIF PUNTOCOMA                 {agregarAPolaca("else"); agregarBifurcacion("then"); agregarAPolaca("cuerpo");}
@@ -210,6 +229,11 @@ parametros_reales
     :parametros_reales COMA expresiones FLECHA identificador       {agregarAPolaca($5.sval); agregarAPolaca("->");}
     |expresiones FLECHA identificador                              {agregarAPolaca($3.sval); agregarAPolaca("->");}
     |expresiones FLECHA                                            {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
+    ;
+
+expresion_lambda
+    :PARENTESISA tipo ID PARENTESISC bloque PARENTESISA identificador PARENTESISC
+    |PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_cte PARENTESISC
     ;
 
 lista_id

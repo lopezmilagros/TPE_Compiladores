@@ -3,10 +3,10 @@ PROGRAMA{
 
     while (X < 9UL) {
        X := X + 1.;
-    };
+    }
 
-    while(X < 2UL) do {
+    while( < 2UL) do {
         print(X);
-    };
+    }
 }
 
