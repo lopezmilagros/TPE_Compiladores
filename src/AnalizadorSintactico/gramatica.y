@@ -67,20 +67,24 @@ sentencia_print_error
     ;
 
 sentencia_while
-    : header_while DO bloque PUNTOCOMA
+    : header_while DO bloque PUNTOCOMA                      {agregarAPolaca("cuerpo"); bifurcacionWhile(); agregarBifurcacion("cond");}
     | sentencia_while_error
     ;
 
 header_while
-    : WHILE PARENTESISA condicion PARENTESISC              {}
+    : inicio_header_while PARENTESISA condicion PARENTESISC
+    ;
+
+inicio_header_while
+    :WHILE                                                 { guardarInicioWhile(); }
     ;
 
 sentencia_while_error
-    : WHILE condicion PARENTESISC DO bloque PUNTOCOMA                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
-    | WHILE PARENTESISA condicion DO bloque PUNTOCOMA                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
-    | WHILE condicion DO bloque PUNTOCOMA                                                {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
-    | header_while bloque PUNTOCOMA        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
-    | header_while DO PUNTOCOMA                                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTÁCTICO: Falta cuerpo de la iteracion");}
+    : inicio_header_while condicion PARENTESISC DO bloque PUNTOCOMA                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion");}
+    | inicio_header_while PARENTESISA condicion DO bloque PUNTOCOMA                                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de cierre de la condicion");}
+    | inicio_header_while condicion DO bloque PUNTOCOMA                                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: faltan parentesis de la condicion");}
+    | header_while bloque PUNTOCOMA                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta 'do' en iteracion");}
+    | header_while DO PUNTOCOMA                                                         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTÁCTICO: Falta cuerpo de la iteracion");}
 ;
 
 sentencia_if
@@ -209,31 +213,39 @@ header_funcion
 parametros_formales
     :parametros_formales COMA parametro_formal   {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); $$ = new ParserVal(a);}
     |parametro_formal                            {ArrayList<String> a = new ArrayList<String>(); a.add($1.sval); $$ = new ParserVal(a);}
-    |parametros_formales parametro_formal               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO:: falta ',' en declaracion de las variables");}
+    |parametros_formales parametro_formal               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta ',' en declaracion de las variables");}
     ;
 
 parametro_formal
-    :CVR tipo identificador                      {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal($3.sval);}
-    |tipo identificador                          {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($2.sval);}
+    :CVR tipo ID                      {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal($3.sval);}
+    |tipo ID                          {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($2.sval);}
     |parametro_formal_error                      {$$ = new ParserVal();}
     ;
 
 parametro_formal_error
     :tipo error                              {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
     |CVR tipo                                {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
-    |CVR identificador                       {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
-    |error identificador                     {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
+    |CVR ID                                 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
+    |error ID                               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
     ;
 
 parametros_reales
-    :parametros_reales COMA expresiones FLECHA identificador       {agregarAPolaca($5.sval); agregarAPolaca("->");}
-    |expresiones FLECHA identificador                              {agregarAPolaca($3.sval); agregarAPolaca("->");}
-    |expresiones FLECHA                                            {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
+    : parametros_reales COMA expresiones FLECHA identificador       {agregarAPolaca($5.sval); agregarAPolaca("->");}
+    | expresiones FLECHA identificador                              {agregarAPolaca($3.sval); agregarAPolaca("->");}
+    | expresiones FLECHA                                            {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
     ;
 
 expresion_lambda
-    :PARENTESISA tipo ID PARENTESISC bloque PARENTESISA identificador PARENTESISC
-    |PARENTESISA tipo ID PARENTESISC bloque PARENTESISA tipo_cte PARENTESISC
+    : header_lambda bloque llamado_lambda PUNTOCOMA                 {borrarAmbito(); agregarAPolaca($3.sval); agregarAPolaca($1.sval); agregarAPolaca("->"); agregarAPolaca("LAMBDA"); agregarAPolaca("call");}
+    ;
+
+header_lambda
+    : FLECHA PARENTESISA tipo ID PARENTESISC                        {ambito = ambito + ":LAMBDA"; ArrayList<String> a = new ArrayList<String>(); a.add($4.sval); modificarAmbitosTS(a); polacaInversa.put(ambito, a); $$ = new ParserVal($4.sval);}
+    ;
+
+llamado_lambda
+    : PARENTESISA identificador PARENTESISC                         {$$ = new ParserVal($2.sval);}
+    | PARENTESISA tipo_cte PARENTESISC                              {$$ = new ParserVal($2.sval);}
     ;
 
 lista_id
@@ -422,6 +434,7 @@ public void limpiarPolaca(String ambitoFuncion) {
 private ArrayList<String> mainArreglo = new ArrayList<String>();
 private HashMap<String, ArrayList<String>> polacaInversa = new HashMap<String, ArrayList<String>>();
 private String ambito = "MAIN";
+private Integer indiceWhile;
 
 public void borrarAmbito(){
     int index = ambito.lastIndexOf(":");
@@ -492,6 +505,30 @@ public void acomodarBifurcacion(){
 
     a.set(i-1,num.toString());
 }
+
+public void guardarInicioWhile(){
+
+  ArrayList<String> a = new ArrayList<String>();
+  if (polacaInversa.containsKey(ambito)) {
+      a = polacaInversa.get(ambito);
+  }else{
+      a = mainArreglo;
+  }
+  indiceWhile = a.size() -1 +1; //queremos la proxima celda que se va a escribir
+}
+
+public void bifurcacionWhile(){
+    ArrayList<String> a = new ArrayList<String>();
+    if (polacaInversa.containsKey(ambito)) {
+        a = polacaInversa.get(ambito);
+    }else{
+        a = mainArreglo;
+    }
+    int i = a.size() - 1;
+    a.set(i, indiceWhile.toString());
+    a.add("BI");
+}
+
 //----------------------------------------------------------------------------------------------------------IMPRESIONES
 
 public void imprimirSentencias(){
