@@ -1,8 +1,11 @@
 PRORAMA{
-    ulong K:= 9UL;
-
-        if (X > 9UL) {ulong H; }else endif
-
-
-
+    ulong K:= 9UL - -3UL;
+    ulong FUN(ulong X){
+        K:= -9.;
+        ulong Y;
+    }
+    ulong FUNCION(ulong Y){
+        Y := 6UL;
+    }
+    Y := 4UL;
 }

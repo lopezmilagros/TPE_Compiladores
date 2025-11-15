@@ -775,14 +775,18 @@ public void modificarAmbitosTS(ArrayList<String> a){
 }
 
 public void copiarTS(String clave, int token){
-    String aux = ambito+":"+yylval.sval;
+    //Si es una constante, no le concateno el ambito
+    String aux = clave;
+    if(!(token == 265)){
+        aux = ambito+":"+clave;
+    }
     if(!tablaDeSimbolos.containsKey(aux)){
         String tipo = aLex.getTipoTS(clave);
         ArrayList<String> a = new ArrayList<String>();
         a.add(tipo);
         //Se agrega el tipo en el indice = 1
         if(token == 265){
-            String tipoCte = aLex.getTipoCteTS(yylval.sval);
+            String tipoCte = aLex.getTipoCteTS(clave);
             a.add(tipoCte);
         }else{
             a.add(" ");
@@ -791,29 +795,23 @@ public void copiarTS(String clave, int token){
    }
 }
 
-public void limpiarPolaca(String ambitoFuncion) {
-    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
-    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
-
-    ArrayList<String> a;
-    if (polacaInversa.containsKey(ambito)) {
-        a = polacaInversa.get(ambito);
-    } else {
-        a = mainArreglo;
-    }
-
-    // Usamos Iterator para poder eliminar mientras iteramos
-    Iterator<String> it = a.iterator();
-    while (it.hasNext()) {
-        String s = it.next();
-        String clave = ambitoFuncion + ":" + s;
-        ArrayList<String> ts = tablaDeSimbolos.get(clave);
-        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
-            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
+public void agregarCteTS(String lexema){
+    //Actualizacion de la TS para constantes (por si hubo una negativa)
+    if (!tablaDeSimbolos.containsKey(lexema)) {
+        //Si el lexema no esta en la tabla de simbolos lo agrega
+        ArrayList<String> a = new ArrayList<>();
+        //Sacar solo el valor numerico si es UL
+        if(lexema.contains(".") & lexema.contains("D")) {
+            a.add(0, "CTE");
+            a.add(1,"DFLOAT");
+            tablaDeSimbolos.put(lexema, a);
+        }
+        else{
+            if(lexema.contains("-")){
+                agregarError("LINEA "+aLex.getNroLinea()+" WARNING SINTACTICO: No se permiten ULONG negativos. La constante fue truncada a positivo.");
+            }
         }
     }
-
-    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
 }
 
 //-------------------------------------------------------------------------------------------------------------CODIGO INTERMEDIO
@@ -851,6 +849,31 @@ public void agregarListaAPolaca(ArrayList<String> a){
     for (String s: a){
         agregarAPolaca(s);
     }
+}
+
+public void limpiarPolaca(String ambitoFuncion) {
+    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
+    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
+
+    ArrayList<String> a;
+    if (polacaInversa.containsKey(ambito)) {
+        a = polacaInversa.get(ambito);
+    } else {
+        a = mainArreglo;
+    }
+
+    // Usamos Iterator para poder eliminar mientras iteramos
+    Iterator<String> it = a.iterator();
+    while (it.hasNext()) {
+        String s = it.next();
+        String clave = ambitoFuncion + ":" + s;
+        ArrayList<String> ts = tablaDeSimbolos.get(clave);
+        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
+            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
+        }
+    }
+
+    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
 }
 
 public void agregarBifurcacion(String flag){
@@ -915,6 +938,55 @@ public void bifurcacionWhile(){
     a.add("BI");
 }
 
+//--------------CHEQUEOS SEMANTICOS----------------------
+
+public boolean estaInicializada(String id){
+
+    if (!tablaDeSimbolos.containsKey(id))
+        return false;
+    else {
+      ArrayList<String> a = tablaDeSimbolos.get(id);
+      if (a != null && a.size() == 3) {
+        String uso = a.get(2);
+        if (uso == "Nombre de variable")
+          //inicializada
+          return true;
+      }
+    }
+    return false;
+}
+
+public boolean variablePermitida(String id) {
+    //Chequeo si la variable esta al alcance y si esta inicializada
+    if (!estaInicializada(id))
+        return false;
+
+    //Concateno el ambito con : para evitar falsas coincidencias
+    String ambitoActual = ambito+":";
+
+    while (true) {
+        String clave = ambitoActual + id;
+
+        // esta al alcance
+        if (tablaDeSimbolos.containsKey(clave))
+            return true;
+
+        // Si ya estamos en el global, cortar
+        if (ambitoActual.equals("MAIN:"))
+            break;
+
+        // Quitar el último nivel del ámbito
+        int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
+        if (idx == -1) {
+            ambitoActual = "MAIN:";
+        } else {
+            ambitoActual = ambitoActual.substring(0, idx + 1);
+        }
+    }
+
+   return false; // no encontrado
+}
+
 //----------------------------------------------------------------------------------------------------------IMPRESIONES
 
 public void imprimirSentencias(){
@@ -955,7 +1027,7 @@ public void imprimirTabla() {
         }
         System.out.println();
 }
-//#line 887 "Parser.java"
+//#line 959 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1367,7 +1439,7 @@ case 87:
 break;
 case 88:
 //#line 157 "gramatica.y"
-{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); agregarAPolaca(val_peek(3).sval); agregarAPolaca(":=");}
+{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); if(!variablePermitida(val_peek(3).sval)){System.out.println(val_peek(3).sval+" NO PERMITIDA");} agregarAPolaca(val_peek(3).sval); agregarAPolaca(":=");}
 break;
 case 89:
 //#line 158 "gramatica.y"
@@ -1567,13 +1639,13 @@ case 145:
 break;
 case 146:
 //#line 278 "gramatica.y"
-{aLex.agregarCteNegativaTS(val_peek(0).sval);}
+{agregarCteTS(val_peek(0).sval); yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 147:
 //#line 279 "gramatica.y"
-{String cte = "-" + val_peek(0).sval; aLex.agregarCteNegativaTS(cte);}
+{String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1); System.out.println("VARIABLE:"+cte);} yyval = new ParserVal(cte);}
 break;
-//#line 1500 "Parser.java"
+//#line 1572 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

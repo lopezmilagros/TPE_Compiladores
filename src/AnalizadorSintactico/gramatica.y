@@ -47,10 +47,10 @@ sentencia_ejecutable
     ;
 
 sentencia_return
-    :RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
-    |RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {agregarAPolaca("return");}
-    |RETURN PARENTESISA lista_id PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
-    |RETURN PARENTESISA expresiones PARENTESISC               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    : RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
+    | RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {agregarAPolaca("return");}
+    | RETURN PARENTESISA lista_id PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    | RETURN PARENTESISA expresiones PARENTESISC               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     ;
 
 sentencia_print
@@ -154,7 +154,7 @@ condicion_error
 
 asignacion
     : tipo ID ASIGN expresiones PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
-    | identificador ASIGN expresiones PUNTOCOMA         {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); agregarAPolaca($1.sval); agregarAPolaca(":=");}
+    | identificador ASIGN expresiones PUNTOCOMA         {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); if(!variablePermitida($1.sval)){System.out.println($1.sval+" NO PERMITIDA");} agregarAPolaca($1.sval); agregarAPolaca(":=");}
     | lista_id IGUAL lista_cte PUNTOCOMA                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; verificar_cantidades(l1, l3); agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}
     | identificador IGUAL lista_cte PUNTOCOMA           {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); agregarListaAPolaca((ArrayList<String>)$3.obj); agregarAPolaca($1.sval); agregarAPolaca("=");}
     | asignacion_error                                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
@@ -275,8 +275,8 @@ tipo
     ;
 
 tipo_cte
-    : CTE               {aLex.agregarCteNegativaTS($1.sval);}
-    | MENOS CTE         {String cte = "-" + $2.sval; aLex.agregarCteNegativaTS(cte);}
+    : CTE               {agregarCteTS($1.sval); $$ = new ParserVal($1.sval);}
+    | MENOS CTE         {String cte = "-" + $2.sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1); System.out.println("VARIABLE:"+cte);} $$ = new ParserVal(cte);}
     ;
 
 %%
@@ -389,14 +389,18 @@ public void modificarAmbitosTS(ArrayList<String> a){
 }
 
 public void copiarTS(String clave, int token){
-    String aux = ambito+":"+yylval.sval;
+    //Si es una constante, no le concateno el ambito
+    String aux = clave;
+    if(!(token == 265)){
+        aux = ambito+":"+clave;
+    }
     if(!tablaDeSimbolos.containsKey(aux)){
         String tipo = aLex.getTipoTS(clave);
         ArrayList<String> a = new ArrayList<String>();
         a.add(tipo);
         //Se agrega el tipo en el indice = 1
         if(token == 265){
-            String tipoCte = aLex.getTipoCteTS(yylval.sval);
+            String tipoCte = aLex.getTipoCteTS(clave);
             a.add(tipoCte);
         }else{
             a.add(" ");
@@ -405,29 +409,23 @@ public void copiarTS(String clave, int token){
    }
 }
 
-public void limpiarPolaca(String ambitoFuncion) {
-    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
-    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
-
-    ArrayList<String> a;
-    if (polacaInversa.containsKey(ambito)) {
-        a = polacaInversa.get(ambito);
-    } else {
-        a = mainArreglo;
-    }
-
-    // Usamos Iterator para poder eliminar mientras iteramos
-    Iterator<String> it = a.iterator();
-    while (it.hasNext()) {
-        String s = it.next();
-        String clave = ambitoFuncion + ":" + s;
-        ArrayList<String> ts = tablaDeSimbolos.get(clave);
-        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
-            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
+public void agregarCteTS(String lexema){
+    //Actualizacion de la TS para constantes (por si hubo una negativa)
+    if (!tablaDeSimbolos.containsKey(lexema)) {
+        //Si el lexema no esta en la tabla de simbolos lo agrega
+        ArrayList<String> a = new ArrayList<>();
+        //Sacar solo el valor numerico si es UL
+        if(lexema.contains(".") & lexema.contains("D")) {
+            a.add(0, "CTE");
+            a.add(1,"DFLOAT");
+            tablaDeSimbolos.put(lexema, a);
+        }
+        else{
+            if(lexema.contains("-")){
+                agregarError("LINEA "+aLex.getNroLinea()+" WARNING SINTACTICO: No se permiten ULONG negativos. La constante fue truncada a positivo.");
+            }
         }
     }
-
-    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
 }
 
 //-------------------------------------------------------------------------------------------------------------CODIGO INTERMEDIO
@@ -465,6 +463,31 @@ public void agregarListaAPolaca(ArrayList<String> a){
     for (String s: a){
         agregarAPolaca(s);
     }
+}
+
+public void limpiarPolaca(String ambitoFuncion) {
+    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
+    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
+
+    ArrayList<String> a;
+    if (polacaInversa.containsKey(ambito)) {
+        a = polacaInversa.get(ambito);
+    } else {
+        a = mainArreglo;
+    }
+
+    // Usamos Iterator para poder eliminar mientras iteramos
+    Iterator<String> it = a.iterator();
+    while (it.hasNext()) {
+        String s = it.next();
+        String clave = ambitoFuncion + ":" + s;
+        ArrayList<String> ts = tablaDeSimbolos.get(clave);
+        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
+            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
+        }
+    }
+
+    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
 }
 
 public void agregarBifurcacion(String flag){
@@ -527,6 +550,55 @@ public void bifurcacionWhile(){
     int i = a.size() - 1;
     a.set(i, indiceWhile.toString());
     a.add("BI");
+}
+
+//--------------CHEQUEOS SEMANTICOS----------------------
+
+public boolean estaInicializada(String id){
+
+    if (!tablaDeSimbolos.containsKey(id))
+        return false;
+    else {
+      ArrayList<String> a = tablaDeSimbolos.get(id);
+      if (a != null && a.size() == 3) {
+        String uso = a.get(2);
+        if (uso == "Nombre de variable")
+          //inicializada
+          return true;
+      }
+    }
+    return false;
+}
+
+public boolean variablePermitida(String id) {
+    //Chequeo si la variable esta al alcance y si esta inicializada
+    if (!estaInicializada(id))
+        return false;
+
+    //Concateno el ambito con : para evitar falsas coincidencias
+    String ambitoActual = ambito+":";
+
+    while (true) {
+        String clave = ambitoActual + id;
+
+        // esta al alcance
+        if (tablaDeSimbolos.containsKey(clave))
+            return true;
+
+        // Si ya estamos en el global, cortar
+        if (ambitoActual.equals("MAIN:"))
+            break;
+
+        // Quitar el último nivel del ámbito
+        int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
+        if (idx == -1) {
+            ambitoActual = "MAIN:";
+        } else {
+            ambitoActual = ambitoActual.substring(0, idx + 1);
+        }
+    }
+
+   return false; // no encontrado
 }
 
 //----------------------------------------------------------------------------------------------------------IMPRESIONES

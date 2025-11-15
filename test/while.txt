@@ -1,8 +1,7 @@
 PROGRAMA{
 
-
     while (X < 9UL) do {
-       X := X + 1.;
+       X := 3. + 1UL;
     };
 
 }
