@@ -938,10 +938,10 @@ public void bifurcacionWhile(){
     a.add("BI");
 }
 
-//--------------CHEQUEOS SEMANTICOS----------------------
+//-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
 public boolean estaInicializada(String id){
-
+//Recibe el id concatenado con el ambito
     if (!tablaDeSimbolos.containsKey(id))
         return false;
     else {
@@ -956,20 +956,15 @@ public boolean estaInicializada(String id){
     return false;
 }
 
-public boolean variablePermitida(String id) {
-    //Chequeo si la variable esta al alcance y si esta inicializada
-    if (!estaInicializada(id))
-        return false;
-
-    //Concateno el ambito con : para evitar falsas coincidencias
+public String variableAlAlcance(String id){
+    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
     String ambitoActual = ambito+":";
-
     while (true) {
         String clave = ambitoActual + id;
 
         // esta al alcance
         if (tablaDeSimbolos.containsKey(clave))
-            return true;
+           return clave;
 
         // Si ya estamos en el global, cortar
         if (ambitoActual.equals("MAIN:"))
@@ -984,8 +979,70 @@ public boolean variablePermitida(String id) {
         }
     }
 
-   return false; // no encontrado
+   return null; // no encontrado
 }
+
+//Este metodo tambien se puede usar para declarar una variable. Si la variable no esta permitida,
+//significa que no hay una declaracion de esa variable en su ambito, por lo que se puede declarar.
+
+public boolean variablePermitida(String id) {
+    //Chequeo si la variable esta al alcance y si esta inicializada
+    String clave = variableAlAlcance(id);
+    if(clave != null)
+        // esta al alcance
+        if(estaInicializada(clave))
+            // fue inicializada en ese ambiente
+                return true;
+   return false; // no se puede usar
+}
+
+public boolean variablesPermitidas(ArrayList<String> a){
+    boolean permitido = true;
+    if (!a.isEmpty()){
+        for (String variable: a){
+            if (!variablePermitida(variable)){
+                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+variable+"' no declarada.");
+                //Uso un booleano para no retornar antes y que se agreguen todas las que no esten permitidas
+                permitido = false;
+            }
+        }
+    }
+    return permitido;
+}
+
+public boolean variablesDeclaradas(ArrayList<String> a){
+    boolean declarada = false;
+    if (!a.isEmpty()){
+        for (String variable: a){
+            if (variablePermitida(variable)){
+                //ya fue declarada
+                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+variable+"' ya fue declarada.");
+                //Uso un booleano para no retornar antes y que se agreguen todas las ya fueron declaradas
+                declarada = true;
+            }
+        }
+    }
+    return declarada;
+}
+//----------------------------------------------------------------------------------------------------------ERRORES SEMANTICOS
+ArrayList<String> erroresSemanticos = new ArrayList<>();
+
+void agregarErrorSemantico(String s){
+    erroresSemanticos.add(s);
+}
+
+public void imprimirErroresSemanticos(){
+    System.out.println("");
+    System.out.println("Errores semanticos: ");
+    if (!erroresSemanticos.isEmpty()){
+        for (String error: erroresSemanticos){
+            System.out.println(error);
+        }
+    }else{
+        System.out.println("No se encontraron errores semanticos");
+    }
+}
+
 
 //----------------------------------------------------------------------------------------------------------IMPRESIONES
 
@@ -1027,7 +1084,7 @@ public void imprimirTabla() {
         }
         System.out.println();
 }
-//#line 959 "Parser.java"
+//#line 1016 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1223,7 +1280,7 @@ case 16:
 break;
 case 17:
 //#line 50 "gramatica.y"
-{ArrayList<String> a = (ArrayList<String>)val_peek(2).obj; agregarListaAPolaca(a); agregarAPolaca("return");}
+{ArrayList<String> a = (ArrayList<String>)val_peek(2).obj; if(variablesPermitidas(a)){agregarListaAPolaca(a); agregarAPolaca("return");}}
 break;
 case 18:
 //#line 51 "gramatica.y"
@@ -1435,19 +1492,19 @@ case 73:
 break;
 case 87:
 //#line 156 "gramatica.y"
-{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add(val_peek(3).sval); modificarTipoTS(a, val_peek(4).sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca(val_peek(3).sval); agregarAPolaca(":=");}
+{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add(val_peek(3).sval); if(!variablePermitida(val_peek(3).sval)){modificarTipoTS(a, val_peek(4).sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca(val_peek(3).sval); agregarAPolaca(":=");}else{agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(3).sval+"' ya fue declarada.");}}
 break;
 case 88:
 //#line 157 "gramatica.y"
-{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); if(!variablePermitida(val_peek(3).sval)){System.out.println(val_peek(3).sval+" NO PERMITIDA");} agregarAPolaca(val_peek(3).sval); agregarAPolaca(":=");}
+{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); if(!variablePermitida(val_peek(3).sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(3).sval+"' no declarada.");} else { agregarAPolaca(val_peek(3).sval); agregarAPolaca(":=");}}
 break;
 case 89:
 //#line 158 "gramatica.y"
-{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)val_peek(3).obj; ArrayList<String> l3 = (ArrayList<String>)val_peek(1).obj; verificar_cantidades(l1, l3); agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}
+{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)val_peek(3).obj; ArrayList<String> l3 = (ArrayList<String>)val_peek(1).obj; verificar_cantidades(l1, l3); if(variablesPermitidas(l1)){ agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}}
 break;
 case 90:
 //#line 159 "gramatica.y"
-{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); agregarListaAPolaca((ArrayList<String>)val_peek(1).obj); agregarAPolaca(val_peek(3).sval); agregarAPolaca("=");}
+{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); if(!variablePermitida(val_peek(3).sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(3).sval+"' no declarada.");} else {agregarListaAPolaca((ArrayList<String>)val_peek(1).obj); agregarAPolaca(val_peek(3).sval); agregarAPolaca("=");}}
 break;
 case 91:
 //#line 160 "gramatica.y"
@@ -1455,19 +1512,19 @@ case 91:
 break;
 case 96:
 //#line 171 "gramatica.y"
-{agregarAPolaca("+");}
+{agregarAPolaca("+"); yyval = new ParserVal();}
 break;
 case 97:
 //#line 172 "gramatica.y"
-{agregarAPolaca("-");}
+{agregarAPolaca("-"); yyval = new ParserVal();}
 break;
 case 98:
 //#line 173 "gramatica.y"
-{agregarAPolaca("*");}
+{agregarAPolaca("*"); yyval = new ParserVal();}
 break;
 case 99:
 //#line 174 "gramatica.y"
-{agregarAPolaca("/");}
+{agregarAPolaca("/"); yyval = new ParserVal();}
 break;
 case 101:
 //#line 176 "gramatica.y"
@@ -1475,7 +1532,7 @@ case 101:
 break;
 case 102:
 //#line 180 "gramatica.y"
-{agregarAPolaca(val_peek(0).sval);}
+{if(!variablePermitida(val_peek(0).sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(0).sval+"' no declarada.");} else {agregarAPolaca(val_peek(0).sval);} }
 break;
 case 103:
 //#line 181 "gramatica.y"
@@ -1503,11 +1560,11 @@ case 109:
 break;
 case 110:
 //#line 197 "gramatica.y"
-{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variable"); ArrayList<String> b = new ArrayList<String>(); b.add(val_peek(1).sval); modificarTipoTS(b, val_peek(2).sval); modificarUsoTS(val_peek(1).sval, "Nombre de variable");}
+{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variable"); ArrayList<String> b = new ArrayList<String>(); b.add(val_peek(1).sval); if(!variablePermitida(val_peek(1).sval)){modificarTipoTS(b, val_peek(2).sval); modificarUsoTS(val_peek(1).sval, "Nombre de variable");}else{agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(1).sval+"' ya fue declarada.");}}
 break;
 case 111:
 //#line 198 "gramatica.y"
-{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variables"); ArrayList<String> a = (ArrayList<String>)val_peek(1).obj; modificarTipoTS(a, val_peek(2).sval); modificarUsos(a, "Nombre de variable");}
+{agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variables"); ArrayList<String> a = (ArrayList<String>)val_peek(1).obj; if(!variablesDeclaradas(a)){modificarTipoTS(a, val_peek(2).sval); modificarUsos(a, "Nombre de variable");}}
 break;
 case 112:
 //#line 199 "gramatica.y"
@@ -1643,9 +1700,9 @@ case 146:
 break;
 case 147:
 //#line 279 "gramatica.y"
-{String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1); System.out.println("VARIABLE:"+cte);} yyval = new ParserVal(cte);}
+{String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} yyval = new ParserVal(cte);}
 break;
-//#line 1572 "Parser.java"
+//#line 1629 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

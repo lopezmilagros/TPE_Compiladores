@@ -1,11 +1,15 @@
 PRORAMA{
-    ulong K:= 9UL - -3UL;
-    ulong FUN(ulong X){
-        K:= -9.;
-        ulong Y;
-    }
-    ulong FUNCION(ulong Y){
-        Y := 6UL;
-    }
-    Y := 4UL;
+    ##SE AGREGA LA EXPRESION NOSE COMO HACER PARA QUE NO SI K NO EXISTE##
+    W := 4UL - 5UL;
+    X, Y = 5UL, 6UL;
+
+    ulong H := J + 3UL;
+    ulong H := 8UL;
+    ulong H, W;
+
+    ##ulong FUNC1 (ulong K){ ulong X; }
+    ulong FUNC2 (ulong K){
+        ulong Y:= 3UL;
+        ulong FUNC3(ulong K){ K:= 3UL; Y := 3UL;}
+    }##
 }

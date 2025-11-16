@@ -47,7 +47,7 @@ sentencia_ejecutable
     ;
 
 sentencia_return
-    : RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; agregarListaAPolaca(a); agregarAPolaca("return");}
+    : RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; if(variablesPermitidas(a)){agregarListaAPolaca(a); agregarAPolaca("return");}}
     | RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {agregarAPolaca("return");}
     | RETURN PARENTESISA lista_id PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     | RETURN PARENTESISA expresiones PARENTESISC               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
@@ -153,10 +153,10 @@ condicion_error
     ;
 
 asignacion
-    : tipo ID ASIGN expresiones PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca($2.sval); agregarAPolaca(":=");}
-    | identificador ASIGN expresiones PUNTOCOMA         {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); if(!variablePermitida($1.sval)){System.out.println($1.sval+" NO PERMITIDA");} agregarAPolaca($1.sval); agregarAPolaca(":=");}
-    | lista_id IGUAL lista_cte PUNTOCOMA                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; verificar_cantidades(l1, l3); agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}
-    | identificador IGUAL lista_cte PUNTOCOMA           {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); agregarListaAPolaca((ArrayList<String>)$3.obj); agregarAPolaca($1.sval); agregarAPolaca("=");}
+    : tipo ID ASIGN expresiones PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); if(!variablePermitida($2.sval)){modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable"); agregarAPolaca($2.sval); agregarAPolaca(":=");}else{agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$2.sval+"' ya fue declarada.");}}
+    | identificador ASIGN expresiones PUNTOCOMA         {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); if(!variablePermitida($1.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada.");} else { agregarAPolaca($1.sval); agregarAPolaca(":=");}}
+    | lista_id IGUAL lista_cte PUNTOCOMA                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; verificar_cantidades(l1, l3); if(variablesPermitidas(l1)){ agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}}
+    | identificador IGUAL lista_cte PUNTOCOMA           {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); if(!variablePermitida($1.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada.");} else {agregarListaAPolaca((ArrayList<String>)$3.obj); agregarAPolaca($1.sval); agregarAPolaca("=");}}
     | asignacion_error                                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     ;
 
@@ -168,16 +168,16 @@ asignacion_error
     ;
 
 expresiones
-    : expresiones MAS termino       {agregarAPolaca("+");}
-    | expresiones MENOS termino     {agregarAPolaca("-");}
-    | expresiones AST termino       {agregarAPolaca("*");}
-    | expresiones BARRA termino     {agregarAPolaca("/");}
+    : expresiones MAS termino       {agregarAPolaca("+"); $$ = new ParserVal();}
+    | expresiones MENOS termino     {agregarAPolaca("-"); $$ = new ParserVal();}
+    | expresiones AST termino       {agregarAPolaca("*"); $$ = new ParserVal();}
+    | expresiones BARRA termino     {agregarAPolaca("/"); $$ = new ParserVal();}
     | termino
     | expresiones operador error         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
     ;
 
 termino
-    : identificador         {agregarAPolaca($1.sval);}
+    : identificador         {if(!variablePermitida($1.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada.");} else {agregarAPolaca($1.sval);} }
     | tipo_cte              {agregarAPolaca($1.sval);}
     | llamado_funcion
     ;
@@ -194,8 +194,8 @@ operador
     ;
 
 sentencia_declarativa
-    : tipo ID PUNTOCOMA                     {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variable"); ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); modificarTipoTS(b, $1.sval); modificarUsoTS($2.sval, "Nombre de variable");}
-    | tipo lista_id PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variables"); ArrayList<String> a = (ArrayList<String>)$2.obj; modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable");}
+    : tipo ID PUNTOCOMA                     {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variable"); ArrayList<String> b = new ArrayList<String>(); b.add($2.sval); if(!variablePermitida($2.sval)){modificarTipoTS(b, $1.sval); modificarUsoTS($2.sval, "Nombre de variable");}else{agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$2.sval+"' ya fue declarada.");}}
+    | tipo lista_id PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variables"); ArrayList<String> a = (ArrayList<String>)$2.obj; if(!variablesDeclaradas(a)){modificarTipoTS(a, $1.sval); modificarUsos(a, "Nombre de variable");}}
     | funcion                               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de funcion");}
     | tipo ID error                         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     | tipo lista_id error                   {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
@@ -276,7 +276,7 @@ tipo
 
 tipo_cte
     : CTE               {agregarCteTS($1.sval); $$ = new ParserVal($1.sval);}
-    | MENOS CTE         {String cte = "-" + $2.sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1); System.out.println("VARIABLE:"+cte);} $$ = new ParserVal(cte);}
+    | MENOS CTE         {String cte = "-" + $2.sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} $$ = new ParserVal(cte);}
     ;
 
 %%
@@ -552,10 +552,10 @@ public void bifurcacionWhile(){
     a.add("BI");
 }
 
-//--------------CHEQUEOS SEMANTICOS----------------------
+//-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
 public boolean estaInicializada(String id){
-
+//Recibe el id concatenado con el ambito
     if (!tablaDeSimbolos.containsKey(id))
         return false;
     else {
@@ -570,20 +570,15 @@ public boolean estaInicializada(String id){
     return false;
 }
 
-public boolean variablePermitida(String id) {
-    //Chequeo si la variable esta al alcance y si esta inicializada
-    if (!estaInicializada(id))
-        return false;
-
-    //Concateno el ambito con : para evitar falsas coincidencias
+public String variableAlAlcance(String id){
+    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
     String ambitoActual = ambito+":";
-
     while (true) {
         String clave = ambitoActual + id;
 
         // esta al alcance
         if (tablaDeSimbolos.containsKey(clave))
-            return true;
+           return clave;
 
         // Si ya estamos en el global, cortar
         if (ambitoActual.equals("MAIN:"))
@@ -598,8 +593,70 @@ public boolean variablePermitida(String id) {
         }
     }
 
-   return false; // no encontrado
+   return null; // no encontrado
 }
+
+//Este metodo tambien se puede usar para declarar una variable. Si la variable no esta permitida,
+//significa que no hay una declaracion de esa variable en su ambito, por lo que se puede declarar.
+
+public boolean variablePermitida(String id) {
+    //Chequeo si la variable esta al alcance y si esta inicializada
+    String clave = variableAlAlcance(id);
+    if(clave != null)
+        // esta al alcance
+        if(estaInicializada(clave))
+            // fue inicializada en ese ambiente
+                return true;
+   return false; // no se puede usar
+}
+
+public boolean variablesPermitidas(ArrayList<String> a){
+    boolean permitido = true;
+    if (!a.isEmpty()){
+        for (String variable: a){
+            if (!variablePermitida(variable)){
+                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+variable+"' no declarada.");
+                //Uso un booleano para no retornar antes y que se agreguen todas las que no esten permitidas
+                permitido = false;
+            }
+        }
+    }
+    return permitido;
+}
+
+public boolean variablesDeclaradas(ArrayList<String> a){
+    boolean declarada = false;
+    if (!a.isEmpty()){
+        for (String variable: a){
+            if (variablePermitida(variable)){
+                //ya fue declarada
+                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+variable+"' ya fue declarada.");
+                //Uso un booleano para no retornar antes y que se agreguen todas las ya fueron declaradas
+                declarada = true;
+            }
+        }
+    }
+    return declarada;
+}
+//----------------------------------------------------------------------------------------------------------ERRORES SEMANTICOS
+ArrayList<String> erroresSemanticos = new ArrayList<>();
+
+void agregarErrorSemantico(String s){
+    erroresSemanticos.add(s);
+}
+
+public void imprimirErroresSemanticos(){
+    System.out.println("");
+    System.out.println("Errores semanticos: ");
+    if (!erroresSemanticos.isEmpty()){
+        for (String error: erroresSemanticos){
+            System.out.println(error);
+        }
+    }else{
+        System.out.println("No se encontraron errores semanticos");
+    }
+}
+
 
 //----------------------------------------------------------------------------------------------------------IMPRESIONES
 
