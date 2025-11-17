@@ -1,15 +1,21 @@
 PRORAMA{
     ##SE AGREGA LA EXPRESION NOSE COMO HACER PARA QUE NO SI K NO EXISTE##
     W := 4UL - 5UL;
+    ulong W;
     X, Y = 5UL, 6UL;
 
     ulong H := J + 3UL;
-    ulong H := 8UL;
-    ulong H, W;
+    ulong H := 8UL + 34UL;
+    ulong J,L,W;
 
-    ##ulong FUNC1 (ulong K){ ulong X; }
+    ulong FUNC1 (ulong K){ ulong X := 68UL; }
     ulong FUNC2 (ulong K){
         ulong Y:= 3UL;
-        ulong FUNC3(ulong K){ K:= 3UL; Y := 3UL;}
-    }##
+        ulong M := FUNC3(Y->S) + 5UL;
+        ulong FUNC3(ulong S){ S:= 3UL;}
+    }
+
+    ulong FUNC2(ulong K){
+        ulong BM := 45UL;
+    }
 }

@@ -503,7 +503,12 @@ public class AnalisisLexico {
             System.out.println("NO ESTA EN TS "+lexema);
             return ("NO");
         }
-    }
+
+
+
+
+
+}
 
 
 }
