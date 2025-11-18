@@ -11,11 +11,15 @@ PRORAMA{
     ulong FUNC1 (ulong K){ ulong X := 68UL; }
     ulong FUNC2 (ulong K){
         ulong Y:= 3UL;
+        ulong FUNC3(ulong S){
+            S:= 3UL;
+            return (AC, AB);
+        }
+
         ulong M := FUNC3(Y->S) + 5UL;
-        ulong FUNC3(ulong S){ S:= 3UL;}
     }
 
-    ulong FUNC2(ulong K){
+    ulong FUNC3(ulong K){
         ulong BM := 45UL;
     }
 }

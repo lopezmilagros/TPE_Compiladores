@@ -48,7 +48,7 @@ sentencia_ejecutable
 
 sentencia_return
     : RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; if(variablesPermitidas(a)){agregarListaAPolaca(a); agregarAPolaca("return");}}
-    | RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {ArrayList<String> b = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(b);} agregarAPolaca("return");}
+    | RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {ArrayList<String> b = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(b); agregarAPolaca("return");}}
     | RETURN PARENTESISA lista_id PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     | RETURN PARENTESISA expresiones PARENTESISC               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     ;
@@ -215,11 +215,11 @@ sentencia_declarativa
     ;
 
 funcion
-    :  header_funcion bloque                {if (tablaDeSimbolos.contains($1.sval)){ agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Funcion "+ambito+" redeclarada");} String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
+    :  header_funcion bloque                {String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
     ;
 
 header_funcion
-    : tipo ID PARENTESISA parametros_formales PARENTESISC       {modificarUsoTS($2.sval, "Nombre de funcion"); ambito = ambito + ":" + $2.sval; modificarAmbitosTS((ArrayList<String>)$4.obj; polacaInversa.put(ambito, (ArrayList<String>) $4.obj); $$ = new ParserVal(ambito);}
+    : tipo ID PARENTESISA parametros_formales PARENTESISC       {modificarUsoTS($2.sval, "Nombre de funcion"); ambito = ambito + ":" + $2.sval; modificarAmbitosTS((ArrayList<String>)$4.obj); if (!polacaInversa.containsKey(ambito)){polacaInversa.put(ambito, (ArrayList<String>) $4.obj);} else {agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Funcion "+ambito+" redeclarada");} $$ = new ParserVal(ambito);}
     | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
     ;
 

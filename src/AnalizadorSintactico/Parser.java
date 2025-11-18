@@ -1313,7 +1313,7 @@ case 17:
 break;
 case 18:
 //#line 51 "gramatica.y"
-{ArrayList<String> b = (ArrayList<String>) val_peek(2).obj; if (!b.contains("null")) { agregarListaAPolaca(b);} agregarAPolaca("return");}
+{ArrayList<String> b = (ArrayList<String>) val_peek(2).obj; if (!b.contains("null")) { agregarListaAPolaca(b); agregarAPolaca("return");}}
 break;
 case 19:
 //#line 52 "gramatica.y"
@@ -1630,11 +1630,11 @@ case 114:
 break;
 case 115:
 //#line 218 "gramatica.y"
-{if (tablaDeSimbolos.containsKey(val_peek(1).sval)){ agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Funcion "+ambito+" redeclarada");} String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
+{String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
 break;
 case 116:
 //#line 222 "gramatica.y"
-{modificarUsoTS(val_peek(3).sval, "Nombre de funcion"); ambito = ambito + ":" + val_peek(3).sval; modificarAmbitosTS((ArrayList<String>)val_peek(1).obj); polacaInversa.put(ambito, (ArrayList<String>) val_peek(1).obj); yyval = new ParserVal(ambito);}
+{modificarUsoTS(val_peek(3).sval, "Nombre de funcion"); ambito = ambito + ":" + val_peek(3).sval; modificarAmbitosTS((ArrayList<String>)val_peek(1).obj); if (!polacaInversa.containsKey(ambito)){polacaInversa.put(ambito, (ArrayList<String>) val_peek(1).obj);} else {agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Funcion "+ambito+" redeclarada");} yyval = new ParserVal(ambito);}
 break;
 case 117:
 //#line 223 "gramatica.y"
