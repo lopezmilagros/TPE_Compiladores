@@ -5,12 +5,12 @@ PROGRAMA{
         ulong ADENTRO(ulong C, ulong F){
         ulong X;
             print(C);
-        };
-    };
+        }
+    }
 
     ulong(ulong A, ulong B) {
         return (A + B);
-    };
+    }
 
     ulong SUMAR(ulong, ulong B) {
         return (B);

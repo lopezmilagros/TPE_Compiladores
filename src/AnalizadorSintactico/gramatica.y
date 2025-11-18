@@ -220,6 +220,7 @@ funcion
 header_funcion
     : tipo ID PARENTESISA parametros_formales PARENTESISC       {String nombre = $2.sval;
                                                                  modificarUsoTS(nombre, "Nombre de funcion");
+                                                                 agregarInfoFuncionTS($1.sval, (ArrayList<String>)$4.obj, nombre);
                                                                  String ambitoAnterior = ambito;
                                                                  ambito = ambito + ":" + nombre;
                                                                  modificarAmbitosTS((ArrayList<String>)$4.obj);
@@ -237,8 +238,8 @@ parametros_formales
     ;
 
 parametro_formal
-    :CVR tipo ID                      {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal($3.sval);}
-    |tipo ID                          {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($2.sval);}
+    :CVR tipo ID                      {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal("cvr "+$2.sval+" "+$3.sval);}
+    |tipo ID                          {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($1.sval+" "+$2.sval);}
     |parametro_formal_error                      {$$ = new ParserVal();}
     ;
 
@@ -387,8 +388,12 @@ public void modificarUsoTS(String aux, String uso){
         String clave = ambito+":"+aux;
         if (tablaDeSimbolos.containsKey(clave)) {
             ArrayList<String> fila = tablaDeSimbolos.get(clave);
-            //Se agrega el uso en el indice = 2
-            fila.add(uso);
+            if(fila.size() == 1)
+                fila.add(""); //agrego tipo vacio en indice 1
+            if(fila.size() == 2)
+                fila.add(uso); //Se agrega el uso en el indice = 2
+            else
+                fila.set(2,uso);
         }else{
             System.out.println("(modificarUsoTS) Error, la clave" + clave + " no existe en la tabla de simbolos");
         }
@@ -400,6 +405,9 @@ public void modificarAmbitosTS(ArrayList<String> a){
 
     for (String parametro : a){
         if (parametro != null){
+            //me quedo solo con su nombre, saco semantica y tipo
+            int indice = parametro.lastIndexOf(" ");
+            parametro = parametro.substring(indice + 1);
             //Lo busco en la ts y modifico su clave para que incluya el ambito de la funcion definida
             ArrayList<String> aux = tablaDeSimbolos.get(ambitoAfuera+":"+parametro);
             tablaDeSimbolos.remove(ambitoAfuera+":"+parametro);
@@ -445,6 +453,24 @@ public void agregarCteTS(String lexema){
                 agregarError("LINEA "+aLex.getNroLinea()+" WARNING SINTACTICO: No se permiten ULONG negativos. La constante fue truncada a positivo.");
             }
         }
+    }
+}
+
+public void agregarInfoFuncionTS(String tipoReturn, ArrayList<String> parametros, String funcion){
+    //Convierto los parametros en un string separados por ','
+    String aux = "";
+    if(parametros != null){
+        aux = String.join(", ", parametros);
+    }
+    funcion = ambito +":"+ funcion;
+    if (tablaDeSimbolos.containsKey(funcion)){
+        ArrayList<String> a = tablaDeSimbolos.get(funcion);
+        if(a.size() == 3){
+            a.set(1, tipoReturn); //en TIPO indico el tipo que retorna la funcion
+            a.add(aux); //Agrego en indice 3 un string con los parametros formales de la funcion (sus tipos y su semantica)
+        }
+    }else{
+      System.out.println("(agregarInfoFuncionTS) Error, la clave" + funcion + " no existe en la tabla de simbolos");
     }
 }
 
