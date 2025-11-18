@@ -665,7 +665,7 @@ final static String yyrule[] = {
 "tipo_cte : MENOS CTE",
 };
 
-//#line 304 "gramatica.y"
+//#line 303 "gramatica.y"
 
 /* -------------------------------------------------------------------------------------------------------------CODIGO AUXILIAR ----------------------------------------------------*/
 
@@ -965,46 +965,29 @@ public void bifurcacionWhile(){
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
-public boolean hijaConIgualNombre(String nombre){
-//si hay otra funcion con igual nombre mas arriba en el ambito da true
-    String ambitoActual = ambito;
-// Quitar el último nivel del ámbito porque ya viene el ambito completo
-    int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
-    if (idx == -1) {
-        ambitoActual = "MAIN:";
-    } else {
-        ambitoActual = ambitoActual.substring(0, idx + 1);
-    }
-    while (true){
+// Devuelve true si ya existe alguna función con ese nombre
+// en el ámbito actual o en alguno de sus padres
+public boolean existeFuncionVisibleConNombre(String nombre) {
+    String amb = ambito;  // ej: "MAIN", "MAIN:FUNC2", "MAIN:FUNC2:FUNC3"
 
-        if (tablaDeSimbolos.containsKey(ambito)){
-            // saco la última parte del ámbito (después del último ':')
-            int index = ambitoActual.lastIndexOf(':');
-            String ultimaParte;
-            if (index == -1) {
-                // no hay ':', todo el string es la última parte
-                ultimaParte = ambitoActual;
-            } else {
-                ultimaParte = ambitoActual.substring(index + 1);
-            }
-            if (nombre.equals(ultimaParte)) {
-                return true;  // existe
+    while (true) {
+        String clave = amb + ":" + nombre;   // ej: "MAIN:FUNC2", "MAIN:FUNC2:FUNC2"
+        if (tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> fila = tablaDeSimbolos.get(clave);
+            if (fila.size() >= 3 && "Nombre de funcion".equals(fila.get(2))) {
+                return true;   // ya hay una función con ese nombre en algún ámbito visible
             }
         }
 
-        if (ambitoActual.equals("MAIN:"))
-            break; //no existe
-
-        // Quitar el último nivel del ámbito
-        idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
-        if (idx == -1) {
-            ambitoActual = "MAIN:";
-        } else {
-            ambitoActual = ambitoActual.substring(0, idx + 1);
-        }
+        // Subo un nivel en la cadena de ámbitos
+        int idx = amb.lastIndexOf(':');
+        if (idx == -1) break;        // ya no hay más padres
+        amb = amb.substring(0, idx); // ej: "MAIN:FUNC2" -> "MAIN"
     }
-    return false; //no existe
+
+    return false;
 }
+
 
 public boolean estaInicializada(String id){
 //Recibe el id concatenado con el ambito
@@ -1179,7 +1162,7 @@ public void imprimirTabla() {
         }
         System.out.println();
 }
-//#line 1111 "Parser.java"
+//#line 1094 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1700,133 +1683,132 @@ break;
 case 116:
 //#line 221 "gramatica.y"
 {String nombre = val_peek(3).sval;
-                                                                 modificarUsoTS(nombre, "Nombre de funcion");
-                                                                 agregarInfoFuncionTS(val_peek(4).sval, (ArrayList<String>)val_peek(1).obj, nombre);
-                                                                 String ambitoAnterior = ambito;
-                                                                 ambito = ambito + ":" + nombre;
-                                                                 modificarAmbitosTS((ArrayList<String>)val_peek(1).obj);
-                                                                 if (polacaInversa.containsKey(ambito) || hijaConIgualNombre(nombre)) {
-                                                                     agregarErrorSemantico("LINEA " + aLex.getNroLinea() +" ERROR SEMANTICO: Funcion '" + nombre + "' redeclarada");
-                                                                 } else {polacaInversa.put(ambito, (ArrayList<String>) val_peek(1).obj);
-                                                                 }}
+                                                                 if (existeFuncionVisibleConNombre(nombre)) {
+                                                                   agregarErrorSemantico("LINEA " + aLex.getNroLinea() +" ERROR SEMANTICO: Funcion '" + nombre + "' redeclarada");
+                                                                 } else {
+                                                                   modificarUsoTS(nombre, "Nombre de funcion");
+                                                                   ambito = ambito + ":" + nombre;
+                                                                   modificarAmbitosTS((ArrayList<String>)val_peek(1).obj);
+                                                                   polacaInversa.put(ambito, (ArrayList<String>) val_peek(1).obj);
+                                                               }}
 break;
 case 117:
-//#line 231 "gramatica.y"
+//#line 230 "gramatica.y"
 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
 break;
 case 118:
-//#line 235 "gramatica.y"
+//#line 234 "gramatica.y"
 {ArrayList<String> a = (ArrayList<String>)val_peek(2).obj; a.add(val_peek(0).sval); yyval = new ParserVal(a);}
 break;
 case 119:
-//#line 236 "gramatica.y"
+//#line 235 "gramatica.y"
 {ArrayList<String> a = new ArrayList<String>(); a.add(val_peek(0).sval); yyval = new ParserVal(a);}
 break;
 case 120:
-//#line 237 "gramatica.y"
+//#line 236 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta ',' en declaracion de las variables");}
 break;
 case 121:
-//#line 241 "gramatica.y"
+//#line 240 "gramatica.y"
 {modificarUsoTS(val_peek(0).sval, "Nombre de parametro"); yyval = new ParserVal("cvr "+val_peek(1).sval+" "+val_peek(0).sval);}
 break;
 case 122:
-//#line 242 "gramatica.y"
+//#line 241 "gramatica.y"
 {modificarUsoTS(val_peek(0).sval, "Nombre de parametro"); yyval = new ParserVal(val_peek(1).sval+" "+val_peek(0).sval);}
 break;
 case 123:
-//#line 243 "gramatica.y"
+//#line 242 "gramatica.y"
 {yyval = new ParserVal();}
 break;
 case 124:
-//#line 247 "gramatica.y"
+//#line 246 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
 break;
 case 125:
-//#line 248 "gramatica.y"
+//#line 247 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
 break;
 case 126:
-//#line 249 "gramatica.y"
+//#line 248 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
 break;
 case 127:
-//#line 250 "gramatica.y"
+//#line 249 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
 break;
 case 128:
-//#line 254 "gramatica.y"
+//#line 253 "gramatica.y"
 {ArrayList<String> b = (ArrayList<String>) val_peek(2).obj; b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b);}
 break;
 case 129:
-//#line 255 "gramatica.y"
+//#line 254 "gramatica.y"
 {ArrayList<String> b = (ArrayList<String>) val_peek(2).obj; b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b);}
 break;
 case 130:
-//#line 256 "gramatica.y"
+//#line 255 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
 break;
 case 131:
-//#line 260 "gramatica.y"
+//#line 259 "gramatica.y"
 {borrarAmbito(); agregarAPolaca(val_peek(1).sval); agregarAPolaca(val_peek(3).sval); agregarAPolaca("->"); agregarAPolaca("LAMBDA"); agregarAPolaca("call");}
 break;
 case 132:
-//#line 264 "gramatica.y"
+//#line 263 "gramatica.y"
 {ambito = ambito + ":LAMBDA"; ArrayList<String> a = new ArrayList<String>(); a.add(val_peek(1).sval); modificarAmbitosTS(a); polacaInversa.put(ambito, a); yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 133:
-//#line 268 "gramatica.y"
+//#line 267 "gramatica.y"
 {yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 134:
-//#line 269 "gramatica.y"
+//#line 268 "gramatica.y"
 {yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 135:
-//#line 273 "gramatica.y"
+//#line 272 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 136:
-//#line 274 "gramatica.y"
+//#line 273 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(2).sval); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo); }
 break;
 case 137:
-//#line 275 "gramatica.y"
+//#line 274 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
 break;
 case 140:
-//#line 284 "gramatica.y"
+//#line 283 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 141:
-//#line 285 "gramatica.y"
+//#line 284 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 142:
-//#line 286 "gramatica.y"
+//#line 285 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
 break;
 case 143:
-//#line 290 "gramatica.y"
+//#line 289 "gramatica.y"
 {yyval = new ParserVal(val_peek(0).sval); }
 break;
 case 144:
-//#line 291 "gramatica.y"
+//#line 290 "gramatica.y"
 {String name = val_peek(2).sval + "." + val_peek(0).sval; yyval = new ParserVal(name);}
 break;
 case 145:
-//#line 295 "gramatica.y"
+//#line 294 "gramatica.y"
 {yyval = new ParserVal("ULONG");}
 break;
 case 146:
-//#line 299 "gramatica.y"
+//#line 298 "gramatica.y"
 {agregarCteTS(val_peek(0).sval); yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 147:
-//#line 300 "gramatica.y"
+//#line 299 "gramatica.y"
 {String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} yyval = new ParserVal(cte);}
 break;
-//#line 1753 "Parser.java"
+//#line 1735 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

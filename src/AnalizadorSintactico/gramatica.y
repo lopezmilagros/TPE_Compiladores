@@ -219,15 +219,14 @@ funcion
 
 header_funcion
     : tipo ID PARENTESISA parametros_formales PARENTESISC       {String nombre = $2.sval;
-                                                                 modificarUsoTS(nombre, "Nombre de funcion");
-                                                                 agregarInfoFuncionTS($1.sval, (ArrayList<String>)$4.obj, nombre);
-                                                                 String ambitoAnterior = ambito;
-                                                                 ambito = ambito + ":" + nombre;
-                                                                 modificarAmbitosTS((ArrayList<String>)$4.obj);
-                                                                 if (polacaInversa.containsKey(ambito) || hijaConIgualNombre(nombre)) {
-                                                                     agregarErrorSemantico("LINEA " + aLex.getNroLinea() +" ERROR SEMANTICO: Funcion '" + nombre + "' redeclarada");
-                                                                 } else {polacaInversa.put(ambito, (ArrayList<String>) $4.obj);
-                                                                 }}
+                                                                 if (existeFuncionVisibleConNombre(nombre)) {
+                                                                   agregarErrorSemantico("LINEA " + aLex.getNroLinea() +" ERROR SEMANTICO: Funcion '" + nombre + "' redeclarada");
+                                                                 } else {
+                                                                   modificarUsoTS(nombre, "Nombre de funcion");
+                                                                   ambito = ambito + ":" + nombre;
+                                                                   modificarAmbitosTS((ArrayList<String>)$4.obj);
+                                                                   polacaInversa.put(ambito, (ArrayList<String>) $4.obj);
+                                                               }}
     | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
     ;
 
@@ -600,46 +599,29 @@ public void bifurcacionWhile(){
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
-public boolean hijaConIgualNombre(String nombre){
-//si hay otra funcion con igual nombre mas arriba en el ambito da true
-    String ambitoActual = ambito;
-// Quitar el último nivel del ámbito porque ya viene el ambito completo
-    int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
-    if (idx == -1) {
-        ambitoActual = "MAIN:";
-    } else {
-        ambitoActual = ambitoActual.substring(0, idx + 1);
-    }
-    while (true){
+// Devuelve true si ya existe alguna función con ese nombre
+// en el ámbito actual o en alguno de sus padres
+public boolean existeFuncionVisibleConNombre(String nombre) {
+    String amb = ambito;  // ej: "MAIN", "MAIN:FUNC2", "MAIN:FUNC2:FUNC3"
 
-        if (tablaDeSimbolos.containsKey(ambito)){
-            // saco la última parte del ámbito (después del último ':')
-            int index = ambitoActual.lastIndexOf(':');
-            String ultimaParte;
-            if (index == -1) {
-                // no hay ':', todo el string es la última parte
-                ultimaParte = ambitoActual;
-            } else {
-                ultimaParte = ambitoActual.substring(index + 1);
-            }
-            if (nombre.equals(ultimaParte)) {
-                return true;  // existe
+    while (true) {
+        String clave = amb + ":" + nombre;   // ej: "MAIN:FUNC2", "MAIN:FUNC2:FUNC2"
+        if (tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> fila = tablaDeSimbolos.get(clave);
+            if (fila.size() >= 3 && "Nombre de funcion".equals(fila.get(2))) {
+                return true;   // ya hay una función con ese nombre en algún ámbito visible
             }
         }
 
-        if (ambitoActual.equals("MAIN:"))
-            break; //no existe
-
-        // Quitar el último nivel del ámbito
-        idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
-        if (idx == -1) {
-            ambitoActual = "MAIN:";
-        } else {
-            ambitoActual = ambitoActual.substring(0, idx + 1);
-        }
+        // Subo un nivel en la cadena de ámbitos
+        int idx = amb.lastIndexOf(':');
+        if (idx == -1) break;        // ya no hay más padres
+        amb = amb.substring(0, idx); // ej: "MAIN:FUNC2" -> "MAIN"
     }
-    return false; //no existe
+
+    return false;
 }
+
 
 public boolean estaInicializada(String id){
 //Recibe el id concatenado con el ambito
