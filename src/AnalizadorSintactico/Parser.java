@@ -940,33 +940,46 @@ public void bifurcacionWhile(){
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
-public boolean funcionAlAlcance(String id) {
- //Si una variable esta al alcance true, si no devuelve false.
-    String ambitoActual = ambito+":";
-    while (true) {
-        String clave = ambitoActual + id;
+public boolean hijaConIgualNombre(String nombre){
+//si hay otra funcion con igual nombre mas arriba en el ambito da true
+    String ambitoActual = ambito;
+// Quitar el último nivel del ámbito porque ya viene el ambito completo
+    int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
+    if (idx == -1) {
+        ambitoActual = "MAIN:";
+    } else {
+        ambitoActual = ambitoActual.substring(0, idx + 1);
+    }
+    while (true){
 
-        // esta al alcance
-        if (tablaDeSimbolos.containsKey(clave))
-           return true;
+        if (tablaDeSimbolos.containsKey(ambito)){
+            // saco la última parte del ámbito (después del último ':')
+            int index = ambitoActual.lastIndexOf(':');
+            String ultimaParte;
+            if (index == -1) {
+                // no hay ':', todo el string es la última parte
+                ultimaParte = ambitoActual;
+            } else {
+                ultimaParte = ambitoActual.substring(index + 1);
+            }
+            if (nombre.equals(ultimaParte)) {
+                return true;  // existe
+            }
+        }
 
-        // Si ya estamos en el global, cortar
         if (ambitoActual.equals("MAIN:"))
-            break;
+            break; //no existe
 
         // Quitar el último nivel del ámbito
-        int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
+        idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
         if (idx == -1) {
             ambitoActual = "MAIN:";
         } else {
             ambitoActual = ambitoActual.substring(0, idx + 1);
         }
     }
-
-   return false; // no encontrado
+    return false; //no existe
 }
-
-
 
 public boolean estaInicializada(String id){
 //Recibe el id concatenado con el ambito
@@ -1141,7 +1154,7 @@ public void imprimirTabla() {
         }
         System.out.println();
 }
-//#line 1073 "Parser.java"
+//#line 1086 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1666,7 +1679,7 @@ case 116:
                                                                  String ambitoAnterior = ambito;
                                                                  ambito = ambito + ":" + nombre;
                                                                  modificarAmbitosTS((ArrayList<String>)val_peek(1).obj);
-                                                                 if (polacaInversa.containsKey(ambito) || polacaInversa.containsKey(ambitoAnterior)) {
+                                                                 if (polacaInversa.containsKey(ambito) || hijaConIgualNombre(nombre)) {
                                                                      agregarErrorSemantico("LINEA " + aLex.getNroLinea() +" ERROR SEMANTICO: Funcion '" + nombre + "' redeclarada");
                                                                  } else {polacaInversa.put(ambito, (ArrayList<String>) val_peek(1).obj);
                                                                  }}
@@ -1787,7 +1800,7 @@ case 147:
 //#line 299 "gramatica.y"
 {String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} yyval = new ParserVal(cte);}
 break;
-//#line 1714 "Parser.java"
+//#line 1727 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
