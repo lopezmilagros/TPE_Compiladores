@@ -156,13 +156,12 @@ asignacion
     : tipo ID ASIGN expresiones PUNTOCOMA               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion y asignacion"); ArrayList<String> a = new ArrayList<String>(); a.add($2.sval); if(!variablePermitida($2.sval)) {
                                                                                                                                                                                                                          ArrayList<String> b = (ArrayList<String>) $4.obj;
                                                                                                                                                                                                                          if (!b.contains("null")) {
-                                                                                                                                                                                                                             for (String s : b) {System.out.println("ENTRO al if, valores del arreglo:"+s+".");}
                                                                                                                                                                                                                              modificarTipoTS(a, $1.sval);
                                                                                                                                                                                                                              modificarUsos(a, "Nombre de variable");
                                                                                                                                                                                                                              agregarListaAPolaca(b);
                                                                                                                                                                                                                              agregarAPolaca($2.sval);
                                                                                                                                                                                                                              agregarAPolaca(":=");
-                                                                                                                                                                                                                         } else {System.out.println("NO ENTRA AL IF PQ TIENE NULL");}
+                                                                                                                                                                                                                         }
                                                                                                                                                                                                                      }
                                                                                                                                                                                                                       else{
                                                                                                                                                                                                                           agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$2.sval+"' ya fue declarada.");}
@@ -181,7 +180,7 @@ asignacion_error
     ;
 
 expresiones
-    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("+"); for (String s : a){System.out.println("arreglo deexpresion: "+s);} $$ = new ParserVal(a);}
+    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("+"); $$ = new ParserVal(a);}
     | expresiones MENOS termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("-"); $$ = new ParserVal(a);}
     | expresiones AST termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("*"); $$ = new ParserVal(a);}
     | expresiones BARRA termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("/"); $$ = new ParserVal(a);}
@@ -219,7 +218,15 @@ funcion
     ;
 
 header_funcion
-    : tipo ID PARENTESISA parametros_formales PARENTESISC       {modificarUsoTS($2.sval, "Nombre de funcion"); ambito = ambito + ":" + $2.sval; modificarAmbitosTS((ArrayList<String>)$4.obj); if (!polacaInversa.containsKey(ambito)){polacaInversa.put(ambito, (ArrayList<String>) $4.obj);} else {agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Funcion "+ambito+" redeclarada");} $$ = new ParserVal(ambito);}
+    : tipo ID PARENTESISA parametros_formales PARENTESISC       {String nombre = $2.sval;
+                                                                 modificarUsoTS(nombre, "Nombre de funcion");
+                                                                 String ambitoAnterior = ambito;
+                                                                 ambito = ambito + ":" + nombre;
+                                                                 modificarAmbitosTS((ArrayList<String>)$4.obj);
+                                                                 if (polacaInversa.containsKey(ambito) || polacaInversa.containsKey(ambitoAnterior)) {
+                                                                     agregarErrorSemantico("LINEA " + aLex.getNroLinea() +" ERROR SEMANTICO: Funcion '" + nombre + "' redeclarada");
+                                                                 } else {polacaInversa.put(ambito, (ArrayList<String>) $4.obj);
+                                                                 }}
     | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
     ;
 
@@ -461,7 +468,7 @@ public void agregarAPolaca(String valor){
         ArrayList<String> a = tablaDeSimbolos.get(valor);
         if (a!= null && a.size() == 3){
             String uso = a.get(2);
-            if(uso != "Nombre de parametro")
+            if(!uso.equals("Nombre de parametro"))
                 polacaInversa.get(ambito).add(valor);
             //Los parametros formales los agregamos a la polaca inversa manualmente en las reglas
         }else
@@ -567,6 +574,34 @@ public void bifurcacionWhile(){
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
+public boolean funcionAlAlcance(String id) {
+ //Si una variable esta al alcance true, si no devuelve false.
+    String ambitoActual = ambito+":";
+    while (true) {
+        String clave = ambitoActual + id;
+
+        // esta al alcance
+        if (tablaDeSimbolos.containsKey(clave))
+           return true;
+
+        // Si ya estamos en el global, cortar
+        if (ambitoActual.equals("MAIN:"))
+            break;
+
+        // Quitar el último nivel del ámbito
+        int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
+        if (idx == -1) {
+            ambitoActual = "MAIN:";
+        } else {
+            ambitoActual = ambitoActual.substring(0, idx + 1);
+        }
+    }
+
+   return false; // no encontrado
+}
+
+
+
 public boolean estaInicializada(String id){
 //Recibe el id concatenado con el ambito
     if (!tablaDeSimbolos.containsKey(id))
@@ -575,7 +610,7 @@ public boolean estaInicializada(String id){
       ArrayList<String> a = tablaDeSimbolos.get(id);
       if (a != null && a.size() == 3) {
         String uso = a.get(2);
-        if (uso == "Nombre de variable" || uso == "Nombre de parametro")
+        if (uso.equals("Nombre de variable") || uso.equals("Nombre de parametro"))
           //inicializada
           return true;
       }
@@ -618,7 +653,7 @@ public boolean estaDeclarada(String id){
       ArrayList<String> a = tablaDeSimbolos.get(id);
       if (a != null && a.size() == 3) {
         String uso = a.get(2);
-        if (uso == "Nombre de funcion")
+        if (uso.equals("Nombre de funcion"))
           //declarada
           return true;
       }
@@ -626,7 +661,7 @@ public boolean estaDeclarada(String id){
     return false;
 }
 public boolean funcionPermitida(String id) {
-    //Chequeo si la variable esta al alcance y si esta inicializada
+    //Chequeo si la funcion esta al alcance y si esta inicializada
     String clave = variableAlAlcance(id);
     if(clave != null)
         // esta al alcance
