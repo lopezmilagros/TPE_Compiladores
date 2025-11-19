@@ -24,4 +24,16 @@ PROGRAMA{
         print("ok");
     };
 
+    while (X < ) do {
+        print("ok");
+    };
+
+    while ( < 6UL) do {
+        print("ok");
+    };
+
+    while ( < ) do {
+        print("ok");
+    };
+
 }

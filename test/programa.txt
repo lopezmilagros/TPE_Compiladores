@@ -1,3 +1,0 @@
-PRORAMA
-    ulong X := 6UL;
-    X := 5UL;
