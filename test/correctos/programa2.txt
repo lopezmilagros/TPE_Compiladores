@@ -1,4 +1,7 @@
-PRORAMA
-    X := 6UL;
-    Y := 5UL;
+PRORAMA2{
+    ulong H := 1UL;
+    ulong FUNC1(cvr ulong X){
+        return(X);
+    }
+    H := FUNC1(H -> X);
 }

@@ -47,8 +47,8 @@ sentencia_ejecutable
     ;
 
 sentencia_return
-    : RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; if(variablesPermitidas(a)){agregarListaAPolaca(a); agregarAPolaca("return");}}
-    | RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {ArrayList<String> b = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(b); agregarAPolaca("return");}}
+    : RETURN PARENTESISA lista_id PARENTESISC PUNTOCOMA        {ArrayList<String> a = (ArrayList<String>)$3.obj; if(variablesPermitidas(a)){agregarAPolaca("empieza lista");agregarListaAPolaca(a); agregarAPolaca("return");}}
+    | RETURN PARENTESISA expresiones PARENTESISC PUNTOCOMA     {ArrayList<String> b = (ArrayList<String>) $3.obj; if (!b.contains("null")) {agregarAPolaca("empieza lista");agregarListaAPolaca(b); agregarAPolaca("return");}}
     | RETURN PARENTESISA lista_id PARENTESISC                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     | RETURN PARENTESISA expresiones PARENTESISC               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     ;
@@ -195,7 +195,16 @@ termino
     ;
 
 llamado_funcion
-    :ID PARENTESISA parametros_reales PARENTESISC       {ArrayList<String> a = new ArrayList<>((ArrayList<String>) $3.obj); if (funcionPermitida($1.sval)){a.add($1.sval); a.add("call");} else {agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+$1.sval+"' fuera de alcance."); a.add("null");} $$ = new ParserVal(a);}
+    :ID PARENTESISA parametros_reales PARENTESISC       {ArrayList<String> a = new ArrayList<>((ArrayList<String>) $3.obj);
+                                                         if (funcionPermitida($1.sval)){
+                                                            a.add($1.sval);
+                                                            a.add("call");
+                                                            //Chequeo si es CVR reasigno los formales a los reales
+                                                            if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
+                                                         }else {
+                                                            agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+$1.sval+"' fuera de alcance.");
+                                                            a.add("null");} $$ = new ParserVal(a);
+                                                         }
     ;
 
 operador
@@ -214,7 +223,9 @@ sentencia_declarativa
     ;
 
 funcion
-    :  header_funcion bloque                {String ambitoConFuncion = ambito; borrarAmbito(); limpiarPolaca(ambitoConFuncion);}
+    :  header_funcion bloque                {String ambitoConFuncion = ambito;
+                                            borrarAmbito();
+                                            limpiarPolaca(ambitoConFuncion);}
     ;
 
 header_funcion
@@ -225,6 +236,8 @@ header_funcion
                                                                    modificarUsoTS(nombre, "Nombre de funcion");
                                                                    ambito = ambito + ":" + nombre;
                                                                    modificarAmbitosTS((ArrayList<String>)$4.obj);
+                                                                   modificarUsosParametros((ArrayList<String>)$4.obj, "Nombre de parametro");
+                                                                   agregarInfoFuncionTS($1.sval, (ArrayList<String>) $4.obj);
                                                                    polacaInversa.put(ambito, (ArrayList<String>) $4.obj);
                                                                }}
     | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
@@ -233,12 +246,12 @@ header_funcion
 parametros_formales
     :parametros_formales COMA parametro_formal   {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); $$ = new ParserVal(a);}
     |parametro_formal                            {ArrayList<String> a = new ArrayList<String>(); a.add($1.sval); $$ = new ParserVal(a);}
-    |parametros_formales parametro_formal               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta ',' en declaracion de las variables");}
+    |parametros_formales parametro_formal        {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta ',' en declaracion de las variables");}
     ;
 
 parametro_formal
-    :CVR tipo ID                      {modificarUsoTS($3.sval, "Nombre de parametro"); $$ = new ParserVal("cvr "+$2.sval+" "+$3.sval);}
-    |tipo ID                          {modificarUsoTS($2.sval, "Nombre de parametro"); $$ = new ParserVal($1.sval+" "+$2.sval);}
+    :CVR tipo ID                      { $$ = new ParserVal("cvr "+$2.sval+" "+$3.sval);}
+    |tipo ID                          { $$ = new ParserVal("cv "+$1.sval+" "+$2.sval);}
     |parametro_formal_error                      {$$ = new ParserVal();}
     ;
 
@@ -250,8 +263,8 @@ parametro_formal_error
     ;
 
 parametros_reales
-    : parametros_reales COMA expresiones FLECHA identificador       {ArrayList<String> b = (ArrayList<String>) $3.obj; b.add($5.sval); b.add("->"); $$ = new ParserVal(b);}
-    | expresiones FLECHA identificador                              {ArrayList<String> b = (ArrayList<String>) $1.obj; b.add($3.sval); b.add("->"); $$ = new ParserVal(b);}
+    : parametros_reales COMA expresiones FLECHA identificador       {ArrayList<String> b = (ArrayList<String>) $3.obj; b.add($5.sval); b.add("->"); $$ = new ParserVal(b); sacarParamFormTS(ambito+":"+$5.sval);}
+    | expresiones FLECHA identificador                              {ArrayList<String> b = (ArrayList<String>) $1.obj; b.add($3.sval); b.add("->"); $$ = new ParserVal(b); sacarParamFormTS(ambito+":"+$3.sval);}
     | expresiones FLECHA                                            {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
     ;
 
@@ -376,10 +389,19 @@ public void modificarTipoTS(ArrayList<String> claves, String tipo){
     }
 }
 
+public void modificarUsosParametros(ArrayList<String> lista, String uso){
+    for (String parametro: lista){
+        int indice = parametro.lastIndexOf(" ");
+        parametro = parametro.substring(indice + 1);
+        modificarUsoTS(parametro, uso);
+        System.out.println("Se modifico el uso del parametro" +ambito+parametro);
+    }
+}
+
 public void modificarUsos(ArrayList<String> lista, String uso){
-        for (String a: lista){
-            modificarUsoTS(a, uso);
-        }
+    for (String a: lista){
+        modificarUsoTS(a, uso);
+    }
 }
 
 public void modificarUsoTS(String aux, String uso){
@@ -398,6 +420,14 @@ public void modificarUsoTS(String aux, String uso){
         }
     }
 }
+
+public void sacarParamFormTS(String clave){
+    ArrayList<String> aux = tablaDeSimbolos.get(clave);
+    //Solo la elimino si es una variable no inicializada.
+    if (aux.size() <= 2 || aux.get(2).equals(""))
+        tablaDeSimbolos.remove(clave);
+}
+
 public void modificarAmbitosTS(ArrayList<String> a){
     int index = ambito.lastIndexOf(":");
     String ambitoAfuera = ambito.substring(0, index);
@@ -405,12 +435,22 @@ public void modificarAmbitosTS(ArrayList<String> a){
     for (String parametro : a){
         if (parametro != null){
             //me quedo solo con su nombre, saco semantica y tipo
-            int indice = parametro.lastIndexOf(" ");
-            parametro = parametro.substring(indice + 1);
-            //Lo busco en la ts y modifico su clave para que incluya el ambito de la funcion definida
+            int indice1 = parametro.indexOf(" ");
+            parametro = parametro.substring(indice1 + 1);
+            int indice2 = parametro.indexOf(" ");
+            String tipo = parametro.substring(0, indice2);
+            parametro = parametro.substring(indice2 + 1);
+
+            System.out.println("mi parametro: "+parametro);
+            System.out.println("mi ambito afuera: "+ambitoAfuera);
             ArrayList<String> aux = tablaDeSimbolos.get(ambitoAfuera+":"+parametro);
-            tablaDeSimbolos.remove(ambitoAfuera+":"+parametro);
+
+            //le agrego el tipo del parametro a la TS
+            aux.set(1,tipo);
             tablaDeSimbolos.put(ambito+":"+parametro, aux);
+
+            //Lo busco en la ts y modifico su clave para que incluya el ambito de la funcion definida
+            sacarParamFormTS(ambitoAfuera+":"+parametro);
         }
     }
 }
@@ -455,13 +495,14 @@ public void agregarCteTS(String lexema){
     }
 }
 
-public void agregarInfoFuncionTS(String tipoReturn, ArrayList<String> parametros, String funcion){
+public void agregarInfoFuncionTS(String tipoReturn, ArrayList<String> parametros){
     //Convierto los parametros en un string separados por ','
     String aux = "";
     if(parametros != null){
         aux = String.join(", ", parametros);
     }
-    funcion = ambito +":"+ funcion;
+    //Ya se concateno el nombre de la funcion al ambito
+    String funcion = ambito;
     if (tablaDeSimbolos.containsKey(funcion)){
         ArrayList<String> a = tablaDeSimbolos.get(funcion);
         if(a.size() == 3){
@@ -488,6 +529,27 @@ public void borrarAmbito(){
     }
 }
 
+public void cvrAPolaca(String funcion, ArrayList<String> parametros_reales, ArrayList<String> arreglo){
+    ArrayList<String> a;
+
+    String semantica = tablaDeSimbolos.get(ambito+":"+funcion).get(3);
+    String[] parametros = semantica.split(",");
+
+    //si la semantica es CVR agrego a la polaca una asignacion
+    for(String p : parametros){
+        int indice = p.lastIndexOf(" ");
+        String nombre = p.substring(indice+1);
+
+        //encuentro el real que esta asignado a el formal
+        String real = parametros_reales.get(parametros_reales.indexOf(nombre) - 1);
+
+        if(p.contains("cvr")){
+            arreglo.add(nombre);
+            arreglo.add(real);
+            arreglo.add("->");
+        }
+    }
+}
 public void agregarAPolaca(String valor){
     if (polacaInversa.containsKey(ambito)) {
         ArrayList<String> a = tablaDeSimbolos.get(valor);
@@ -672,7 +734,7 @@ public boolean estaDeclarada(String id){
         return false;
     else {
       ArrayList<String> a = tablaDeSimbolos.get(id);
-      if (a != null && a.size() == 3) {
+      if (a != null && a.size() >= 3) {
         String uso = a.get(2);
         if (uso.equals("Nombre de funcion"))
           //declarada

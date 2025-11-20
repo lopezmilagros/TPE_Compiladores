@@ -34,7 +34,7 @@ public  class Main {
                System.out.println("2.Lambda                   7.Asignaciones");
                System.out.println("3.While                    8.Programa");
                System.out.println("4.If                       9.Print");
-               System.out.println("5.Punto y coma             10. prueba");
+               System.out.println("5.Punto y coma             10.prueba");
                System.out.println();
                System.out.print("Opcion: ");
 
@@ -47,7 +47,7 @@ public  class Main {
                     case 5 -> path = "test/incorrectos/puntocoma.txt";
                     case 6 -> path = "test/incorrectos/condiciones.txt";
                     case 7 -> path = "test/incorrectos/asignaciones.txt";
-                    case 8 -> path = "test/incorrectos/programa1.txt";
+                    case 8 -> path = "test/incorrectos/programa.txt";
                     case 9 -> path = "test/incorrectos/print.txt";
                     case 10 -> path = "test/incorrectos/prueba.txt";
                }
@@ -69,8 +69,8 @@ public  class Main {
           parser.imprimirErrores();
           parser.imprimirErroresSemanticos();
           System.out.println();
-          System.out.println("TABLA DEL LEXICO");
-          aLex.imprimirTabla();
+          //System.out.println("TABLA DEL LEXICO");
+          //aLex.imprimirTabla();
           System.out.println("TABLA DEL SINTACTICO");
           parser.imprimirTabla();
           //aLex.imprimirTokensLeidos();
