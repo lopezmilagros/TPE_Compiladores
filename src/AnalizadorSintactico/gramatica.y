@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 %%
 prog
-    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); }
+    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; polacaInversa = null;} }
     | bloque        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
     ;
 
@@ -41,7 +41,7 @@ sentencia_ejecutable
     : asignacion
     | sentencia_return                                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Return");}
     | sentencia_print                                 {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Print");}
-    | sentencia_if                                    {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: If"); agregarAPolaca("if");}
+    | sentencia_if                                    {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: If");}
     | sentencia_while                                 {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: While");}
     | expresion_lambda                                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Lambda");}
     ;
@@ -67,16 +67,16 @@ sentencia_print_error
     ;
 
 sentencia_while
-    : header_while DO bloque PUNTOCOMA                      {agregarAPolaca("cuerpo"); bifurcacionWhile(); agregarBifurcacion("cond");}
+    : header_while DO bloque PUNTOCOMA                      {if (!$1.sval.equals("null")){agregarAPolaca("cuerpo"); bifurcacionWhile(); agregarAPolaca("LABEL "+label+":");  agregarBifurcacion("cond");}}
     | sentencia_while_error
     ;
 
 header_while
-    : inicio_header_while PARENTESISA condicion PARENTESISC
+    : inicio_header_while PARENTESISA condicion PARENTESISC {if ($3.sval.equals("null")){$$ = new ParserVal("null");} else {$$ = new ParserVal("sin error");}}
     ;
 
 inicio_header_while
-    :WHILE                                                 { guardarInicioWhile(); }
+    :WHILE                                                 { pilaWhile.push(label); agregarAPolaca("LABEL "+label+":"); label++; }
     ;
 
 sentencia_while_error
@@ -88,13 +88,13 @@ sentencia_while_error
 ;
 
 sentencia_if
-    : header_if ELSE bloque ENDIF PUNTOCOMA                 {agregarAPolaca("else"); agregarBifurcacion("then"); agregarAPolaca("cuerpo");}
-    | header_if ENDIF PUNTOCOMA                             {agregarAPolaca("cuerpo"); acomodarBifurcacion();}
+    : header_if ELSE bloque ENDIF PUNTOCOMA                 {if (!$1.sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); Integer l = label - 1; agregarBifurcacion("LABEL "+l+":");}}
+    | header_if ENDIF PUNTOCOMA
     | sentencia_if_error
     ;
 
 header_if
-    : IF PARENTESISA condicion PARENTESISC bloque        {agregarAPolaca("then"); agregarBifurcacion("cond");}
+    : IF PARENTESISA condicion PARENTESISC bloque        {if (!$3.sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); agregarBifurcacion("cond"); $$ = new ParserVal("sin error");} else {$$ = new ParserVal("null");}}
     ;
 
 sentencia_if_error
@@ -109,7 +109,7 @@ sentencia_if_error
     |IF PARENTESISA condicion PARENTESISC ENDIF PUNTOCOMA                               {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
     |IF PARENTESISA condicion PARENTESISC ELSE bloque ENDIF PUNTOCOMA                   {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'then'");}
     |header_if ELSE ENDIF PUNTOCOMA                                                     {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else'");}
-    |IF PARENTESISA condicion PARENTESISC ELSE ENDIF PUNTOCOMA                           {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else', 'then'");}
+    |IF PARENTESISA condicion PARENTESISC ELSE ENDIF PUNTOCOMA                          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta contenido en bloque 'else', 'then'");}
     |header_if ELSE bloque ENDIF                                                        {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     |header_if ENDIF                                                                    {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     |IF  condicion PARENTESISC bloque ENDIF                                             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTÁCTICO: falta parentesis de apertura de la condicion y falta ';' ");}
@@ -127,12 +127,24 @@ sentencia_if_error
     ;
 
 condicion
-    : expresiones MAYOR expresiones                 {ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) {agregarListaAPolaca(b); ArrayList<String> a = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(a);}} agregarAPolaca(">"); agregarAPolaca("cond");}
-    | expresiones MAYIG expresiones                 {ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) {agregarListaAPolaca(b); ArrayList<String> a = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(a);}} agregarAPolaca(">="); agregarAPolaca("cond");}
-    | expresiones MENOR expresiones                 {ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) {agregarListaAPolaca(b); ArrayList<String> a = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(a);}} agregarAPolaca("<"); agregarAPolaca("cond");}
-    | expresiones MENIG expresiones                 {ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) {agregarListaAPolaca(b); ArrayList<String> a = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(a);}} agregarAPolaca(">="); agregarAPolaca("cond");}
-    | expresiones IGIG expresiones                  {ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) {agregarListaAPolaca(b); ArrayList<String> a = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(a);}} agregarAPolaca("=="); agregarAPolaca("cond");}
-    | expresiones DIF expresiones                   {ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) {agregarListaAPolaca(b); ArrayList<String> a = (ArrayList<String>) $3.obj; if (!b.contains("null")) { agregarListaAPolaca(a);}} agregarAPolaca("=!"); agregarAPolaca("cond");}
+    : expresiones MAYOR expresiones                 {ArrayList<String> b = (ArrayList<String>) $1.obj;
+                                                    $$ = new ParserVal("null");
+                                                    if (!b.contains("null")){
+                                                        ArrayList<String> a = (ArrayList<String>) $3.obj;
+                                                        if (!a.contains("null")) {
+                                                            agregarListaAPolaca(b);
+                                                            agregarListaAPolaca(a);
+                                                            agregarAPolaca(">");
+                                                            agregarAPolaca("cond");
+                                                            $$ = new ParserVal("sin error");
+                                                        }
+                                                    }
+                                                    }
+    | expresiones MAYIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca(">="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
+    | expresiones MENOR expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("<"); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
+    | expresiones MENIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca(">="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
+    | expresiones IGIG expresiones                  {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("=="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
+    | expresiones DIF expresiones                   {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("=!"); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | condicion_error                               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Condicion incompleta");}
     ;
 
@@ -180,17 +192,17 @@ asignacion_error
     ;
 
 expresiones
-    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("+"); $$ = new ParserVal(a);}
+    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj;  a.add($3.sval); a.add("+"); $$ = new ParserVal(a);}
     | expresiones MENOS termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("-"); $$ = new ParserVal(a);}
     | expresiones AST termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("*"); $$ = new ParserVal(a);}
     | expresiones BARRA termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("/"); $$ = new ParserVal(a);}
-    | termino                       {ArrayList<String> a = new ArrayList<String>(); if ($1.obj != null) { a.addAll((ArrayList<String>) $1.obj);} else { a.add($1.sval);} $$ = new ParserVal(a);}
+    | termino                       {$$ = new ParserVal($1.obj);}
     | expresiones operador error         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
     ;
 
 termino
-    : identificador         {if(!variablePermitida($1.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada."); $$ = new ParserVal("null");} else {$$ = new ParserVal($1.sval);} }
-    | tipo_cte              {$$ = new ParserVal($1.sval); }
+    : identificador         {ArrayList<String> a = new ArrayList<String>(); if(!variablePermitida($1.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada."); a.add("null"); $$ = new ParserVal(a);} else {a.add($1.sval); $$ = new ParserVal(a);} }
+    | tipo_cte              {ArrayList<String> a = new ArrayList<String>(); a.add($1.sval); $$ = new ParserVal(a); }
     | llamado_funcion       {$$ = new ParserVal($1.obj); }
     ;
 
@@ -224,8 +236,7 @@ sentencia_declarativa
 
 funcion
     :  header_funcion bloque                {String ambitoConFuncion = ambito;
-                                            borrarAmbito();
-                                            limpiarPolaca(ambitoConFuncion);}
+                                            borrarAmbito();}
     ;
 
 header_funcion
@@ -238,7 +249,7 @@ header_funcion
                                                                    modificarAmbitosTS((ArrayList<String>)$4.obj);
                                                                    modificarUsosParametros((ArrayList<String>)$4.obj, "Nombre de parametro");
                                                                    agregarInfoFuncionTS($1.sval, (ArrayList<String>) $4.obj);
-                                                                   polacaInversa.put(ambito, (ArrayList<String>) $4.obj);
+                                                                   polacaInversa.put(ambito, new ArrayList<String>());
                                                                }}
     | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
     ;
@@ -277,7 +288,7 @@ header_lambda
     ;
 
 llamado_lambda
-    : PARENTESISA identificador PARENTESISC                         {$$ = new ParserVal($2.sval);}
+    : PARENTESISA identificador PARENTESISC                         {if(!variablePermitida($2.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada.");} $$ = new ParserVal($2.sval);}
     | PARENTESISA tipo_cte PARENTESISC                              {$$ = new ParserVal($2.sval);}
     ;
 
@@ -300,7 +311,7 @@ lista_cte
 
 identificador
     :ID                 {$$ = new ParserVal($1.sval); }
-    |ID PUNTO ID        {String name = $1.sval + "." + $3.sval; $$ = new ParserVal(name);}
+    |ID PUNTO ID        {String name = $1.sval + "." + $3.sval; String a = $1.sval + ":" + $3.sval; if(!existeVariable(a)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+name+"' no declarada!!!!!!!!!!!!!.");} System.out.printl("REDUCIO"); $$ = new ParserVal(name); }
     ;
 
 tipo
@@ -519,6 +530,10 @@ private ArrayList<String> mainArreglo = new ArrayList<String>();
 private HashMap<String, ArrayList<String>> polacaInversa = new HashMap<String, ArrayList<String>>();
 private String ambito = "MAIN";
 private Integer indiceWhile;
+private Integer label = 0;
+private java.util.Stack<Integer> pilaWhile = new java.util.Stack<>();
+
+public HashMap<String, ArrayList<String>> getPolacaInversa(){ return polacaInversa; }
 
 public void borrarAmbito(){
     int index = ambito.lastIndexOf(":");
@@ -608,32 +623,18 @@ public void agregarBifurcacion(String flag){
     while ( i >= 0 && !flag.equals(a.get(i)) ){
         i--;
     }
-    Integer saltoBF = a.size() - 1 + 3;
-    Integer saltoBI = a.size() - 1 + 1;
+
+    String l = label.toString();
 
     if (flag.equals("cond")) {
-       a.set(i, (saltoBF).toString());  //porque agregamos dos bifurcaciones
+       a.set(i, "SALTO A "+l);
        a.add(i + 1, "BF");
     }else{
-        a.set(i, (saltoBI).toString());  //porque agregamos una bifurcaciones
+        a.set(i, "SALTO A "+l);
         a.add(i + 1, "BI");
+        a.add(i + 2, flag);
     }
-}
-
-public void acomodarBifurcacion(){
-    ArrayList<String> a = new ArrayList<String>();
-    if (polacaInversa.containsKey(ambito)) {
-        a = polacaInversa.get(ambito);
-    }else{
-        a = mainArreglo;
-    }
-    int i = a.size() - 1;
-    while ( i >= 0 && !a.get(i).equals("BF")  ){
-        i--;
-    }
-    Integer num = Integer.parseInt(a.get(i - 1)) - 2;
-
-    a.set(i-1,num.toString());
+    label++;
 }
 
 public void guardarInicioWhile(){
@@ -655,9 +656,11 @@ public void bifurcacionWhile(){
         a = mainArreglo;
     }
     int i = a.size() - 1;
-    a.set(i, indiceWhile.toString());
+    Integer l = pilaWhile.pop();
+    a.set(i, "SALTO A "+l);
     a.add("BI");
 }
+
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
@@ -704,6 +707,8 @@ public boolean estaInicializada(String id){
 public String variableAlAlcance(String id){
     //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
     String ambitoActual = ambito+":";
+
+    //Para variables sin prefijado
     while (true) {
         String clave = ambitoActual + id;
 
@@ -743,6 +748,7 @@ public boolean estaDeclarada(String id){
     }
     return false;
 }
+
 public boolean funcionPermitida(String id) {
     //Chequeo si la funcion esta al alcance y si esta inicializada
     String clave = variableAlAlcance(id);
@@ -760,8 +766,19 @@ public boolean funcionPermitida(String id) {
 //significa que no hay una declaracion de esa variable en su ambito, por lo que se puede declarar.
 
 public boolean variablePermitida(String id) {
-    //Chequeo si la variable esta al alcance y si esta inicializada
+    //Para variables con prefijado
+    if(id.contains(".")){
+        int indice = id.lastIndexOf(".");
+        String funcion = id.substring(0, indice);
+
+        if(ambito.contains(funcion))
+            return true;
+        else
+            return false;
+    }
+
     String clave = variableAlAlcance(id);
+    //Chequeo si la variable esta al alcance y si esta inicializada
     if(clave != null)
         // esta al alcance
         if(estaInicializada(clave))
@@ -805,20 +822,44 @@ void agregarErrorSemantico(String s){
     erroresSemanticos.add(s);
 }
 
-public void imprimirErroresSemanticos(){
-    System.out.println("");
-    System.out.println("Errores semanticos: ");
-    if (!erroresSemanticos.isEmpty()){
-        for (String error: erroresSemanticos){
-            System.out.println(error);
-        }
-    }else{
-        System.out.println("No se encontraron errores semanticos");
+public boolean huboError(){
+    if(!erroresSemanticos.isEmpty()){
+        return true;
     }
+
+    if(!errores.isEmpty()){
+        for (String e :errores){
+            if(e.contains("ERROR"))
+                return true;
+        }
+    }
+    ArrayList<String> a = aLex.getErroresLexicos();
+    if(!a.isEmpty()){
+        for (String e : a){
+            if(e.contains("ERROR"))
+                return true;
+        }
+    }
+
+    return false;
 }
 
-
+public boolean existeVariable(String name){
+    System.out.println("VARIABLE!!: "+name);
+    for (String clave : tablaDeSimbolos.keySet()){
+        if(clave.endsWith(name)){
+            return true;
+        }
+    }
+    return false;
+}
 //----------------------------------------------------------------------------------------------------------IMPRESIONES
+
+private String errorGeneral = "";
+
+public String getError(){
+    return errorGeneral;
+}
 
 public void imprimirSentencias(){
     if (!sentencias.isEmpty()) {
@@ -857,4 +898,17 @@ public void imprimirTabla() {
             System.out.printf("%-10s | %s%n", clave, valores);
         }
         System.out.println();
+}
+
+
+public void imprimirErroresSemanticos(){
+    System.out.println("");
+    System.out.println("Errores semanticos: ");
+    if (!erroresSemanticos.isEmpty()){
+        for (String error: erroresSemanticos){
+            System.out.println(error);
+        }
+    }else{
+        System.out.println("No se encontraron errores semanticos");
+    }
 }

@@ -74,7 +74,10 @@ public  class Main {
           System.out.println("TABLA DEL SINTACTICO");
           parser.imprimirTabla();
           //aLex.imprimirTokensLeidos();
-          parser.imprimirPolaca();
+          if(parser.getPolacaInversa() != null)
+               parser.imprimirPolaca();
+
+          System.out.println(parser.getError());
      }
 }
 

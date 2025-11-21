@@ -504,13 +504,11 @@ public class AnalisisLexico {
             return ("NO");
         }
 
+    }
 
-
-
-
-}
-
-
+    public ArrayList<String> getErroresLexicos() {
+        return erroresLexicos;
+    }
 }
 
 
