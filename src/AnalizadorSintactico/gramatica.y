@@ -16,13 +16,13 @@ import java.util.Iterator;
 
 %%
 prog
-    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; polacaInversa = null;} }
+    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; } }
     | bloque        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
     ;
 
 bloque
-    : LLAVEA sentencias LLAVEC
-    | LLAVEA sentencias error            {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
+    : LLAVEA sentencias LLAVEC              {System.out.println("AMBITOOO: "+ ambito);}
+    | LLAVEA sentencias error             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
     | error sentencias LLAVEC             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador inicial");}
     | error sentencias error              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
     ;
@@ -94,7 +94,7 @@ sentencia_if
     ;
 
 header_if
-    : IF PARENTESISA condicion PARENTESISC bloque        {if (!$3.sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); agregarBifurcacion("cond"); $$ = new ParserVal("sin error");} else {$$ = new ParserVal("null");}}
+    : IF PARENTESISA condicion PARENTESISC bloque        {System.out.println("Ambito en if: " + ambito); if (!$3.sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); agregarBifurcacion("cond"); $$ = new ParserVal("sin error");} else {$$ = new ParserVal("null");}}
     ;
 
 sentencia_if_error
@@ -179,7 +179,7 @@ asignacion
                                                                                                                                                                                                                           agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$2.sval+"' ya fue declarada.");}
                                                                                                                                                                                                                       }
     | identificador ASIGN expresiones PUNTOCOMA         {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion"); if(!variablePermitida($1.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada.");} else {ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) {agregarListaAPolaca(a); agregarAPolaca($1.sval); agregarAPolaca(":=");}}}
-    | lista_id IGUAL lista_cte PUNTOCOMA                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; verificar_cantidades(l1, l3); if(variablesPermitidas(l1)){ agregarListaAPolaca(l3); agregarListaAPolaca(l1); agregarAPolaca("=");}}
+    | lista_id IGUAL lista_cte PUNTOCOMA                {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); ArrayList<String> l1 = (ArrayList<String>)$1.obj; ArrayList<String> l3 = (ArrayList<String>)$3.obj; if (verificar_cantidades(l1, l3)){ if(variablesPermitidas(l1)){ agregarPolacaMultiple(l1, l3);}}}
     | identificador IGUAL lista_cte PUNTOCOMA           {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Asignacion multiple"); if(!variablePermitida($1.sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+$1.sval+"' no declarada.");} else {agregarListaAPolaca((ArrayList<String>)$3.obj); agregarAPolaca($1.sval); agregarAPolaca("=");}}
     | asignacion_error                                  {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     ;
@@ -192,11 +192,11 @@ asignacion_error
     ;
 
 expresiones
-    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj;  a.add($3.sval); a.add("+"); $$ = new ParserVal(a);}
-    | expresiones MENOS termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("-"); $$ = new ParserVal(a);}
-    | expresiones AST termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("*"); $$ = new ParserVal(a);}
-    | expresiones BARRA termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; a.add($3.sval); a.add("/"); $$ = new ParserVal(a);}
-    | termino                       {$$ = new ParserVal($1.obj);}
+    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("+"); $$ = new ParserVal(a);}
+    | expresiones MENOS termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("-"); $$ = new ParserVal(a);}
+    | expresiones AST termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b);a.add("*"); $$ = new ParserVal(a);}
+    | expresiones BARRA termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("/"); $$ = new ParserVal(a);}
+    | termino                       {ArrayList<String> a = (ArrayList<String>)$1.obj; $$ = new ParserVal($1.obj);}
     | expresiones operador error         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
     ;
 
@@ -232,6 +232,7 @@ sentencia_declarativa
     | funcion                               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de funcion");}
     | tipo ID error                         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     | tipo lista_id error                   {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
+    | tipo ID PUNTO ID PUNTOCOMA {System.out.println("ERRORRRRRR");}
     ;
 
 funcion
@@ -280,11 +281,34 @@ parametros_reales
     ;
 
 expresion_lambda
-    : header_lambda bloque llamado_lambda PUNTOCOMA                 {borrarAmbito(); agregarAPolaca($3.sval); agregarAPolaca($1.sval); agregarAPolaca("->"); agregarAPolaca("LAMBDA"); agregarAPolaca("call");}
+        : header_lambda bloque llamado_lambda PUNTOCOMA              {
+                                                                     agregarAPolaca($3.sval);
+                                                                     agregarAPolaca($1.sval);
+                                                                     agregarAPolaca(":=");
+
+
+                                                                     borrarAmbito();
+                                                                     agregarAPolaca("->");
+                                                                     agregarAPolaca("LAMBDA");
+                                                                     agregarAPolaca("call");}
     ;
 
 header_lambda
-    : FLECHA PARENTESISA tipo ID PARENTESISC                        {ambito = ambito + ":LAMBDA"; ArrayList<String> a = new ArrayList<String>(); a.add($4.sval); modificarAmbitosTS(a); polacaInversa.put(ambito, a); $$ = new ParserVal($4.sval);}
+    : FLECHA PARENTESISA tipo ID PARENTESISC                        {ambito = ambito + ":LAMBDA";
+                                                                     ArrayList<String> polaca = new ArrayList<String>();
+                                                                     polacaInversa.put(ambito, polaca);
+
+                                                                    ArrayList<String> parametroCompleto = new ArrayList<String>();
+                                                                    String parametro =  "cv " + $3.sval+ " "+$4.sval;
+                                                                    parametroCompleto.add(parametro);
+                                                                    modificarAmbitosTS(parametroCompleto);
+
+                                                                    ArrayList<String> parametroID = new ArrayList<String>();
+                                                                    parametroID.add($4.sval);
+                                                                    modificarUsosParametros(parametroID, "Nombre de parametro");
+                                                                    System.out.println("AMBITO header LAMBDA2 : "+ambito);
+
+                                                                    $$ = new ParserVal($4.sval);}
     ;
 
 llamado_lambda
@@ -310,8 +334,8 @@ lista_cte
     ;
 
 identificador
-    :ID                 {$$ = new ParserVal($1.sval); }
-    |ID PUNTO ID        {String name = $1.sval + "." + $3.sval; String a = $1.sval + ":" + $3.sval; if(!existeVariable(a)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+name+"' no declarada!!!!!!!!!!!!!.");} System.out.printl("REDUCIO"); $$ = new ParserVal(name); }
+    :ID                 {$$ = new ParserVal($1.sval);}
+    |ID PUNTO ID        {String name = $1.sval + "." + $3.sval; String a = $1.sval + ":" + $3.sval; $$ = new ParserVal(name); }
     ;
 
 tipo
@@ -335,11 +359,22 @@ public void setAlex(AnalisisLexico a){
 
 }
 
-public void verificar_cantidades(ArrayList<String> l1, ArrayList<String> l2){
+public boolean verificar_cantidades(ArrayList<String> l1, ArrayList<String> l2){
     if (l1 != null && l2 != null){
-    if (l1.size() > l2.size() )
-        agregarError("Linea: "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
-    }
+        if (l1.size() > l2.size() ){
+            agregarError("Linea "+aLex.getNroLinea()+" ERROR: se esperaba que el lado izquierdo de la asignacion tenga menor o igual cantidad de elementos que el lado derecho");
+            return false;
+            }
+        }
+        if (l1.size() < l2.size()){
+            agregarErrorSemantico("Linea "+aLex.getNroLinea()+" WARNING: Quedan elementos sin asignar del lado derecho.");
+            return true;
+        }
+        if (l1.size() == l2.size()) {
+            return true;
+        }
+    return false;
+
 }
 
 void yyerror (String s){
@@ -442,6 +477,8 @@ public void sacarParamFormTS(String clave){
 public void modificarAmbitosTS(ArrayList<String> a){
     int index = ambito.lastIndexOf(":");
     String ambitoAfuera = ambito.substring(0, index);
+
+
 
     for (String parametro : a){
         if (parametro != null){
@@ -566,6 +603,8 @@ public void cvrAPolaca(String funcion, ArrayList<String> parametros_reales, Arra
     }
 }
 public void agregarAPolaca(String valor){
+if (polacaInversa != null){
+
     if (polacaInversa.containsKey(ambito)) {
         ArrayList<String> a = tablaDeSimbolos.get(valor);
         if (a!= null && a.size() == 3){
@@ -579,6 +618,7 @@ public void agregarAPolaca(String valor){
     else{
         mainArreglo.add(valor);
     }
+}
 }
 
 public void agregarListaAPolaca(ArrayList<String> a){
@@ -688,6 +728,15 @@ public boolean existeFuncionVisibleConNombre(String nombre) {
 }
 
 
+public void agregarPolacaMultiple(ArrayList<String> l1, ArrayList<String> l2){
+    for (int i=0; i<l1.size(); i++){
+        agregarAPolaca(l1.get(i));
+        agregarAPolaca(l2.get(i));
+        agregarAPolaca(":=");
+    }
+
+}
+
 public boolean estaInicializada(String id){
 //Recibe el id concatenado con el ambito
     if (!tablaDeSimbolos.containsKey(id))
@@ -792,7 +841,7 @@ public boolean variablesPermitidas(ArrayList<String> a){
     if (!a.isEmpty()){
         for (String variable: a){
             if (!variablePermitida(variable)){
-                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+variable+"' no declarada.");
+                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+variable+"' no declarada.(val permtida)");
                 //Uso un booleano para no retornar antes y que se agreguen todas las que no esten permitidas
                 permitido = false;
             }
@@ -824,8 +873,11 @@ void agregarErrorSemantico(String s){
 
 public boolean huboError(){
     if(!erroresSemanticos.isEmpty()){
-        return true;
-    }
+            for (String e :errores){
+                if(e.contains("ERROR"))
+                    return true;
+            }
+        }
 
     if(!errores.isEmpty()){
         for (String e :errores){

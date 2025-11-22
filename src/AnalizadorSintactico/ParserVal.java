@@ -8,7 +8,6 @@
  * of the yacc/C 'union' directive
  */
 package AnalizadorSintactico;
-
 public class ParserVal
 {
 /**
