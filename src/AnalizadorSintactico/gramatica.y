@@ -281,11 +281,7 @@ parametros_reales
     ;
 
 expresion_lambda
-        : header_lambda bloque llamado_lambda PUNTOCOMA              {
-                                                                     agregarAPolaca($3.sval);
-                                                                     agregarAPolaca($1.sval);
-                                                                     agregarAPolaca(":=");
-
+        : header_lambda bloque llamado_lambda PUNTOCOMA              {agregarPolacaLambda($3.sval, $1.sval);
 
                                                                      borrarAmbito();
                                                                      agregarAPolaca("->");
@@ -703,6 +699,17 @@ public void bifurcacionWhile(){
 
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
+
+public void agregarPolacaLambda(String valor1, String valor2){
+    if (polacaInversa != null){
+        if (polacaInversa.containsKey(ambito)) {
+            ArrayList<String> arreglo = polacaInversa.get(ambito);
+            arreglo.add(0,valor1);
+            arreglo.add(1, valor2);
+            arreglo.add(2, ":=");
+        }
+    }
+}
 
 // Devuelve true si ya existe alguna función con ese nombre
 // en el ámbito actual o en alguno de sus padres

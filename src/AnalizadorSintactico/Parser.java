@@ -668,7 +668,7 @@ final static String yyrule[] = {
 "tipo_cte : MENOS CTE",
 };
 
-//#line 351 "gramatica.y"
+//#line 347 "gramatica.y"
 
 /* -------------------------------------------------------------------------------------------------------------CODIGO AUXILIAR ----------------------------------------------------*/
 
@@ -1025,6 +1025,17 @@ public void bifurcacionWhile(){
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
+public void agregarPolacaLambda(String valor1, String valor2){
+    if (polacaInversa != null){
+        if (polacaInversa.containsKey(ambito)) {
+            ArrayList<String> arreglo = polacaInversa.get(ambito);
+            arreglo.add(0,valor1);
+            arreglo.add(1, valor2);
+            arreglo.add(2, ":=");
+        }
+    }
+}
+
 // Devuelve true si ya existe alguna función con ese nombre
 // en el ámbito actual o en alguno de sus padres
 public boolean existeFuncionVisibleConNombre(String nombre) {
@@ -1285,7 +1296,7 @@ public void imprimirErroresSemanticos(){
         System.out.println("No se encontraron errores semanticos");
     }
 }
-//#line 1217 "Parser.java"
+//#line 1231 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1905,11 +1916,7 @@ case 131:
 break;
 case 132:
 //#line 284 "gramatica.y"
-{
-                                                                     agregarAPolaca(val_peek(1).sval);
-                                                                     agregarAPolaca(val_peek(3).sval);
-                                                                     agregarAPolaca(":=");
-
+{agregarPolacaLambda(val_peek(1).sval, val_peek(3).sval);
 
                                                                      borrarAmbito();
                                                                      agregarAPolaca("->");
@@ -1917,7 +1924,7 @@ case 132:
                                                                      agregarAPolaca("call");}
 break;
 case 133:
-//#line 297 "gramatica.y"
+//#line 293 "gramatica.y"
 {ambito = ambito + ":LAMBDA";
                                                                      ArrayList<String> polaca = new ArrayList<String>();
                                                                      polacaInversa.put(ambito, polaca);
@@ -1935,58 +1942,58 @@ case 133:
                                                                     yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 134:
-//#line 315 "gramatica.y"
+//#line 311 "gramatica.y"
 {if(!variablePermitida(val_peek(1).sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(2).sval+"' no declarada.");} yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 135:
-//#line 316 "gramatica.y"
+//#line 312 "gramatica.y"
 {yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 136:
-//#line 320 "gramatica.y"
+//#line 316 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 137:
-//#line 321 "gramatica.y"
+//#line 317 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(2).sval); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo); }
 break;
 case 138:
-//#line 322 "gramatica.y"
+//#line 318 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
 break;
 case 141:
-//#line 331 "gramatica.y"
+//#line 327 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 142:
-//#line 332 "gramatica.y"
+//#line 328 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 143:
-//#line 333 "gramatica.y"
+//#line 329 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
 break;
 case 144:
-//#line 337 "gramatica.y"
+//#line 333 "gramatica.y"
 {yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 145:
-//#line 338 "gramatica.y"
+//#line 334 "gramatica.y"
 {String name = val_peek(2).sval + "." + val_peek(0).sval; String a = val_peek(2).sval + ":" + val_peek(0).sval; yyval = new ParserVal(name); }
 break;
 case 146:
-//#line 342 "gramatica.y"
+//#line 338 "gramatica.y"
 {yyval = new ParserVal("ULONG");}
 break;
 case 147:
-//#line 346 "gramatica.y"
+//#line 342 "gramatica.y"
 {agregarCteTS(val_peek(0).sval); yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 148:
-//#line 347 "gramatica.y"
+//#line 343 "gramatica.y"
 {String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} yyval = new ParserVal(cte);}
 break;
-//#line 1913 "Parser.java"
+//#line 1923 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

@@ -1,14 +1,5 @@
-PROR.AMA2{
-    ulong H := 1UL;
-    ulong FUNC1(cvr ulong X){
-        ulong VARIABLE;
-        MAIN.K := 6UL;
-        MAIN.H := 7UL;
-    }
+PRORAMA2{
+    -> (ulong A) {if (A > 1UL) {print("hola"); }endif;} (3UL) ;
 
-    H := FUNC1(H -> X);
 
-    ulong FUNC2(ulong X){
-        print("hola");
-    }
 }

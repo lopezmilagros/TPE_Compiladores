@@ -33,7 +33,7 @@ public class AccionSem9 implements AccionSem {
                 break;
 
             case 3:
-                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba un número y llegó '" + simbolos[columna] + "'");
+                erroresLexicos.add("Linea "+nroLinea+": ERROR LEXICO: se esperaba un número y llegó '" + simbolos[columna] + lexema.getLexema()+"'");
                 break;
 
             case 5:
