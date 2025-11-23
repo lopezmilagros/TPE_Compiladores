@@ -1,6 +1,7 @@
 import java.io.IOException;
 import AnalizadorLexico.*;
 import AnalizadorSintactico.*;
+import Assembler.Assembler;
 
 public  class Main {
      public static void main (String []args) throws IOException{
@@ -78,6 +79,9 @@ public  class Main {
                parser.imprimirPolaca();
 
           System.out.println(parser.getError());
+
+          Assembler a = new Assembler(parser.getTablaDeSimbolos(),parser.getPolacaInversa());
+          a.generarAssembler();
      }
 }
 

@@ -52,6 +52,7 @@ public class Assembler {
     }
 
     public String tipoToken(String ambito, String identificador) {
+        System.out.println("EN TIPO TOKEN "+ambito+identificador);
         if (ts.containsKey(identificador)) {
             //ES CTE porque no tiene ambito asociado
             ArrayList<String> info = ts.get(identificador);
@@ -59,7 +60,7 @@ public class Assembler {
         } else {
             if (ts.containsKey(ambito + identificador)) {
                 //puede ser identificador o cadena
-                ArrayList<String> info = ts.get(identificador);
+                ArrayList<String> info = ts.get(ambito + identificador);
                 return (info.get(0)); //ID O CADENA
             }
         }
@@ -97,7 +98,7 @@ public class Assembler {
 
         // Creamos el archivo
         try {
-            Files.write(Path.of("programa.asm"), out.toString().getBytes());
+            Files.write(Path.of("programaAssembler.txt"), out.toString().getBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -195,7 +196,7 @@ public class Assembler {
                 String operando2 = pila.pop();
 
                 String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, token);
+                String tipo2 = tipoToken(ambito, operando2);
                 if(tipo1.equals("ID")) {
                     cargarOperandos(operando1, operando2, ambito, code, data);
                     //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
@@ -218,7 +219,7 @@ public class Assembler {
                 String operando2 = pila.pop();
 
                 String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, token);
+                String tipo2 = tipoToken(ambito, operando2);
                 if(tipo1.equals("ID")) {
                     cargarOperandos(operando1, operando2, ambito, code, data);
                     //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
@@ -241,7 +242,8 @@ public class Assembler {
                 String operando2 = pila.pop();
 
                 String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, token);
+                String tipo2 = tipoToken(ambito, operando2);
+                System.out.println("OPERANDO 2: "+operando2+tipo2);
                 if(tipo1.equals("ID")) {
                     cargarOperandos(operando1, operando2, ambito, code, data);
                     //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
@@ -264,7 +266,7 @@ public class Assembler {
                 String operando2 = pila.pop();
 
                 String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, token);
+                String tipo2 = tipoToken(ambito, operando2);
                 if(tipo1.equals("ID")) {
                     cargarOperandos(operando1, operando2, ambito, code, data);
                     //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
@@ -287,7 +289,7 @@ public class Assembler {
                 String operando2 = pila.pop();
 
                 String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, token);
+                String tipo2 = tipoToken(ambito, operando2);
 
                 if(tipo1.equals("ID"))
                     cargarOperandos(operando1, operando2, ambito, code, data);
@@ -307,7 +309,7 @@ public class Assembler {
                 String operando2 = pila.pop();
 
                 String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, token);
+                String tipo2 = tipoToken(ambito, operando2);
 
                 if(tipo1.equals("ID"))
                     cargarOperandos(operando1, operando2, ambito, code, data);

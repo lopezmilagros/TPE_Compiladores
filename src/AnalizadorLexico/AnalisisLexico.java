@@ -496,6 +496,7 @@ public class AnalisisLexico {
     public ArrayList<String> getErroresLexicos() {
         return erroresLexicos;
     }
+
 }
 
 

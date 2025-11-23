@@ -1296,7 +1296,11 @@ public void imprimirErroresSemanticos(){
         System.out.println("No se encontraron errores semanticos");
     }
 }
-//#line 1231 "Parser.java"
+
+public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
+    return tablaDeSimbolos;
+}
+//#line 1232 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1993,7 +1997,7 @@ case 148:
 //#line 343 "gramatica.y"
 {String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} yyval = new ParserVal(cte);}
 break;
-//#line 1923 "Parser.java"
+//#line 1924 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

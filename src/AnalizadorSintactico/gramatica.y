@@ -971,3 +971,7 @@ public void imprimirErroresSemanticos(){
         System.out.println("No se encontraron errores semanticos");
     }
 }
+
+public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
+    return tablaDeSimbolos;
+}

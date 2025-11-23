@@ -1,16 +1,7 @@
 PROGRAMA{
+    ulong X := 7UL;
     if (X > 5UL) {
         print("ok");
-    };
-
-    if (X > 5UL)
-    endif;
-
-    if (X > 8UL) {
-        print("ok");
-    }
-    else
-    endif;
-
+    }endif;
 }
 
