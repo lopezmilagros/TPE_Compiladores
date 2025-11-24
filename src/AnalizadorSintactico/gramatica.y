@@ -21,7 +21,7 @@ prog
     ;
 
 bloque
-    : LLAVEA sentencias LLAVEC              {System.out.println("AMBITOOO: "+ ambito);}
+    : LLAVEA sentencias LLAVEC
     | LLAVEA sentencias error             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
     | error sentencias LLAVEC             {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador inicial");}
     | error sentencias error              {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Faltan delimitadores");}
@@ -67,7 +67,7 @@ sentencia_print_error
     ;
 
 sentencia_while
-    : header_while DO bloque PUNTOCOMA                      {if (!$1.sval.equals("null")){agregarAPolaca("cuerpo"); bifurcacionWhile(); agregarAPolaca("LABEL "+label+":");  agregarBifurcacion("cond");}}
+    : header_while DO bloque PUNTOCOMA                      {if (!$1.sval.equals("null")){agregarAPolaca("cuerpo"); bifurcacionWhile(); agregarAPolaca("LABEL"+label+":");  agregarBifurcacion("cond");}}
     | sentencia_while_error
     ;
 
@@ -76,7 +76,7 @@ header_while
     ;
 
 inicio_header_while
-    :WHILE                                                 { pilaWhile.push(label); agregarAPolaca("LABEL "+label+":"); label++; }
+    :WHILE                                                 { pilaWhile.push(label); agregarAPolaca("LABEL"+label+":"); label++; }
     ;
 
 sentencia_while_error
@@ -88,13 +88,13 @@ sentencia_while_error
 ;
 
 sentencia_if
-    : header_if ELSE bloque ENDIF PUNTOCOMA                 {if (!$1.sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); Integer l = label - 1; agregarBifurcacion("LABEL "+l+":");}}
+    : header_if ELSE bloque ENDIF PUNTOCOMA                 {if (!$1.sval.equals("null")) {agregarAPolaca("LABEL"+label+":"); Integer l = label - 1; agregarBifurcacion("LABEL"+l+":");}}
     | header_if ENDIF PUNTOCOMA
     | sentencia_if_error
     ;
 
 header_if
-    : IF PARENTESISA condicion PARENTESISC bloque        {System.out.println("Ambito en if: " + ambito); if (!$3.sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); agregarBifurcacion("cond"); $$ = new ParserVal("sin error");} else {$$ = new ParserVal("null");}}
+    : IF PARENTESISA condicion PARENTESISC bloque        {System.out.println("Ambito en if: " + ambito); if (!$3.sval.equals("null")) {agregarAPolaca("LABEL"+label+":"); agregarBifurcacion("cond"); $$ = new ParserVal("sin error");} else {$$ = new ParserVal("null");}}
     ;
 
 sentencia_if_error

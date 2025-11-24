@@ -1,7 +1,12 @@
 PROGRAMA{
+    print("Hola soy un programa muy lindo!!");
     ulong X := 7UL;
-    if (X > 5UL) {
-        print("ok");
+    if (5UL > X) {
+        print("X es menor");
+        print(X);
+    }else{
+        print("X es mayor");
+        print(X);
     }endif;
 }
 

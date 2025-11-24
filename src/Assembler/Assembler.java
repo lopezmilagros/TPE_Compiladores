@@ -11,6 +11,7 @@ public class Assembler {
     private HashMap<String, ArrayList<String>> ts;
     private ArrayList<String> polacaLineal = new ArrayList<>();
     private int nroAux = 0;
+    private int nroMensaje = 0;
 
     public Assembler(HashMap<String, ArrayList<String>> ts, HashMap<String, ArrayList<String>> polacaInversa) {
         this.ts = ts;
@@ -24,14 +25,16 @@ public class Assembler {
         // agregar el resto de las funciones
         for (String funcion : polacaInversa.keySet()) {
             if (!funcion.equals("MAIN")) { // evitamos repetir el main
+                //Quito el : del name mangling de la funcion, reemplazandolo por _
+                funcion = funcion.replace(":","_");
                 polacaLineal.add(funcion + ":");  // etiqueta
                 polacaLineal.addAll(polacaInversa.get(funcion));
             }
         }
 
-        for (String elemento : polacaLineal) {
+        /*for (String elemento : polacaLineal) {
             System.out.print(elemento + ",");
-        }
+        }*/
 
     }
 
@@ -44,7 +47,7 @@ public class Assembler {
 
 
         Stack<String> pila = new Stack<>();
-        String ambito = "MAIN:";
+        String ambito = "MAIN";
         for (String token : polacaLineal)
             casePolaca(token, code, data, pila, ambito);
 
@@ -52,15 +55,15 @@ public class Assembler {
     }
 
     public String tipoToken(String ambito, String identificador) {
-        System.out.println("EN TIPO TOKEN "+ambito+identificador);
         if (ts.containsKey(identificador)) {
             //ES CTE porque no tiene ambito asociado
             ArrayList<String> info = ts.get(identificador);
             return (info.get(1)); //TIPO DE CTE
         } else {
-            if (ts.containsKey(ambito + identificador)) {
+            if (ts.containsKey(ambito +":"+ identificador)) {
                 //puede ser identificador o cadena
-                ArrayList<String> info = ts.get(ambito + identificador);
+
+                ArrayList<String> info = ts.get(ambito +":"+ identificador);
                 return (info.get(0)); //ID O CADENA
             }
         }
@@ -68,6 +71,9 @@ public class Assembler {
     }
 
     public void inicializarData(StringBuilder data) {
+        //Agregamos un espacio de 20 bytes, para poder imrpimir valores numericos pasados a caracteres
+        data.append("IMPRESIONES DB 20 dup(0)\n");
+        data.append("FORMATO db \"%d\",0\n");
         //Plasmamos la ts al segmento de data
 
         //ULONG 32 BITS
@@ -75,17 +81,29 @@ public class Assembler {
             ArrayList<String> info = ts.get(s);
             if (info.get(0).equals("ID") && (info.get(2).equals("Nombre de variable") || info.get(2).equals("Nombre de parametro"))) {
                 //Como no se pueden declarar variables DFLOAT, asumimos que todas tienen tipo = ULONG
-                //las variables llevan prefijo _
-                data.append("_" + s + " DD ?");
+                //las variables llevan prefijo _, y reemplazo los : del nameMangling por _
+                s = s.replace(":","_");
+                data.append("_" + s + " DD ?\n");
             }
         }
     }
 
     public void crearArchivoASM(StringBuilder data, StringBuilder code) {
         StringBuilder out = new StringBuilder();
+        out.append(".586\n");
+        out.append(".MODEL flat, stdcall\n");
+        out.append("option casemap:none\n\n");
 
-        out.append(".MODEL small\n");
-        out.append(".STACK 200h\n\n");
+        //Agrego los includes para compilar desde windows, y poder mostrar los prints
+        out.append("include \\masm32\\include\\windows.inc\n"); // las \\ se transforman en \
+        out.append("include \\masm32\\include\\user32.inc\n");
+        out.append("include \\masm32\\include\\kernel32.inc\n");
+        out.append("include \\masm32\\include\\masm32.inc\n");
+
+        out.append("includelib \\masm32\\lib\\user32.lib\n");
+        out.append("includelib \\masm32\\lib\\kernel32.lib\n");
+        out.append("includelib \\masm32\\lib\\masm32.lib\n");
+
 
         out.append(".DATA\n");
         out.append(data).append("\n");
@@ -94,11 +112,12 @@ public class Assembler {
         out.append("START:\n");
         out.append(code).append("\n");
 
+        out.append("FIN:\n invoke ExitProcess, 0\n"); //TERMINAR PROCESO WINDOWS
         out.append("END START\n");
 
         // Creamos el archivo
         try {
-            Files.write(Path.of("programaAssembler.txt"), out.toString().getBytes());
+            Files.write(Path.of("programaAssembler.asm"), out.toString().getBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -107,8 +126,8 @@ public class Assembler {
 
     public void cargarOperandos(String op1, String op2, String ambito, StringBuilder code, StringBuilder data) {
         //tipo1 siempre nos aseguramos que sea un ID de tipo ULONG para poder usar el CMP
-
-        code.append("MOV EAX,"+ambito+op1+"\n");
+        String a = ambito.replace(":","_");
+        code.append("MOV EAX,_"+a+"_"+op1+"\n");
 
         String tipo2 = tipoToken(ambito, op2);
         if (tipo2 != null){
@@ -124,7 +143,7 @@ public class Assembler {
                 }
                 case "ID" -> {
                     // variable de tipo ulong
-                    code.append("MOV EBX,"+ambito+op2+"\n");
+                    code.append("MOV EBX,_"+ambito+op2+"\n");
                     code.append("CMP EAX, EBX\n");
                 }
             }
@@ -243,7 +262,6 @@ public class Assembler {
 
                 String tipo1 = tipoToken(ambito, operando1);
                 String tipo2 = tipoToken(ambito, operando2);
-                System.out.println("OPERANDO 2: "+operando2+tipo2);
                 if(tipo1.equals("ID")) {
                     cargarOperandos(operando1, operando2, ambito, code, data);
                     //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
@@ -329,7 +347,7 @@ public class Assembler {
                 String label = pila.pop();
                 // como tengo "SALTO A X", solo me quedo el X para generar la etiqueta
                 int indice = label.lastIndexOf(" ");
-                label = "LABEL " + label.substring(indice + 1);
+                label = "LABEL" + label.substring(indice + 1);
                 code.append(label + "\n");
             }
 
@@ -342,7 +360,30 @@ public class Assembler {
 
             case "print" -> {
                 // imprimir
-                String operando = pila.pop();
+                String mensaje = pila.pop();
+                System.out.println("PRINT"+mensaje);
+
+                if(mensaje.startsWith("\"")){ //Empriza con comillas, es una cadena
+                    //Creo un messagebox y lo imrpimo
+                    System.out.println("entro al if");
+                    data.append("msj"+nroMensaje+" db "+mensaje+", 0\n");
+                    code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
+                    nroMensaje++;
+                }else{
+                    String tipo = tipoToken(ambito, mensaje);
+                    if(tipo.equals("ID")){
+                        String a = ambito.replace(":","_");
+                        code.append("MOV EAX, _"+a+"_"+mensaje+"\n");
+                    }else if(tipo.equals("ULONG")){
+                        conversion(mensaje, code, data);
+                        code.append("MOV EAX, @AUX"+nroAux+"\n");
+                    }else{
+                        code.append("MOV EAX, _"+mensaje+"\n");
+                    }
+                    //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
+                    code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
+                    code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
+                }
             }
 
             case "BI" -> {
@@ -350,7 +391,7 @@ public class Assembler {
                 String label = pila.pop();
                 // como tengo "SALTO A X", solo me quedo el X para generar la etiqueta
                 int indice = label.lastIndexOf(" ");
-                label = "LABEL " + label.substring(indice + 1);
+                label = "LABEL" + label.substring(indice + 1);
                 code.append("JMP " + label + "\n");
             }
 
@@ -372,7 +413,7 @@ public class Assembler {
             //label
             code.append(token + "\n");
             if (token.startsWith("MAIN:"))
-                ambito = token;
+                ambito = token.replace("_",":"); //ambito necesito que este como son las claves en la TS, con :
 
         } else {
             //identificador, constantes, cadenas  o señales de control, solo apilo

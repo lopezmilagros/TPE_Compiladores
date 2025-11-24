@@ -1462,10 +1462,6 @@ case 2:
 //#line 20 "gramatica.y"
 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
 break;
-case 3:
-//#line 24 "gramatica.y"
-{System.out.println("AMBITOOO: "+ ambito);}
-break;
 case 4:
 //#line 25 "gramatica.y"
 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta delimitador final");}
@@ -1540,7 +1536,7 @@ case 27:
 break;
 case 28:
 //#line 70 "gramatica.y"
-{if (!val_peek(3).sval.equals("null")){agregarAPolaca("cuerpo"); bifurcacionWhile(); agregarAPolaca("LABEL "+label+":");  agregarBifurcacion("cond");}}
+{if (!val_peek(3).sval.equals("null")){agregarAPolaca("cuerpo"); bifurcacionWhile(); agregarAPolaca("LABEL"+label+":");  agregarBifurcacion("cond");}}
 break;
 case 30:
 //#line 75 "gramatica.y"
@@ -1548,7 +1544,7 @@ case 30:
 break;
 case 31:
 //#line 79 "gramatica.y"
-{ pilaWhile.push(label); agregarAPolaca("LABEL "+label+":"); label++; }
+{ pilaWhile.push(label); agregarAPolaca("LABEL"+label+":"); label++; }
 break;
 case 32:
 //#line 83 "gramatica.y"
@@ -1572,11 +1568,11 @@ case 36:
 break;
 case 37:
 //#line 91 "gramatica.y"
-{if (!val_peek(4).sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); Integer l = label - 1; agregarBifurcacion("LABEL "+l+":");}}
+{if (!val_peek(4).sval.equals("null")) {agregarAPolaca("LABEL"+label+":"); Integer l = label - 1; agregarBifurcacion("LABEL"+l+":");}}
 break;
 case 40:
 //#line 97 "gramatica.y"
-{System.out.println("Ambito en if: " + ambito); if (!val_peek(2).sval.equals("null")) {agregarAPolaca("LABEL "+label+":"); agregarBifurcacion("cond"); yyval = new ParserVal("sin error");} else {yyval = new ParserVal("null");}}
+{System.out.println("Ambito en if: " + ambito); if (!val_peek(2).sval.equals("null")) {agregarAPolaca("LABEL"+label+":"); agregarBifurcacion("cond"); yyval = new ParserVal("sin error");} else {yyval = new ParserVal("null");}}
 break;
 case 41:
 //#line 101 "gramatica.y"
@@ -1997,7 +1993,7 @@ case 148:
 //#line 343 "gramatica.y"
 {String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} yyval = new ParserVal(cte);}
 break;
-//#line 1924 "Parser.java"
+//#line 1920 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
