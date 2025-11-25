@@ -10,8 +10,13 @@ import AnalizadorSintactico.*;
 public class Assembler {
     private HashMap<String, ArrayList<String>> ts;
     private ArrayList<String> polacaLineal = new ArrayList<>();
+    private StringBuilder data = new StringBuilder();
+    private StringBuilder code = new StringBuilder();
+    private StringBuilder errores = new StringBuilder();
+    private String ambito;
     private int nroAux = 0;
     private int nroMensaje = 0;
+    private int nroError = 0;
 
     public Assembler(HashMap<String, ArrayList<String>> ts, HashMap<String, ArrayList<String>> polacaInversa) {
         this.ts = ts;
@@ -39,22 +44,17 @@ public class Assembler {
     }
 
     public void generarAssembler() {
-        //Creamos dos estructuras en donde vamos a ir escribiendo para luego pasar todo a un archivo .asm
-        StringBuilder data = new StringBuilder();
-        StringBuilder code = new StringBuilder();
-
-        inicializarData(data);
-
+        inicializarData();
 
         Stack<String> pila = new Stack<>();
-        String ambito = "MAIN";
+        ambito = "MAIN";
         for (String token : polacaLineal)
-            casePolaca(token, code, data, pila, ambito);
+            casePolaca(token,pila);
 
-        crearArchivoASM(data, code);
+        crearArchivoASM();
     }
 
-    public String tipoToken(String ambito, String identificador) {
+    public String tipoToken(String identificador) {
         if (ts.containsKey(identificador)) {
             //ES CTE porque no tiene ambito asociado
             ArrayList<String> info = ts.get(identificador);
@@ -70,7 +70,7 @@ public class Assembler {
         return null;
     }
 
-    public void inicializarData(StringBuilder data) {
+    public void inicializarData() {
         //Agregamos un espacio de 20 bytes, para poder imrpimir valores numericos pasados a caracteres
         data.append("IMPRESIONES DB 20 dup(0)\n");
         data.append("FORMATO db \"%d\",0\n");
@@ -88,7 +88,7 @@ public class Assembler {
         }
     }
 
-    public void crearArchivoASM(StringBuilder data, StringBuilder code) {
+    public void crearArchivoASM() {
         StringBuilder out = new StringBuilder();
         out.append(".586\n");
         out.append(".MODEL flat, stdcall\n");
@@ -112,6 +112,9 @@ public class Assembler {
         out.append("START:\n");
         out.append(code).append("\n");
 
+        out.append("JMP FIN\n"); //salta para no imprimir errores
+        out.append(errores).append("\n");
+
         out.append("FIN:\n invoke ExitProcess, 0\n"); //TERMINAR PROCESO WINDOWS
         out.append("END START\n");
 
@@ -124,7 +127,7 @@ public class Assembler {
 
     }
 
-    public void cargarOperandos(String op1, String op2, String ambito, StringBuilder code, StringBuilder data) {
+   /* public void cargarOperandos(String op1, String op2, String ambito, StringBuilder code, StringBuilder data) {
         //tipo1 siempre nos aseguramos que sea un ID de tipo ULONG para poder usar el CMP
         String a = ambito.replace(":","_");
         code.append("MOV EAX,_"+a+"_"+op1+"\n");
@@ -150,9 +153,9 @@ public class Assembler {
         }else{
             //error
         }
-    }
+    }*/
 
-    public void conversion(String dfloat, StringBuilder code, StringBuilder data){
+    public void conversion(String dfloat){
         if(!dfloat.startsWith("-")) {
             //la operacion FISTP toma el DFLOAT la pila SP y guarda en aux el nro parseado
             nroAux++;
@@ -169,7 +172,7 @@ public class Assembler {
         }
     }
 
-    public void casePolaca(String token, StringBuilder code, StringBuilder data, Stack<String> pila, String ambito){
+    public void casePolaca(String token, Stack<String> pila){
         switch (token) {
 
             // OPERACIONES BINARIAS-----------------------------------------------------------
@@ -177,36 +180,97 @@ public class Assembler {
                 // suma
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
+                cargarOperandos(operando1, operando2);
+
+                code.append("ADD EAX, EBX\n");
+                //salta si el flag CF fue modificado a 1 (Hubo overflow)
+                agregarError("La suma ha exedido el rango del tipo utilizado");
+                nroError++;
+                code.append("JC ERROR"+nroError+"\n");
+
+                //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
+                nroAux++;
+                data.append("@AUX" + nroAux + " DD ?\n");
+                code.append("MOV @AUX"+nroAux+", EAX\n");
+                pila.push("@AUX"+nroAux);
+                System.out.println("TOPE DE PILA"+pila.firstElement());
             }
 
             case "-" -> {
                 // resta
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
+
+                cargarOperandos(operando1, operando2);
+                code.append("SUB EAX, EBX\n");
+                //si el op1 < op2 de modifica CF = 1.
+                agregarError("La resta ha exedido el rango del tipo utilizado");
+                nroError++;
+                code.append("JC ERROR"+nroError+"\n");
+
+                //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
+                nroAux++;
+                data.append("@AUX" + nroAux + " DD ?\n");
+                code.append("MOV @AUX"+nroAux+", EAX\n");
+                pila.push("@AUX"+nroAux);
             }
 
             case "*" -> {
                 // multiplicación
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
+
+                cargarOperandos(operando1, operando2);
+                //El primer operando debe estar en EAX para el mul. La funcion cargarOperandos ya lo dejo en ese reg
+                code.append("MUL EBX\n");
+                //salta si el flag CF fue modificado a 1 (Hubo overflow)
+                agregarError("La multiplicacion ha exedido el rango del tipo utilizado");
+                nroError++;
+                code.append("JC ERROR"+nroError+"\n");
+
+                //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
+                nroAux++;
+                data.append("@AUX" + nroAux + " DD ?\n");
+                code.append("MOV @AUX"+nroAux+", EAX\n");
+                pila.push("@AUX"+nroAux);
             }
 
             case "/" -> {
                 // división
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
+
+                cargarOperandos(operando1, operando2);
+
+                //salta si el flag ZF = 1. Este se activa si los numeros son iguales.
+                code.append("CMP EBX, 0\n");
+                agregarError("No se puede realizar la division por cero");
+                nroError++;
+                code.append("JZ ERROR"+nroError+"\n");
+
+                //El primer operando debe estar en EDX:EAX, por lo que lleno a EDX de ceros.
+                code.append("MOV EDX, 0\n");
+                code.append("DIV EBX\n");
+
+                //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
+                nroAux++;
+                data.append("@AUX" + nroAux + " DD ?\n");
+                code.append("MOV @AUX"+nroAux+", EAX\n");
+                pila.push("@AUX"+nroAux);
             }
 
             case "->" -> {
                 // asignación especial (parametros)
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
+                cargarOperandos(operando1, operando2);
             }
 
             case ":=" -> {
                 // asignación común
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
+                cargarOperandos(operando1, operando2);
             }
 
             case ">" -> {
@@ -214,22 +278,10 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, operando2);
-                if(tipo1.equals("ID")) {
-                    cargarOperandos(operando1, operando2, ambito, code, data);
-                    //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
-                    code.append("JA ");
-                }else{
-                    if(tipo2.equals("ID")) {
-                        //tengo que invertir la condicion para que el inmediato sea operador 2
-                        pila.push(operando1);
-                        pila.push(operando2);
-                        casePolaca("<", code, data, pila, ambito);
-                    }else {
-                        //error
-                    }
-                }
+                cargarOperandos(operando1, operando2);
+                //Siempre va a ser Jump above (saltos sin signo) porque los dfloats son convertidos a ulong
+                code.append("CMP EAX, EBX\n");
+                code.append("JA ");
             }
 
             case ">=" -> {
@@ -237,22 +289,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, operando2);
-                if(tipo1.equals("ID")) {
-                    cargarOperandos(operando1, operando2, ambito, code, data);
-                    //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
-                    code.append("JAE ");
-                }else{
-                    if(tipo2.equals("ID")) {
-                        //tengo que invertir la condicion para que el inmediato sea operador 2
-                        pila.push(operando1);
-                        pila.push(operando2);
-                        casePolaca("<=", code, data, pila, ambito);
-                    }else {
-                        //error
-                    }
-                }
+                cargarOperandos(operando1, operando2);
+                code.append("CMP EAX, EBX\n");
+                code.append("JAE ");
             }
 
             case "<" -> {
@@ -260,22 +299,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, operando2);
-                if(tipo1.equals("ID")) {
-                    cargarOperandos(operando1, operando2, ambito, code, data);
-                    //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
-                    code.append("JB ");
-                }else{
-                    if(tipo2.equals("ID")) {
-                        //tengo que invertir la condicion para que el inmediato sea operador 2
-                        pila.push(operando1);
-                        pila.push(operando2);
-                        casePolaca(">", code, data, pila, ambito);
-                    }else {
-                        //error
-                    }
-                }
+                cargarOperandos(operando1, operando2);
+                code.append("CMP EAX, EBX\n");
+                code.append("JB ");
             }
 
             case "<=" -> {
@@ -283,22 +309,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, operando2);
-                if(tipo1.equals("ID")) {
-                    cargarOperandos(operando1, operando2, ambito, code, data);
-                    //Siempre va a ser Jump above (saltos sin signo) porque el operador 1 siemrpe es un ID
-                    code.append("JBE ");
-                }else{
-                    if(tipo2.equals("ID")) {
-                        //tengo que invertir la condicion para que el inmediato sea operador 2
-                        pila.push(operando1);
-                        pila.push(operando2);
-                        casePolaca(">=", code, data, pila, ambito);
-                    }else {
-                        //error
-                    }
-                }
+                cargarOperandos(operando1, operando2);
+                code.append("CMP EAX, EBX\n");
+                code.append("JBE ");
             }
 
             case "==" -> {
@@ -306,18 +319,8 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, operando2);
-
-                if(tipo1.equals("ID"))
-                    cargarOperandos(operando1, operando2, ambito, code, data);
-                else
-                    if(tipo2.equals("ID"))
-                        //Solo invierto los operandos en la llamada, porque el comparador es igual
-                        cargarOperandos(operando2, operando1, ambito, code, data);
-                    else
-                        //error
-
+                cargarOperandos(operando1, operando2);
+                code.append("CMP EAX, EBX\n");
                 code.append("JE ");
             }
 
@@ -326,19 +329,8 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                String tipo1 = tipoToken(ambito, operando1);
-                String tipo2 = tipoToken(ambito, operando2);
-
-                if(tipo1.equals("ID"))
-                    cargarOperandos(operando1, operando2, ambito, code, data);
-                else
-                    if(tipo2.equals("ID"))
-                        //Solo invierto los operandos en la llamada, porque el comparador es igual
-                        cargarOperandos(operando2, operando1, ambito, code, data);
-                    else {
-                    //error
-                    }
-
+                cargarOperandos(operando1, operando2);
+                code.append("CMP EAX, EBX\n");
                 code.append("JNE ");
             }
 
@@ -361,21 +353,18 @@ public class Assembler {
             case "print" -> {
                 // imprimir
                 String mensaje = pila.pop();
-                System.out.println("PRINT"+mensaje);
-
+                nroMensaje++;
                 if(mensaje.startsWith("\"")){ //Empriza con comillas, es una cadena
                     //Creo un messagebox y lo imrpimo
-                    System.out.println("entro al if");
                     data.append("msj"+nroMensaje+" db "+mensaje+", 0\n");
                     code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
-                    nroMensaje++;
                 }else{
-                    String tipo = tipoToken(ambito, mensaje);
+                    String tipo = tipoToken(mensaje);
                     if(tipo.equals("ID")){
                         String a = ambito.replace(":","_");
                         code.append("MOV EAX, _"+a+"_"+mensaje+"\n");
                     }else if(tipo.equals("ULONG")){
-                        conversion(mensaje, code, data);
+                        conversion(mensaje);
                         code.append("MOV EAX, @AUX"+nroAux+"\n");
                     }else{
                         code.append("MOV EAX, _"+mensaje+"\n");
@@ -407,18 +396,57 @@ public class Assembler {
                 pila.pop();
             }
 
-        }
+            default -> {
+                if (token.endsWith(":")) {
+                    //label
+                    code.append(token + "\n");
+                    if (token.startsWith("MAIN:"))
+                        ambito = token.replace("_",":"); //ambito necesito que este como son las claves en la TS, con :
 
-        if (token.endsWith(":")) {
-            //label
-            code.append(token + "\n");
-            if (token.startsWith("MAIN:"))
-                ambito = token.replace("_",":"); //ambito necesito que este como son las claves en la TS, con :
-
-        } else {
-            //identificador, constantes, cadenas  o señales de control, solo apilo
-            pila.push(token);
+                } else {
+                    //identificador, constantes, cadenas  o señales de control, solo apilo
+                    pila.push(token);
+                }
+            }
         }
+    }
+
+    public void cargarOperandos(String op1, String op2){
+        //Esta funcion toma OP1 y OP2 y los carga en EAX y en EBX respectivamente
+
+        String tipo1 = tipoToken(op1);
+        String a = ambito.replace(":","_");
+        switch (tipo1){
+            case "ID" ->
+                    code.append("MOV EAX,_"+a+"_"+op1+"\n");
+            case "ULONG" ->
+                    code.append("MOV EAX,"+op1+"\n");
+            case "DFLOAT" -> {
+                    conversion(op1);
+                    code.append("MOV EBX, @AUX"+nroAux+"\n");
+            }
+        }
+        System.out.println("EN CARGAR: "+op2);
+        String tipo2 = tipoToken(op2);
+        switch (tipo2){
+            case "ID" ->
+                    code.append("MOV EBX,_"+a+"_"+op2+"\n");
+            case "ULONG" ->
+                    code.append("MOV EBX,"+op2+"\n");
+            case "DFLOAT" -> {
+                conversion(op2);
+                code.append("MOV EBX, @AUX"+nroAux+"\n");
+            }
+        }
+    }
+
+    public void agregarError(String error){
+        nroMensaje++;
+        //Creo un messagebox y lo imrpimo
+        data.append("msj"+nroMensaje+" db \""+error+"\", 0\n");
+        errores.append("ERROR"+nroError+":\n");
+        errores.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
+        errores.append("JMP FIN\n"); //terminamos la ejecucion
     }
 }
 
