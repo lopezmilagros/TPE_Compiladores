@@ -9,31 +9,70 @@ include \masm32\include\masm32.inc
 includelib \masm32\lib\user32.lib
 includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\masm32.lib
+
 .DATA
 IMPRESIONES DB 20 dup(0)
 FORMATO db "%d",0
-_MAIN_X DD 7
-msj0 db "Hola soy un programa muy lindo!!", 0
-msj1 db "X es menor", 0
-msj2 db "X es mayor", 0
+_MAIN_FUNC2_Y DD ?
+_MAIN_FUNC2_K DD ?
+_MAIN_H DD ?
+@AUX1 DQ ?@AUX2 DD ?@AUX3 DQ ?@AUX4 DD ?msj1 db "La suma ha exedido el rango del tipo utilizado", 0
+@AUX5 DD ?
 
 .CODE
 START:
-invoke MessageBox, NULL, addr msj0, addr msj0, MB_OK
-MOV EAX,_MAIN_X
-CMP EAX,5
-JA LABEL0
+
+; cargar operandos en registros
+FLD @AUX1
+FISTP @AUX2
+MOV EAX, @AUX2
+FLD @AUX3
+FISTP @AUX4
+MOV EBX, @AUX4
+
+ADD EAX, EBX
+JC ERROR1
+MOV @AUX5, EAX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_H
+MOV EBX,@AUX5
+
+MOV _MAIN_H, EBX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNC2_K
+MOV EBX,_MAIN_H
+
+MOV _MAIN_FUNC2_K, EBX
+CALL FUNC2
+
+; cargar operandos en registros
+MOV EAX,_MAIN_H
+MOV EBX,_MAIN_FUNC2_K
+
+MOV _MAIN_H, EBX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_H
+MOV EBX, _MAIN_FUNC2_Y
+
+MOV _MAIN_H, EBX
+
+MAIN_FUNC2:
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNC2_Y
+MOV EBX,3
+
+MOV _MAIN_FUNC2_Y, EBX
+RET
+
+JMP FIN
+; manejo de errores
+ERROR1:
 invoke MessageBox, NULL, addr msj1, addr msj1, MB_OK
-MOV EAX, _MAIN_X
-invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
-invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
-JMP LABEL1
-LABEL0:
-invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
-MOV EAX, _MAIN_X
-invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
-invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
-LABEL1:
+JMP FIN
 
 FIN:
  invoke ExitProcess, 0

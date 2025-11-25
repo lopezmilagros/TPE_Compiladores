@@ -1,25 +1,10 @@
 PRORAMA{
-    ##TIENE ERRORES DE ALCANCE##
-    W := 4UL - 5UL;
-    ulong W;
-    X, Y = 5UL, 6UL;
+    ulong H := .8 + .7;
 
-    ulong H := J + 3UL;
-    ulong H := 8UL + 34UL;
-    ulong J,L,W;
-
-    ulong FUNC1 (ulong K){ ulong X := 68UL; }
-    ulong FUNC2 (ulong K){
+    ulong FUNC2 (cvr ulong K){
         ulong Y:= 3UL;
-        ulong FUNC2(ulong S){
-            S:= 3UL;
-            return (AC, AB);
-        }
-
-        ulong M := FUNC3(Y->S) + 5UL;
+        return (Y, K);
     }
 
-    ulong FUNC2(ulong K){
-        ulong BM := 45UL;
-    }
+    H := FUNC2(H->K);
 }

@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 %%
 prog
-    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; } }
+    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; polacaInversa = null; } }
     | bloque        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
     ;
 
@@ -94,7 +94,7 @@ sentencia_if
     ;
 
 header_if
-    : IF PARENTESISA condicion PARENTESISC bloque        {System.out.println("Ambito en if: " + ambito); if (!$3.sval.equals("null")) {agregarAPolaca("LABEL"+label+":"); agregarBifurcacion("cond"); $$ = new ParserVal("sin error");} else {$$ = new ParserVal("null");}}
+    : IF PARENTESISA condicion PARENTESISC bloque        {if (!$3.sval.equals("null")) {agregarAPolaca("LABEL"+label+":"); agregarBifurcacion("cond"); $$ = new ParserVal("sin error");} else {$$ = new ParserVal("null");}}
     ;
 
 sentencia_if_error
@@ -213,6 +213,8 @@ llamado_funcion
                                                             a.add("call");
                                                             //Chequeo si es CVR reasigno los formales a los reales
                                                             if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
+                                                            a.add("reemplazar_"+ambito+":"+$1.sval);
+
                                                          }else {
                                                             agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+$1.sval+"' fuera de alcance.");
                                                             a.add("null");} $$ = new ParserVal(a);
@@ -232,7 +234,7 @@ sentencia_declarativa
     | funcion                               {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de funcion");}
     | tipo ID error                         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
     | tipo lista_id error                   {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
-    | tipo ID PUNTO ID PUNTOCOMA {System.out.println("ERRORRRRRR");}
+    | tipo ID PUNTO ID PUNTOCOMA
     ;
 
 funcion
@@ -302,7 +304,7 @@ header_lambda
                                                                     ArrayList<String> parametroID = new ArrayList<String>();
                                                                     parametroID.add($4.sval);
                                                                     modificarUsosParametros(parametroID, "Nombre de parametro");
-                                                                    System.out.println("AMBITO header LAMBDA2 : "+ambito);
+
 
                                                                     $$ = new ParserVal($4.sval);}
     ;
@@ -436,7 +438,6 @@ public void modificarUsosParametros(ArrayList<String> lista, String uso){
         int indice = parametro.lastIndexOf(" ");
         parametro = parametro.substring(indice + 1);
         modificarUsoTS(parametro, uso);
-        System.out.println("Se modifico el uso del parametro" +ambito+parametro);
     }
 }
 
@@ -485,8 +486,6 @@ public void modificarAmbitosTS(ArrayList<String> a){
             String tipo = parametro.substring(0, indice2);
             parametro = parametro.substring(indice2 + 1);
 
-            System.out.println("mi parametro: "+parametro);
-            System.out.println("mi ambito afuera: "+ambitoAfuera);
             ArrayList<String> aux = tablaDeSimbolos.get(ambitoAfuera+":"+parametro);
 
             //le agrego el tipo del parametro a la TS
@@ -594,7 +593,7 @@ public void cvrAPolaca(String funcion, ArrayList<String> parametros_reales, Arra
         if(p.contains("cvr")){
             arreglo.add(nombre);
             arreglo.add(real);
-            arreglo.add("->");
+            arreglo.add("<-");
         }
     }
 }
@@ -871,6 +870,18 @@ public boolean variablesDeclaradas(ArrayList<String> a){
     }
     return declarada;
 }
+
+public boolean chequeoReturn(){
+    for(String clave: polacaInversa.keySet()){
+        if(!clave.equals("MAIN")){
+            ArrayList<String> a = polacaInversa.get(clave);
+            if (!a.contains("return"))
+                return false;
+        }
+    }
+    return true;
+}
+
 //----------------------------------------------------------------------------------------------------------ERRORES SEMANTICOS
 ArrayList<String> erroresSemanticos = new ArrayList<>();
 
@@ -880,11 +891,11 @@ void agregarErrorSemantico(String s){
 
 public boolean huboError(){
     if(!erroresSemanticos.isEmpty()){
-            for (String e :errores){
-                if(e.contains("ERROR"))
-                    return true;
-            }
+        for (String e :erroresSemanticos){
+            if(e.contains("ERROR"))
+                return true;
         }
+    }
 
     if(!errores.isEmpty()){
         for (String e :errores){
@@ -904,7 +915,6 @@ public boolean huboError(){
 }
 
 public boolean existeVariable(String name){
-    System.out.println("VARIABLE!!: "+name);
     for (String clave : tablaDeSimbolos.keySet()){
         if(clave.endsWith(name)){
             return true;

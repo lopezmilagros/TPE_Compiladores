@@ -75,13 +75,14 @@ public  class Main {
           System.out.println("TABLA DEL SINTACTICO");
           parser.imprimirTabla();
           //aLex.imprimirTokensLeidos();
-          if(parser.getPolacaInversa() != null)
+          if(parser.getPolacaInversa() != null) {
                parser.imprimirPolaca();
-
+               Assembler a = new Assembler(parser.getTablaDeSimbolos(),parser.getPolacaInversa());
+               a.generarAssembler();
+          }
           System.out.println(parser.getError());
 
-          Assembler a = new Assembler(parser.getTablaDeSimbolos(),parser.getPolacaInversa());
-          a.generarAssembler();
+
      }
 }
 

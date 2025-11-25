@@ -14,6 +14,7 @@ public class Assembler {
     private StringBuilder code = new StringBuilder();
     private StringBuilder errores = new StringBuilder();
     private String ambito;
+    private String llamadoFuncion;
     private int nroAux = 0;
     private int nroMensaje = 0;
     private int nroError = 0;
@@ -31,15 +32,15 @@ public class Assembler {
         for (String funcion : polacaInversa.keySet()) {
             if (!funcion.equals("MAIN")) { // evitamos repetir el main
                 //Quito el : del name mangling de la funcion, reemplazandolo por _
-                funcion = funcion.replace(":","_");
-                polacaLineal.add(funcion + ":");  // etiqueta
+                String funcionEtiqueta = funcion.replace(":","_");
+                polacaLineal.add(funcionEtiqueta + ":");  // etiqueta
                 polacaLineal.addAll(polacaInversa.get(funcion));
             }
         }
 
-        /*for (String elemento : polacaLineal) {
+        for (String elemento : polacaLineal) {
             System.out.print(elemento + ",");
-        }*/
+        }
 
     }
 
@@ -48,8 +49,24 @@ public class Assembler {
 
         Stack<String> pila = new Stack<>();
         ambito = "MAIN";
-        for (String token : polacaLineal)
+        String token;
+        for (int i = 0; i < polacaLineal.size(); i++){
+            token = polacaLineal.get(i);
+            if (token.equals("->")){
+                int j = i;
+                while(j < polacaLineal.size() && !polacaLineal.get(j).equals("call")){
+                    String clave = ambito + ":" + polacaLineal.get(j);
+                    if (ts.containsKey(clave)){
+                        ArrayList<String> a = ts.get(clave);
+                        if(a.contains("Nombre de funcion")){
+                            llamadoFuncion = clave;
+                        }
+                    }
+                    j++;
+                }
+            }
             casePolaca(token,pila);
+        }
 
         crearArchivoASM();
     }
@@ -65,6 +82,11 @@ public class Assembler {
 
                 ArrayList<String> info = ts.get(ambito +":"+ identificador);
                 return (info.get(0)); //ID O CADENA
+            } else {
+                if (ts.containsKey(llamadoFuncion+":"+ identificador)){
+                    ArrayList<String> info = ts.get(llamadoFuncion +":"+ identificador);
+                    return (info.get(0)); //ID O CADENA
+                }
             }
         }
         return null;
@@ -79,11 +101,13 @@ public class Assembler {
         //ULONG 32 BITS
         for (String s : ts.keySet()) {
             ArrayList<String> info = ts.get(s);
-            if (info.get(0).equals("ID") && (info.get(2).equals("Nombre de variable") || info.get(2).equals("Nombre de parametro"))) {
-                //Como no se pueden declarar variables DFLOAT, asumimos que todas tienen tipo = ULONG
-                //las variables llevan prefijo _, y reemplazo los : del nameMangling por _
-                s = s.replace(":","_");
-                data.append("_" + s + " DD ?\n");
+            if(info.size() >= 3 ){ //tiene uso
+                if (info.get(0).equals("ID") && (info.get(2).equals("Nombre de variable") || info.get(2).equals("Nombre de parametro"))) {
+                    //Como no se pueden declarar variables DFLOAT, asumimos que todas tienen tipo = ULONG
+                    //las variables llevan prefijo _, y reemplazo los : del nameMangling por _
+                    s = s.replace(":","_");
+                    data.append("_" + s + " DD ?\n");
+                }
             }
         }
     }
@@ -103,6 +127,7 @@ public class Assembler {
         out.append("includelib \\masm32\\lib\\user32.lib\n");
         out.append("includelib \\masm32\\lib\\kernel32.lib\n");
         out.append("includelib \\masm32\\lib\\masm32.lib\n");
+        out.append("\n");
 
 
         out.append(".DATA\n");
@@ -113,6 +138,7 @@ public class Assembler {
         out.append(code).append("\n");
 
         out.append("JMP FIN\n"); //salta para no imprimir errores
+        out.append("; manejo de errores\n");
         out.append(errores).append("\n");
 
         out.append("FIN:\n invoke ExitProcess, 0\n"); //TERMINAR PROCESO WINDOWS
@@ -126,34 +152,6 @@ public class Assembler {
         }
 
     }
-
-   /* public void cargarOperandos(String op1, String op2, String ambito, StringBuilder code, StringBuilder data) {
-        //tipo1 siempre nos aseguramos que sea un ID de tipo ULONG para poder usar el CMP
-        String a = ambito.replace(":","_");
-        code.append("MOV EAX,_"+a+"_"+op1+"\n");
-
-        String tipo2 = tipoToken(ambito, op2);
-        if (tipo2 != null){
-            switch (tipo2){
-                case "DFLOAT" -> {
-                    conversion(op2, code, data);
-                    code.append("MOV EBX, @AUX"+nroAux+"\n");
-                    code.append("CMP EAX, EBX\n");
-
-                }
-                case "ULONG" -> {
-                    code.append("CMP EAX,"+op2+"\n");
-                }
-                case "ID" -> {
-                    // variable de tipo ulong
-                    code.append("MOV EBX,_"+ambito+op2+"\n");
-                    code.append("CMP EAX, EBX\n");
-                }
-            }
-        }else{
-            //error
-        }
-    }*/
 
     public void conversion(String dfloat){
         if(!dfloat.startsWith("-")) {
@@ -173,6 +171,7 @@ public class Assembler {
     }
 
     public void casePolaca(String token, Stack<String> pila){
+        System.out.println(token);
         switch (token) {
 
             // OPERACIONES BINARIAS-----------------------------------------------------------
@@ -184,8 +183,8 @@ public class Assembler {
 
                 code.append("ADD EAX, EBX\n");
                 //salta si el flag CF fue modificado a 1 (Hubo overflow)
-                agregarError("La suma ha exedido el rango del tipo utilizado");
                 nroError++;
+                agregarError("La suma ha exedido el rango del tipo utilizado");
                 code.append("JC ERROR"+nroError+"\n");
 
                 //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
@@ -193,7 +192,7 @@ public class Assembler {
                 data.append("@AUX" + nroAux + " DD ?\n");
                 code.append("MOV @AUX"+nroAux+", EAX\n");
                 pila.push("@AUX"+nroAux);
-                System.out.println("TOPE DE PILA"+pila.firstElement());
+                agregarATS("@AUX"+nroAux);
             }
 
             case "-" -> {
@@ -204,8 +203,8 @@ public class Assembler {
                 cargarOperandos(operando1, operando2);
                 code.append("SUB EAX, EBX\n");
                 //si el op1 < op2 de modifica CF = 1.
-                agregarError("La resta ha exedido el rango del tipo utilizado");
                 nroError++;
+                agregarError("La resta ha exedido el rango del tipo utilizado");
                 code.append("JC ERROR"+nroError+"\n");
 
                 //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
@@ -213,6 +212,7 @@ public class Assembler {
                 data.append("@AUX" + nroAux + " DD ?\n");
                 code.append("MOV @AUX"+nroAux+", EAX\n");
                 pila.push("@AUX"+nroAux);
+                agregarATS("@AUX"+nroAux);
             }
 
             case "*" -> {
@@ -224,8 +224,8 @@ public class Assembler {
                 //El primer operando debe estar en EAX para el mul. La funcion cargarOperandos ya lo dejo en ese reg
                 code.append("MUL EBX\n");
                 //salta si el flag CF fue modificado a 1 (Hubo overflow)
-                agregarError("La multiplicacion ha exedido el rango del tipo utilizado");
                 nroError++;
+                agregarError("La multiplicacion ha exedido el rango del tipo utilizado");
                 code.append("JC ERROR"+nroError+"\n");
 
                 //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
@@ -233,6 +233,7 @@ public class Assembler {
                 data.append("@AUX" + nroAux + " DD ?\n");
                 code.append("MOV @AUX"+nroAux+", EAX\n");
                 pila.push("@AUX"+nroAux);
+                agregarATS("@AUX"+nroAux);
             }
 
             case "/" -> {
@@ -243,9 +244,9 @@ public class Assembler {
                 cargarOperandos(operando1, operando2);
 
                 //salta si el flag ZF = 1. Este se activa si los numeros son iguales.
+                nroError++;
                 code.append("CMP EBX, 0\n");
                 agregarError("No se puede realizar la division por cero");
-                nroError++;
                 code.append("JZ ERROR"+nroError+"\n");
 
                 //El primer operando debe estar en EDX:EAX, por lo que lleno a EDX de ceros.
@@ -257,20 +258,39 @@ public class Assembler {
                 data.append("@AUX" + nroAux + " DD ?\n");
                 code.append("MOV @AUX"+nroAux+", EAX\n");
                 pila.push("@AUX"+nroAux);
+                agregarATS("@AUX"+nroAux);
             }
 
             case "->" -> {
-                // asignación especial (parametros)
-                String operando1 = pila.pop();
-                String operando2 = pila.pop();
+                //parametro real -> parametro formal
+                String operando1 = pila.pop(); // formal
+                String operando2 = pila.pop(); // real
                 cargarOperandos(operando1, operando2);
+
+                //llamadoFuncion es una variable que indica el proximo ambito a llamar
+                String a = llamadoFuncion.replace(":", "_");
+                code.append("MOV _"+a+"_"+operando1+", EBX\n");
+            }
+
+            case "<-" -> {
+                //parametro formal -> parametro real
+                String operando1 = pila.pop(); // real
+                String operando2 = pila.pop(); // formal
+                cargarOperandos(operando1, operando2);
+
+                //llamadoFuncion es una variable que indica el proximo ambito a llamar
+                String a = ambito.replace(":", "_");
+                code.append("MOV _"+a+"_"+operando1+", EBX\n");
             }
 
             case ":=" -> {
                 // asignación común
-                String operando1 = pila.pop();
+                String operando1 = pila.pop(); //variable a asignar
                 String operando2 = pila.pop();
                 cargarOperandos(operando1, operando2);
+                String a = ambito.replace(":", "_");
+                code.append("MOV _"+a+"_"+operando1+", EBX\n");
+
             }
 
             case ">" -> {
@@ -348,14 +368,15 @@ public class Assembler {
             case "call" -> {
                 // llamada a función
                 String operando = pila.pop();
+                code.append("CALL "+operando+"\n");
             }
 
             case "print" -> {
                 // imprimir
                 String mensaje = pila.pop();
-                nroMensaje++;
                 if(mensaje.startsWith("\"")){ //Empriza con comillas, es una cadena
                     //Creo un messagebox y lo imrpimo
+                    nroMensaje++;
                     data.append("msj"+nroMensaje+" db "+mensaje+", 0\n");
                     code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
                 }else{
@@ -388,21 +409,38 @@ public class Assembler {
 
             case "return" -> {
                 // return
+                System.out.println("ENTRE AL RETURN");
                 ArrayList<String> variables = new ArrayList<>();
-                while (!pila.firstElement().equals("empieza lista")) {
-                    variables.add(pila.pop());
+                while (!pila.peek().equals("empieza lista")) {
+                    String var = pila.pop();
+                    variables.add(var);
+                    System.out.println("RETORNO "+var);
                 }
                 // saco el "empieza lista"
                 pila.pop();
+
+                code.append("RET\n");
+                //Busco donde esta reemplazar_(funcion) y le asigno la primera variable del return
+                //Tengo que cambiar el code a string para reemplazar lo que coincida
+                String variable = variables.getLast();
+                System.out.println("RETORNO "+variable);
+                String flag = "reemplazar_" + ambito;
+                String reemplazo = "_"+ambito.replace(":","_")+"_"+variable;
+
+                String nuevo = code.toString().replace(flag, reemplazo);
+                code.setLength(0); // vacía el StringBuilder
+                code.append(nuevo); // lo vuelve a cargar
+
             }
 
             default -> {
                 if (token.endsWith(":")) {
-                    //label
-                    code.append(token + "\n");
-                    if (token.startsWith("MAIN:"))
-                        ambito = token.replace("_",":"); //ambito necesito que este como son las claves en la TS, con :
-
+                    //label;
+                    code.append("\n"+token + "\n");
+                    if (token.startsWith("MAIN")) {
+                        ambito = token.replace("_", ":"); //ambito necesito que este como son las claves en la TS, con :
+                        ambito = ambito.substring(0, ambito.length() - 1); // le saco el ultimo ':'
+                    }
                 } else {
                     //identificador, constantes, cadenas  o señales de control, solo apilo
                     pila.push(token);
@@ -414,8 +452,15 @@ public class Assembler {
     public void cargarOperandos(String op1, String op2){
         //Esta funcion toma OP1 y OP2 y los carga en EAX y en EBX respectivamente
 
+        code.append("\n");
+        code.append("; cargar operandos en registros\n");
         String tipo1 = tipoToken(op1);
-        String a = ambito.replace(":","_");
+        String a;
+        if(ts.containsKey(llamadoFuncion+ ":" +op1))
+            a = llamadoFuncion.replace(":", "_");
+        else
+            a = ambito.replace(":","_");
+
         switch (tipo1){
             case "ID" ->
                     code.append("MOV EAX,_"+a+"_"+op1+"\n");
@@ -423,21 +468,31 @@ public class Assembler {
                     code.append("MOV EAX,"+op1+"\n");
             case "DFLOAT" -> {
                     conversion(op1);
-                    code.append("MOV EBX, @AUX"+nroAux+"\n");
+                    code.append("MOV EAX, @AUX"+nroAux+"\n");
             }
         }
-        System.out.println("EN CARGAR: "+op2);
-        String tipo2 = tipoToken(op2);
-        switch (tipo2){
-            case "ID" ->
-                    code.append("MOV EBX,_"+a+"_"+op2+"\n");
-            case "ULONG" ->
-                    code.append("MOV EBX,"+op2+"\n");
-            case "DFLOAT" -> {
-                conversion(op2);
-                code.append("MOV EBX, @AUX"+nroAux+"\n");
+        if(!op2.startsWith("reemplazar_")){
+            String tipo2 = tipoToken(op2);
+            if(ts.containsKey(llamadoFuncion+ ":" +op2))
+                a = llamadoFuncion.replace(":", "_");
+            else
+                a = ambito.replace(":","_");
+
+            switch (tipo2){
+                case "ID" ->
+                        code.append("MOV EBX,_"+a+"_"+op2+"\n");
+                case "ULONG" ->
+                        code.append("MOV EBX,"+op2+"\n");
+                case "DFLOAT" -> {
+                        conversion(op2);
+                        code.append("MOV EBX, @AUX"+nroAux+"\n");
+                }
             }
+        }else{
+            code.append("MOV EBX, "+op2+"\n");
         }
+
+        code.append("\n");
     }
 
     public void agregarError(String error){
@@ -447,6 +502,14 @@ public class Assembler {
         errores.append("ERROR"+nroError+":\n");
         errores.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
         errores.append("JMP FIN\n"); //terminamos la ejecucion
+    }
+
+    public void agregarATS(String aux){
+        ArrayList<String> a = new ArrayList<>();
+        a.add(0,"ID");
+        a.add(1,"ULONG");
+        a.add(2,"Variable auxiliar");
+        ts.put(aux,a);
     }
 }
 
