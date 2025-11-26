@@ -27,6 +27,9 @@ public class Assembler {
         // agregar primero el main
         if (polacaInversa.containsKey("MAIN")) {
             polacaLineal.addAll(polacaInversa.get("MAIN"));
+            polacaLineal.add("FIN");
+            polacaLineal.add("BI"); //agrego un salto a fin cuando termina main para evitar siga leyendo hacia abajo y
+                                    // que se ejecuten las funciones cuando no deben.
         }
         // agregar el resto de las funciones
         for (String funcion : polacaInversa.keySet()) {
@@ -137,7 +140,6 @@ public class Assembler {
         out.append("START:\n");
         out.append(code).append("\n");
 
-        out.append("JMP FIN\n"); //salta para no imprimir errores
         out.append("; manejo de errores\n");
         out.append(errores).append("\n");
 
@@ -155,19 +157,35 @@ public class Assembler {
 
     public void conversion(String dfloat){
         if(!dfloat.startsWith("-")) {
+            String dfloatConvertido = traducirDfloat(dfloat);
             //la operacion FISTP toma el DFLOAT la pila SP y guarda en aux el nro parseado
             nroAux++;
-            data.append("@AUX" + nroAux + " DQ ?"); //dfloat 64 bits
-            code.append("FLD @AUX" + nroAux + "\n");// cargo en st(0) el dfloat
+            data.append("@AUX" + nroAux + " DQ "+dfloatConvertido+"\n"); //cargo en aux el dfloat 64 bits
+            code.append("FLD @AUX" + nroAux + " ; cargo dfloat a la pila\n");// cargo en st(0) el dfloat
 
             nroAux++;
-            data.append("@AUX" + nroAux + " DD ?"); //resultado ulong
-            code.append("FISTP @AUX" + nroAux + "\n"); //convierte ulong y lo guarda en var aux
+            data.append("@AUX" + nroAux + " DD ?\n"); //resultado ulong
+            code.append("FISTP @AUX" + nroAux + " ; convierto a ulong y lo guardo en aux\n"); //convierte ulong y lo guarda en var aux
         }else{
             //No puedo convertir de negativo a unsigned
+            nroError++;
+            agregarError("No es posible convertir dfloat negativo '"+dfloat+"' a entero sin signo");
+            code.append("JMP ERROR"+nroError+"\n");
 
-            //error
         }
+    }
+
+    public String traducirDfloat(String dfloat){
+        String nuevo = dfloat;
+        if(nuevo.contains("D"))
+            nuevo = nuevo.replace("D","E");
+        if(nuevo.startsWith("."))
+            nuevo = "0"+nuevo;
+        if(nuevo.endsWith("."))
+            nuevo = nuevo+"0";
+        if(nuevo.contains(".E"))
+            nuevo = nuevo.replace(".E", ".0E");
+        return (nuevo);
     }
 
     public void casePolaca(String token, Stack<String> pila){
@@ -181,6 +199,7 @@ public class Assembler {
                 String operando2 = pila.pop();
                 cargarOperandos(operando1, operando2);
 
+                code.append("; suma\n");
                 code.append("ADD EAX, EBX\n");
                 //salta si el flag CF fue modificado a 1 (Hubo overflow)
                 nroError++;
@@ -199,8 +218,9 @@ public class Assembler {
                 // resta
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
-
                 cargarOperandos(operando1, operando2);
+
+                code.append("; resta\n");
                 code.append("SUB EAX, EBX\n");
                 //si el op1 < op2 de modifica CF = 1.
                 nroError++;
@@ -219,8 +239,9 @@ public class Assembler {
                 // multiplicación
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
-
                 cargarOperandos(operando1, operando2);
+
+                code.append("; multiplicacion\n");
                 //El primer operando debe estar en EAX para el mul. La funcion cargarOperandos ya lo dejo en ese reg
                 code.append("MUL EBX\n");
                 //salta si el flag CF fue modificado a 1 (Hubo overflow)
@@ -243,6 +264,7 @@ public class Assembler {
 
                 cargarOperandos(operando1, operando2);
 
+                code.append("; division\n");
                 //salta si el flag ZF = 1. Este se activa si los numeros son iguales.
                 nroError++;
                 code.append("CMP EBX, 0\n");
@@ -267,6 +289,7 @@ public class Assembler {
                 String operando2 = pila.pop(); // real
                 cargarOperandos(operando1, operando2);
 
+                code.append("; asignacion de parametros\n");
                 //llamadoFuncion es una variable que indica el proximo ambito a llamar
                 String a = llamadoFuncion.replace(":", "_");
                 code.append("MOV _"+a+"_"+operando1+", EBX\n");
@@ -278,6 +301,7 @@ public class Assembler {
                 String operando2 = pila.pop(); // formal
                 cargarOperandos(operando1, operando2);
 
+                code.append("; asignacion copia-valor-resultado al retornar \n");
                 //llamadoFuncion es una variable que indica el proximo ambito a llamar
                 String a = ambito.replace(":", "_");
                 code.append("MOV _"+a+"_"+operando1+", EBX\n");
@@ -288,6 +312,8 @@ public class Assembler {
                 String operando1 = pila.pop(); //variable a asignar
                 String operando2 = pila.pop();
                 cargarOperandos(operando1, operando2);
+
+                code.append("; asignacion\n");
                 String a = ambito.replace(":", "_");
                 code.append("MOV _"+a+"_"+operando1+", EBX\n");
 
@@ -367,12 +393,15 @@ public class Assembler {
 
             case "call" -> {
                 // llamada a función
+                code.append("\n; llamado a funcion\n");
                 String operando = pila.pop();
+                operando = ambito.replace(":", "_") + "_" + operando;
                 code.append("CALL "+operando+"\n");
             }
 
             case "print" -> {
                 // imprimir
+                code.append("\n; impresion de mensajes\n");
                 String mensaje = pila.pop();
                 if(mensaje.startsWith("\"")){ //Empriza con comillas, es una cadena
                     //Creo un messagebox y lo imrpimo
@@ -399,10 +428,15 @@ public class Assembler {
             case "BI" -> {
                 // branch incondicional
                 String label = pila.pop();
-                // como tengo "SALTO A X", solo me quedo el X para generar la etiqueta
-                int indice = label.lastIndexOf(" ");
-                label = "LABEL" + label.substring(indice + 1);
-                code.append("JMP " + label + "\n");
+                if(label.equals("FIN")){
+                    code.append("JMP " + label + "\n");
+                }
+                else {
+                    // como tengo "SALTO A X", solo me quedo el X para generar la etiqueta
+                    int indice = label.lastIndexOf(" ");
+                    label = "LABEL" + label.substring(indice + 1);
+                    code.append("JMP " + label + "\n");
+                }
             }
 
             // OPERACIONES ESPECIALES-----------------------------------------------------
@@ -436,11 +470,12 @@ public class Assembler {
             default -> {
                 if (token.endsWith(":")) {
                     //label;
-                    code.append("\n"+token + "\n");
                     if (token.startsWith("MAIN")) {
                         ambito = token.replace("_", ":"); //ambito necesito que este como son las claves en la TS, con :
                         ambito = ambito.substring(0, ambito.length() - 1); // le saco el ultimo ':'
+                        code.append("\n; comienza "+ambito+"-------------------------\n");
                     }
+                    code.append(token + "\n");
                 } else {
                     //identificador, constantes, cadenas  o señales de control, solo apilo
                     pila.push(token);
@@ -489,6 +524,7 @@ public class Assembler {
                 }
             }
         }else{
+            code.append("; asignacion del retorno de la funcion\n");
             code.append("MOV EBX, "+op2+"\n");
         }
 

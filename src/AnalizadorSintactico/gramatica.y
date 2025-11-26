@@ -580,20 +580,22 @@ public void cvrAPolaca(String funcion, ArrayList<String> parametros_reales, Arra
     ArrayList<String> a;
 
     String semantica = tablaDeSimbolos.get(ambito+":"+funcion).get(3);
-    String[] parametros = semantica.split(",");
+    if (semantica.contains("cvr")) {
+        String[] parametros = semantica.split(",");
 
-    //si la semantica es CVR agrego a la polaca una asignacion
-    for(String p : parametros){
-        int indice = p.lastIndexOf(" ");
-        String nombre = p.substring(indice+1);
+        //si la semantica es CVR agrego a la polaca una asignacion
+        for (String p : parametros) {
+          int indice = p.lastIndexOf(" ");
+          String nombre = p.substring(indice + 1);
 
-        //encuentro el real que esta asignado a el formal
-        String real = parametros_reales.get(parametros_reales.indexOf(nombre) - 1);
+          //encuentro el real que esta asignado a el formal
+          String real = parametros_reales.get(parametros_reales.indexOf(nombre) - 1);
 
-        if(p.contains("cvr")){
+          if (p.contains("cvr")) {
             arreglo.add(nombre);
             arreglo.add(real);
             arreglo.add("<-");
+          }
         }
     }
 }
@@ -736,8 +738,8 @@ public boolean existeFuncionVisibleConNombre(String nombre) {
 
 public void agregarPolacaMultiple(ArrayList<String> l1, ArrayList<String> l2){
     for (int i=0; i<l1.size(); i++){
-        agregarAPolaca(l1.get(i));
         agregarAPolaca(l2.get(i));
+        agregarAPolaca(l1.get(i));
         agregarAPolaca(":=");
     }
 

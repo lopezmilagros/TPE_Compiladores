@@ -1,10 +1,14 @@
 PRORAMA{
-    ulong H := .8 + .7;
+    ulong H;
+    ulong Y;
+    H, Y = 8.D+7, 7UL;
 
-    ulong FUNC2 (cvr ulong K){
-        ulong Y:= 3UL;
-        return (Y, K);
+    ulong SUMA (ulong A, ulong B){
+        ulong Y := A + B;
+        return (Y);
     }
 
-    H := FUNC2(H->K);
+    H := SUMA(H->A, Y ->B);
+    print("Valor de suma: ");
+    print(H);
 }
