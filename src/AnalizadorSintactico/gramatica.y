@@ -214,7 +214,7 @@ llamado_funcion
                                                             //Chequeo si es CVR reasigno los formales a los reales
                                                             if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
                                                             a.add("reemplazar_"+ambito+":"+$1.sval);
-
+                                                            $$ = new ParserVal(a);
                                                          }else {
                                                             agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+$1.sval+"' fuera de alcance.");
                                                             a.add("null");} $$ = new ParserVal(a);
@@ -277,22 +277,24 @@ parametro_formal_error
     ;
 
 parametros_reales
-    : parametros_reales COMA expresiones FLECHA identificador       {ArrayList<String> b = (ArrayList<String>) $3.obj; b.add($5.sval); b.add("->"); $$ = new ParserVal(b); sacarParamFormTS(ambito+":"+$5.sval);}
+    : parametros_reales COMA expresiones FLECHA identificador       {ArrayList<String> b = (ArrayList<String>) $1.obj; b.addAll((ArrayList<String>)$3.obj); b.add($5.sval); b.add("->"); $$ = new ParserVal(b); sacarParamFormTS(ambito+":"+$5.sval);}
     | expresiones FLECHA identificador                              {ArrayList<String> b = (ArrayList<String>) $1.obj; b.add($3.sval); b.add("->"); $$ = new ParserVal(b); sacarParamFormTS(ambito+":"+$3.sval);}
     | expresiones FLECHA                                            {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
     ;
 
 expresion_lambda
-        : header_lambda bloque llamado_lambda PUNTOCOMA              {agregarPolacaLambda($3.sval, $1.sval);
-
+        : header_lambda bloque llamado_lambda PUNTOCOMA              {agregarAPolaca("returnLambda");
                                                                      borrarAmbito();
+                                                                     agregarAPolaca($3.sval);
+                                                                     agregarAPolaca($1.sval);
                                                                      agregarAPolaca("->");
-                                                                     agregarAPolaca("LAMBDA");
-                                                                     agregarAPolaca("call");}
+                                                                     agregarAPolaca("LAMBDA"+nroLambda);
+                                                                     agregarAPolaca("call");
+                                                                     nroLambda++;}
     ;
 
 header_lambda
-    : FLECHA PARENTESISA tipo ID PARENTESISC                        {ambito = ambito + ":LAMBDA";
+    : FLECHA PARENTESISA tipo ID PARENTESISC                        {ambito = ambito + ":LAMBDA"+nroLambda;
                                                                      ArrayList<String> polaca = new ArrayList<String>();
                                                                      polacaInversa.put(ambito, polaca);
 
@@ -342,7 +344,7 @@ tipo
 
 tipo_cte
     : CTE               {agregarCteTS($1.sval); $$ = new ParserVal($1.sval);}
-    | MENOS CTE         {String cte = "-" + $2.sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} $$ = new ParserVal(cte);}
+    | MENOS CTE         {String cte = "-" + $2.sval; if(dentroDeRango(cte)){ agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);}} else {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");} $$ = new ParserVal(cte);}
     ;
 
 %%
@@ -564,6 +566,7 @@ private String ambito = "MAIN";
 private Integer indiceWhile;
 private Integer label = 0;
 private java.util.Stack<Integer> pilaWhile = new java.util.Stack<>();
+private int nroLambda = 0;
 
 public HashMap<String, ArrayList<String>> getPolacaInversa(){ return polacaInversa; }
 
@@ -624,31 +627,6 @@ public void agregarListaAPolaca(ArrayList<String> a){
     }
 }
 
-public void limpiarPolaca(String ambitoFuncion) {
-    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
-    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
-
-    ArrayList<String> a;
-    if (polacaInversa.containsKey(ambito)) {
-        a = polacaInversa.get(ambito);
-    } else {
-        a = mainArreglo;
-    }
-
-    // Usamos Iterator para poder eliminar mientras iteramos
-    Iterator<String> it = a.iterator();
-    while (it.hasNext()) {
-        String s = it.next();
-        String clave = ambitoFuncion + ":" + s;
-        ArrayList<String> ts = tablaDeSimbolos.get(clave);
-        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
-            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
-        }
-    }
-
-    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
-}
-
 public void agregarBifurcacion(String flag){
     ArrayList<String> a = new ArrayList<String>();
     if (polacaInversa.containsKey(ambito)) {
@@ -701,16 +679,6 @@ public void bifurcacionWhile(){
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
-public void agregarPolacaLambda(String valor1, String valor2){
-    if (polacaInversa != null){
-        if (polacaInversa.containsKey(ambito)) {
-            ArrayList<String> arreglo = polacaInversa.get(ambito);
-            arreglo.add(0,valor1);
-            arreglo.add(1, valor2);
-            arreglo.add(2, ":=");
-        }
-    }
-}
 
 // Devuelve true si ya existe alguna función con ese nombre
 // en el ámbito actual o en alguno de sus padres
@@ -753,42 +721,13 @@ public boolean estaInicializada(String id){
       ArrayList<String> a = tablaDeSimbolos.get(id);
       if (a != null && a.size() == 3) {
         String uso = a.get(2);
-        if (uso.equals("Nombre de variable") || uso.equals("Nombre de parametro"))
+        if (uso.equals("Nombre de variable") || uso.equals("Nombre de parametro") || uso.equals("Nombre de funcion"))
           //inicializada
           return true;
       }
     }
     return false;
 }
-
-public String variableAlAlcance(String id){
-    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
-    String ambitoActual = ambito+":";
-
-    //Para variables sin prefijado
-    while (true) {
-        String clave = ambitoActual + id;
-
-        // esta al alcance
-        if (tablaDeSimbolos.containsKey(clave))
-           return clave;
-
-        // Si ya estamos en el global, cortar
-        if (ambitoActual.equals("MAIN:"))
-            break;
-
-        // Quitar el último nivel del ámbito
-        int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
-        if (idx == -1) {
-            ambitoActual = "MAIN:";
-        } else {
-            ambitoActual = ambitoActual.substring(0, idx + 1);
-        }
-    }
-
-   return null; // no encontrado
-}
-
 
 public boolean estaDeclarada(String id){
 //Recibe el id concatenado con el ambito
@@ -806,9 +745,37 @@ public boolean estaDeclarada(String id){
     return false;
 }
 
+public String funcionAlAlcance(String id){
+    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
+    String ambitoActual = ambito;
+
+    //Para variables sin prefijado
+    while (true) {
+        String clave = ambitoActual + ":" + id;
+
+        // esta al alcance
+        if (tablaDeSimbolos.containsKey(clave))
+                return clave;
+
+        // Si ya estamos en el global, cortar
+        if (ambitoActual.equals("MAIN"))
+            break;
+
+        // Quitar el último nivel del ámbito
+        int idx = ambitoActual.lastIndexOf(":");
+        if (idx == -1) {
+            ambitoActual = "MAIN";
+        } else {
+            ambitoActual = ambitoActual.substring(0, idx);
+        }
+    }
+
+   return null; // no encontrado
+}
+
 public boolean funcionPermitida(String id) {
     //Chequeo si la funcion esta al alcance y si esta inicializada
-    String clave = variableAlAlcance(id);
+    String clave = funcionAlAlcance(id);
     if(clave != null)
         // esta al alcance
         if(estaDeclarada(clave))
@@ -817,7 +784,34 @@ public boolean funcionPermitida(String id) {
    return false; // no se puede usar
 }
 
+public String variableAlAlcance(String id){
+    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
+    String ambitoActual = ambito;
 
+    //Para variables sin prefijado
+    while (true) {
+        String clave = ambitoActual + ":" + id;
+
+        // esta al alcance
+        if (tablaDeSimbolos.containsKey(clave))
+            if(estaInicializada(clave))
+                return clave;
+
+        // Si ya estamos en el global, cortar
+        if (ambitoActual.equals("MAIN"))
+            break;
+
+        // Quitar el último nivel del ámbito
+        int idx = ambitoActual.lastIndexOf(":");
+        if (idx == -1) {
+            ambitoActual = "MAIN";
+        } else {
+            ambitoActual = ambitoActual.substring(0, idx);
+        }
+    }
+
+   return null; // no encontrado
+}
 
 //Este metodo tambien se puede usar para declarar una variable. Si la variable no esta permitida,
 //significa que no hay una declaracion de esa variable en su ambito, por lo que se puede declarar.
@@ -837,10 +831,8 @@ public boolean variablePermitida(String id) {
     String clave = variableAlAlcance(id);
     //Chequeo si la variable esta al alcance y si esta inicializada
     if(clave != null)
-        // esta al alcance
-        if(estaInicializada(clave))
-            // fue inicializada en ese ambiente
-                return true;
+        // esta al alcance y fue inicializada en ese ambiente o en uno padre
+        return true;
    return false; // no se puede usar
 }
 
@@ -875,7 +867,7 @@ public boolean variablesDeclaradas(ArrayList<String> a){
 
 public boolean chequeoReturn(){
     for(String clave: polacaInversa.keySet()){
-        if(!clave.equals("MAIN")){
+        if(!clave.equals("MAIN") && !clave.contains("LAMBDA")){
             ArrayList<String> a = polacaInversa.get(clave);
             if (!a.contains("return"))
                 return false;
@@ -886,6 +878,47 @@ public boolean chequeoReturn(){
 
 //----------------------------------------------------------------------------------------------------------ERRORES SEMANTICOS
 ArrayList<String> erroresSemanticos = new ArrayList<>();
+
+public boolean dentroDeRango(String lex){
+        lex = lex.substring(1, lex.length() - 1);
+        String base = "";
+        String exponente = "";
+        boolean d = false;
+        for (int i = 0 ; i < lex.length(); i++){
+            char c = lex.charAt(i);
+            if (!d) {
+                if (c == 'D')
+                    d = true;
+                else
+                    base = base + c;
+            }
+            else
+                exponente = exponente + c;
+        }
+        double base2;
+        if (base.equals(""))
+            base2 = 1;
+        else
+            base2 = Double.parseDouble(base);
+
+        base2 = base2 * (-1);
+
+        double exponente2;
+        if(exponente.equals(""))
+            exponente2 = 0;
+        else
+            exponente2 = Double.parseDouble(exponente);
+
+        double resultado = base2 * Math.pow(10, exponente2);
+
+        double minP = -1.7976931348623157 * Math.pow(10, 308);   //-1.7976931348623157D+308
+        double maxP = -2.2250738585072014D * Math.pow(10, -308);    //-2.2250738585072014D-308
+
+        if ((minP < resultado && resultado < maxP) | resultado == 0.0){
+            return true;
+        }
+        return false;
+}
 
 void agregarErrorSemantico(String s){
     erroresSemanticos.add(s);
@@ -957,19 +990,44 @@ public void imprimirPolaca() {
     System.out.println();
 }
 
-public void imprimirTabla() {
-        System.out.println();
-        System.out.println("Tabla de simbolos:");
-        System.out.printf("%-10s | %-10s | %-10s | %-10s%n", "ambito", "Tipo Token", "Tipo", "Uso");
-        System.out.println("--------------------------");
+  public void imprimirTabla() {
+    System.out.println("\nTabla de símbolos:");
 
-        for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
-            String clave = entry.getKey();
-            String valores = String.join(" | ", entry.getValue());
-            System.out.printf("%-10s | %s%n", clave, valores);
-        }
-        System.out.println();
-}
+    // Encabezados con buen espaciado
+    System.out.printf(
+            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+            "Ámbito / Lexema",
+            "Tipo Token",
+            "Tipo",
+            "Uso",
+            "Semántica"
+    );
+
+    System.out.println("----------------------------------------------------------------------------------------------");
+
+    for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
+
+      String clave = entry.getKey();
+      ArrayList<String> valores = entry.getValue();
+
+      String tipoToken   = valores.size() > 0 ? valores.get(0) : "";
+      String tipo        = valores.size() > 1 ? valores.get(1) : "";
+      String uso         = valores.size() > 2 ? valores.get(2) : "";
+      String otraInfo    = valores.size() > 3 ? valores.get(3) : "";
+      String semantica   = valores.size() > 4 ? valores.get(4) : "";
+
+      System.out.printf(
+              "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+              clave,
+              tipoToken,
+              tipo,
+              uso,
+              semantica
+      );
+    }
+
+    System.out.println();
+  }
 
 
 public void imprimirErroresSemanticos(){

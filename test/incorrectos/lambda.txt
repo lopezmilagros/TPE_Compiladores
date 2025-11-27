@@ -1,3 +1,0 @@
-PROG{
-    ->(ulong X){ print(X); } (3UL);
-}

@@ -41,13 +41,9 @@ public class Assembler {
             }
         }
 
-        for (String elemento : polacaLineal) {
-            System.out.print(elemento + ",");
-        }
-
     }
 
-    public void generarAssembler() {
+    public void generarAssembler(String path) {
         inicializarData();
 
         Stack<String> pila = new Stack<>();
@@ -65,13 +61,17 @@ public class Assembler {
                             llamadoFuncion = clave;
                         }
                     }
+                    else{
+                        if(polacaLineal.get(j).contains("LAMBDA"))
+                            llamadoFuncion = clave;
+                        }
                     j++;
                 }
             }
             casePolaca(token,pila);
         }
 
-        crearArchivoASM();
+        crearArchivoASM(path);
     }
 
     public String tipoToken(String identificador) {
@@ -115,7 +115,7 @@ public class Assembler {
         }
     }
 
-    public void crearArchivoASM() {
+    public void crearArchivoASM(String path) {
         StringBuilder out = new StringBuilder();
         out.append(".586\n");
         out.append(".MODEL flat, stdcall\n");
@@ -148,7 +148,7 @@ public class Assembler {
 
         // Creamos el archivo
         try {
-            Files.write(Path.of("programaAssembler.asm"), out.toString().getBytes());
+            Files.write(Path.of(path), out.toString().getBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -169,7 +169,7 @@ public class Assembler {
         }else{
             //No puedo convertir de negativo a unsigned
             nroError++;
-            agregarError("No es posible convertir dfloat negativo '"+dfloat+"' a entero sin signo");
+            agregarError("ERROR: No es posible convertir dfloat negativo '"+dfloat+"' a entero sin signo");
             code.append("JMP ERROR"+nroError+"\n");
 
         }
@@ -189,7 +189,6 @@ public class Assembler {
     }
 
     public void casePolaca(String token, Stack<String> pila){
-        System.out.println(token);
         switch (token) {
 
             // OPERACIONES BINARIAS-----------------------------------------------------------
@@ -203,7 +202,7 @@ public class Assembler {
                 code.append("ADD EAX, EBX\n");
                 //salta si el flag CF fue modificado a 1 (Hubo overflow)
                 nroError++;
-                agregarError("La suma ha exedido el rango del tipo utilizado");
+                agregarError("ERROR: La suma ha exedido el rango del tipo utilizado");
                 code.append("JC ERROR"+nroError+"\n");
 
                 //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
@@ -224,7 +223,7 @@ public class Assembler {
                 code.append("SUB EAX, EBX\n");
                 //si el op1 < op2 de modifica CF = 1.
                 nroError++;
-                agregarError("La resta ha exedido el rango del tipo utilizado");
+                agregarError("ERROR: La resta ha exedido el rango del tipo utilizado");
                 code.append("JC ERROR"+nroError+"\n");
 
                 //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
@@ -246,7 +245,7 @@ public class Assembler {
                 code.append("MUL EBX\n");
                 //salta si el flag CF fue modificado a 1 (Hubo overflow)
                 nroError++;
-                agregarError("La multiplicacion ha exedido el rango del tipo utilizado");
+                agregarError("ERROR: La multiplicacion ha exedido el rango del tipo utilizado");
                 code.append("JC ERROR"+nroError+"\n");
 
                 //El resultado que queda en EAX lo paso a un auxiliar y este lo agrego a la pila
@@ -259,16 +258,16 @@ public class Assembler {
 
             case "/" -> {
                 // división
-                String operando1 = pila.pop();
-                String operando2 = pila.pop();
+                String divisor = pila.pop();
+                String dividendo = pila.pop();
 
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(dividendo, divisor);
 
                 code.append("; division\n");
                 //salta si el flag ZF = 1. Este se activa si los numeros son iguales.
                 nroError++;
                 code.append("CMP EBX, 0\n");
-                agregarError("No se puede realizar la division por cero");
+                agregarError("ERROR: No se puede realizar la division por cero");
                 code.append("JZ ERROR"+nroError+"\n");
 
                 //El primer operando debe estar en EDX:EAX, por lo que lleno a EDX de ceros.
@@ -318,12 +317,20 @@ public class Assembler {
                 code.append("MOV _"+a+"_"+operando1+", EBX\n");
 
             }
+            case "asignLambda" -> {
+                String operando1 = pila.pop(); //variable a asignar
+                String operando2 = pila.pop();
+                cargarOperandos(operando1, operando2);
 
+                code.append("; asignacion\n");
+                String a = ambito.replace(":", "_");
+                code.append("MOV _"+a+"_LAMBDA_"+operando1+", EBX\n");
+
+            }
             case ">" -> {
                 // mayor que
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
-
                 cargarOperandos(operando1, operando2);
                 //Siempre va a ser Jump above (saltos sin signo) porque los dfloats son convertidos a ulong
                 code.append("CMP EAX, EBX\n");
@@ -443,12 +450,10 @@ public class Assembler {
 
             case "return" -> {
                 // return
-                System.out.println("ENTRE AL RETURN");
                 ArrayList<String> variables = new ArrayList<>();
                 while (!pila.peek().equals("empieza lista")) {
                     String var = pila.pop();
                     variables.add(var);
-                    System.out.println("RETORNO "+var);
                 }
                 // saco el "empieza lista"
                 pila.pop();
@@ -457,7 +462,6 @@ public class Assembler {
                 //Busco donde esta reemplazar_(funcion) y le asigno la primera variable del return
                 //Tengo que cambiar el code a string para reemplazar lo que coincida
                 String variable = variables.getLast();
-                System.out.println("RETORNO "+variable);
                 String flag = "reemplazar_" + ambito;
                 String reemplazo = "_"+ambito.replace(":","_")+"_"+variable;
 
@@ -465,6 +469,11 @@ public class Assembler {
                 code.setLength(0); // vacía el StringBuilder
                 code.append(nuevo); // lo vuelve a cargar
 
+            }
+
+            case "returnLambda" -> {
+                //lambda no devuelve variables, solo agrego el retorno al main
+                code.append("RET\n");
             }
 
             default -> {
@@ -491,14 +500,15 @@ public class Assembler {
         code.append("; cargar operandos en registros\n");
         String tipo1 = tipoToken(op1);
         String a;
-        if(ts.containsKey(llamadoFuncion+ ":" +op1))
-            a = llamadoFuncion.replace(":", "_");
-        else
-            a = ambito.replace(":","_");
 
         switch (tipo1){
-            case "ID" ->
-                    code.append("MOV EAX,_"+a+"_"+op1+"\n");
+            case "ID" ->{
+                if(ts.containsKey(ambito+ ":" +op1))
+                    a = ambito.replace(":", "_");
+                else
+                    a = llamadoFuncion.replace(":","_");
+                code.append("MOV EAX,_"+a+"_"+op1+"\n");
+            }
             case "ULONG" ->
                     code.append("MOV EAX,"+op1+"\n");
             case "DFLOAT" -> {
@@ -508,14 +518,15 @@ public class Assembler {
         }
         if(!op2.startsWith("reemplazar_")){
             String tipo2 = tipoToken(op2);
-            if(ts.containsKey(llamadoFuncion+ ":" +op2))
-                a = llamadoFuncion.replace(":", "_");
-            else
-                a = ambito.replace(":","_");
 
             switch (tipo2){
-                case "ID" ->
-                        code.append("MOV EBX,_"+a+"_"+op2+"\n");
+                case "ID" ->{
+                    if(ts.containsKey(ambito+ ":" +op2))
+                        a = ambito.replace(":", "_");
+                    else
+                        a = llamadoFuncion.replace(":","_");
+                    code.append("MOV EBX,_"+a+"_"+op2+"\n");
+                }
                 case "ULONG" ->
                         code.append("MOV EBX,"+op2+"\n");
                 case "DFLOAT" -> {

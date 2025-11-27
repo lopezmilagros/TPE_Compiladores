@@ -668,7 +668,7 @@ final static String yyrule[] = {
 "tipo_cte : MENOS CTE",
 };
 
-//#line 349 "gramatica.y"
+//#line 351 "gramatica.y"
 
 /* -------------------------------------------------------------------------------------------------------------CODIGO AUXILIAR ----------------------------------------------------*/
 
@@ -887,6 +887,7 @@ private String ambito = "MAIN";
 private Integer indiceWhile;
 private Integer label = 0;
 private java.util.Stack<Integer> pilaWhile = new java.util.Stack<>();
+private int nroLambda = 0;
 
 public HashMap<String, ArrayList<String>> getPolacaInversa(){ return polacaInversa; }
 
@@ -1024,16 +1025,6 @@ public void bifurcacionWhile(){
 
 //-----------------------------------CHEQUEOS SEMANTICOS----------------------------------------
 
-public void agregarPolacaLambda(String valor1, String valor2){
-    if (polacaInversa != null){
-        if (polacaInversa.containsKey(ambito)) {
-            ArrayList<String> arreglo = polacaInversa.get(ambito);
-            arreglo.add(0,valor1);
-            arreglo.add(1, valor2);
-            arreglo.add(2, ":=");
-        }
-    }
-}
 
 // Devuelve true si ya existe alguna función con ese nombre
 // en el ámbito actual o en alguno de sus padres
@@ -1076,42 +1067,13 @@ public boolean estaInicializada(String id){
       ArrayList<String> a = tablaDeSimbolos.get(id);
       if (a != null && a.size() == 3) {
         String uso = a.get(2);
-        if (uso.equals("Nombre de variable") || uso.equals("Nombre de parametro"))
+        if (uso.equals("Nombre de variable") || uso.equals("Nombre de parametro") || uso.equals("Nombre de funcion"))
           //inicializada
           return true;
       }
     }
     return false;
 }
-
-public String variableAlAlcance(String id){
-    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
-    String ambitoActual = ambito+":";
-
-    //Para variables sin prefijado
-    while (true) {
-        String clave = ambitoActual + id;
-
-        // esta al alcance
-        if (tablaDeSimbolos.containsKey(clave))
-           return clave;
-
-        // Si ya estamos en el global, cortar
-        if (ambitoActual.equals("MAIN:"))
-            break;
-
-        // Quitar el último nivel del ámbito
-        int idx = ambitoActual.lastIndexOf(":", ambitoActual.length() - 2);
-        if (idx == -1) {
-            ambitoActual = "MAIN:";
-        } else {
-            ambitoActual = ambitoActual.substring(0, idx + 1);
-        }
-    }
-
-   return null; // no encontrado
-}
-
 
 public boolean estaDeclarada(String id){
 //Recibe el id concatenado con el ambito
@@ -1129,9 +1091,37 @@ public boolean estaDeclarada(String id){
     return false;
 }
 
+public String funcionAlAlcance(String id){
+    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
+    String ambitoActual = ambito;
+
+    //Para variables sin prefijado
+    while (true) {
+        String clave = ambitoActual + ":" + id;
+
+        // esta al alcance
+        if (tablaDeSimbolos.containsKey(clave))
+                return clave;
+
+        // Si ya estamos en el global, cortar
+        if (ambitoActual.equals("MAIN"))
+            break;
+
+        // Quitar el último nivel del ámbito
+        int idx = ambitoActual.lastIndexOf(":");
+        if (idx == -1) {
+            ambitoActual = "MAIN";
+        } else {
+            ambitoActual = ambitoActual.substring(0, idx);
+        }
+    }
+
+   return null; // no encontrado
+}
+
 public boolean funcionPermitida(String id) {
     //Chequeo si la funcion esta al alcance y si esta inicializada
-    String clave = variableAlAlcance(id);
+    String clave = funcionAlAlcance(id);
     if(clave != null)
         // esta al alcance
         if(estaDeclarada(clave))
@@ -1140,7 +1130,34 @@ public boolean funcionPermitida(String id) {
    return false; // no se puede usar
 }
 
+public String variableAlAlcance(String id){
+    //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
+    String ambitoActual = ambito;
 
+    //Para variables sin prefijado
+    while (true) {
+        String clave = ambitoActual + ":" + id;
+
+        // esta al alcance
+        if (tablaDeSimbolos.containsKey(clave))
+            if(estaInicializada(clave))
+                return clave;
+
+        // Si ya estamos en el global, cortar
+        if (ambitoActual.equals("MAIN"))
+            break;
+
+        // Quitar el último nivel del ámbito
+        int idx = ambitoActual.lastIndexOf(":");
+        if (idx == -1) {
+            ambitoActual = "MAIN";
+        } else {
+            ambitoActual = ambitoActual.substring(0, idx);
+        }
+    }
+
+   return null; // no encontrado
+}
 
 //Este metodo tambien se puede usar para declarar una variable. Si la variable no esta permitida,
 //significa que no hay una declaracion de esa variable en su ambito, por lo que se puede declarar.
@@ -1160,10 +1177,8 @@ public boolean variablePermitida(String id) {
     String clave = variableAlAlcance(id);
     //Chequeo si la variable esta al alcance y si esta inicializada
     if(clave != null)
-        // esta al alcance
-        if(estaInicializada(clave))
-            // fue inicializada en ese ambiente
-                return true;
+        // esta al alcance y fue inicializada en ese ambiente o en uno padre
+        return true;
    return false; // no se puede usar
 }
 
@@ -1198,7 +1213,7 @@ public boolean variablesDeclaradas(ArrayList<String> a){
 
 public boolean chequeoReturn(){
     for(String clave: polacaInversa.keySet()){
-        if(!clave.equals("MAIN")){
+        if(!clave.equals("MAIN") && !clave.contains("LAMBDA")){
             ArrayList<String> a = polacaInversa.get(clave);
             if (!a.contains("return"))
                 return false;
@@ -1209,6 +1224,47 @@ public boolean chequeoReturn(){
 
 //----------------------------------------------------------------------------------------------------------ERRORES SEMANTICOS
 ArrayList<String> erroresSemanticos = new ArrayList<>();
+
+public boolean dentroDeRango(String lex){
+        lex = lex.substring(1, lex.length() - 1);
+        String base = "";
+        String exponente = "";
+        boolean d = false;
+        for (int i = 0 ; i < lex.length(); i++){
+            char c = lex.charAt(i);
+            if (!d) {
+                if (c == 'D')
+                    d = true;
+                else
+                    base = base + c;
+            }
+            else
+                exponente = exponente + c;
+        }
+        double base2;
+        if (base.equals(""))
+            base2 = 1;
+        else
+            base2 = Double.parseDouble(base);
+
+        base2 = base2 * (-1);
+
+        double exponente2;
+        if(exponente.equals(""))
+            exponente2 = 0;
+        else
+            exponente2 = Double.parseDouble(exponente);
+
+        double resultado = base2 * Math.pow(10, exponente2);
+
+        double minP = -1.7976931348623157 * Math.pow(10, 308);   //-1.7976931348623157D+308
+        double maxP = -2.2250738585072014D * Math.pow(10, -308);    //-2.2250738585072014D-308
+
+        if ((minP < resultado && resultado < maxP) | resultado == 0.0){
+            return true;
+        }
+        return false;
+}
 
 void agregarErrorSemantico(String s){
     erroresSemanticos.add(s);
@@ -1280,19 +1336,44 @@ public void imprimirPolaca() {
     System.out.println();
 }
 
-public void imprimirTabla() {
-        System.out.println();
-        System.out.println("Tabla de simbolos:");
-        System.out.printf("%-10s | %-10s | %-10s | %-10s%n", "ambito", "Tipo Token", "Tipo", "Uso");
-        System.out.println("--------------------------");
+  public void imprimirTabla() {
+    System.out.println("\nTabla de símbolos:");
 
-        for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
-            String clave = entry.getKey();
-            String valores = String.join(" | ", entry.getValue());
-            System.out.printf("%-10s | %s%n", clave, valores);
-        }
-        System.out.println();
-}
+    // Encabezados con buen espaciado
+    System.out.printf(
+            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+            "Ámbito / Lexema",
+            "Tipo Token",
+            "Tipo",
+            "Uso",
+            "Semántica"
+    );
+
+    System.out.println("----------------------------------------------------------------------------------------------");
+
+    for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
+
+      String clave = entry.getKey();
+      ArrayList<String> valores = entry.getValue();
+
+      String tipoToken   = valores.size() > 0 ? valores.get(0) : "";
+      String tipo        = valores.size() > 1 ? valores.get(1) : "";
+      String uso         = valores.size() > 2 ? valores.get(2) : "";
+      String otraInfo    = valores.size() > 3 ? valores.get(3) : "";
+      String semantica   = valores.size() > 4 ? valores.get(4) : "";
+
+      System.out.printf(
+              "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+              clave,
+              tipoToken,
+              tipo,
+              uso,
+              semantica
+      );
+    }
+
+    System.out.println();
+  }
 
 
 public void imprimirErroresSemanticos(){
@@ -1310,7 +1391,7 @@ public void imprimirErroresSemanticos(){
 public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
     return tablaDeSimbolos;
 }
-//#line 1240 "Parser.java"
+//#line 1323 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1805,7 +1886,7 @@ case 105:
                                                             /*Chequeo si es CVR reasigno los formales a los reales*/
                                                             if(val_peek(1) != null) {cvrAPolaca(val_peek(3).sval, (ArrayList<String>)val_peek(1).obj, a);}
                                                             a.add("reemplazar_"+ambito+":"+val_peek(3).sval);
-
+                                                            yyval = new ParserVal(a);
                                                          }else {
                                                             agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+val_peek(3).sval+"' fuera de alcance.");
                                                             a.add("null");} yyval = new ParserVal(a);
@@ -1912,7 +1993,7 @@ case 128:
 break;
 case 129:
 //#line 280 "gramatica.y"
-{ArrayList<String> b = (ArrayList<String>) val_peek(2).obj; b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b); sacarParamFormTS(ambito+":"+val_peek(0).sval);}
+{ArrayList<String> b = (ArrayList<String>) val_peek(4).obj; b.addAll((ArrayList<String>)val_peek(2).obj); b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b); sacarParamFormTS(ambito+":"+val_peek(0).sval);}
 break;
 case 130:
 //#line 281 "gramatica.y"
@@ -1924,16 +2005,18 @@ case 131:
 break;
 case 132:
 //#line 286 "gramatica.y"
-{agregarPolacaLambda(val_peek(1).sval, val_peek(3).sval);
-
+{agregarAPolaca("returnLambda");
                                                                      borrarAmbito();
+                                                                     agregarAPolaca(val_peek(1).sval);
+                                                                     agregarAPolaca(val_peek(3).sval);
                                                                      agregarAPolaca("->");
-                                                                     agregarAPolaca("LAMBDA");
-                                                                     agregarAPolaca("call");}
+                                                                     agregarAPolaca("LAMBDA"+nroLambda);
+                                                                     agregarAPolaca("call");
+                                                                     nroLambda++;}
 break;
 case 133:
-//#line 295 "gramatica.y"
-{ambito = ambito + ":LAMBDA";
+//#line 297 "gramatica.y"
+{ambito = ambito + ":LAMBDA"+nroLambda;
                                                                      ArrayList<String> polaca = new ArrayList<String>();
                                                                      polacaInversa.put(ambito, polaca);
 
@@ -1950,58 +2033,58 @@ case 133:
                                                                     yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 134:
-//#line 313 "gramatica.y"
+//#line 315 "gramatica.y"
 {if(!variablePermitida(val_peek(1).sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(2).sval+"' no declarada.");} yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 135:
-//#line 314 "gramatica.y"
+//#line 316 "gramatica.y"
 {yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 136:
-//#line 318 "gramatica.y"
+//#line 320 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 137:
-//#line 319 "gramatica.y"
+//#line 321 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(2).sval); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo); }
 break;
 case 138:
-//#line 320 "gramatica.y"
+//#line 322 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
 break;
 case 141:
-//#line 329 "gramatica.y"
+//#line 331 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 142:
-//#line 330 "gramatica.y"
+//#line 332 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 143:
-//#line 331 "gramatica.y"
+//#line 333 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
 break;
 case 144:
-//#line 335 "gramatica.y"
+//#line 337 "gramatica.y"
 {yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 145:
-//#line 336 "gramatica.y"
+//#line 338 "gramatica.y"
 {String name = val_peek(2).sval + "." + val_peek(0).sval; String a = val_peek(2).sval + ":" + val_peek(0).sval; yyval = new ParserVal(name); }
 break;
 case 146:
-//#line 340 "gramatica.y"
+//#line 342 "gramatica.y"
 {yyval = new ParserVal("ULONG");}
 break;
 case 147:
-//#line 344 "gramatica.y"
+//#line 346 "gramatica.y"
 {agregarCteTS(val_peek(0).sval); yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 148:
-//#line 345 "gramatica.y"
-{String cte = "-" + val_peek(0).sval; agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);} yyval = new ParserVal(cte);}
+//#line 347 "gramatica.y"
+{String cte = "-" + val_peek(0).sval; if(dentroDeRango(cte)){ agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);}} else {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");} yyval = new ParserVal(cte);}
 break;
-//#line 1926 "Parser.java"
+//#line 2011 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

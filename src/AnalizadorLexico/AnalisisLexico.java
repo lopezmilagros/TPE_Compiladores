@@ -281,7 +281,7 @@ public class AnalisisLexico {
 
             if (columna == -1)
                 //Un caracter invalido que no coincide con nincula columna de la matriz
-                System.out.println("Linea " + nroLinea + ": ERROR LEXICO: Caracter invalido: " + caracter + ".");
+                erroresLexicos.add("Linea " + nroLinea + ": ERROR LEXICO: Caracter invalido: " + caracter + ".");
             else {
                 estadoSiguiente = estados[estadoActual][columna];
                 if (estadoSiguiente == -1) {

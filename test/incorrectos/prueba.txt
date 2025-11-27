@@ -1,5 +1,0 @@
-PROGRAMA{
-    ulong SUMA(ulong A, cvr ulong B) {
-        return (A + B);
-    }
-}

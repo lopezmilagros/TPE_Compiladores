@@ -1,8 +1,0 @@
-PROGRAMA{
-    print("Hola mundo");
-    print(X+Y);
-    print(X);
-    print(X, );
-    print();
-}
-

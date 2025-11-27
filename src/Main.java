@@ -18,7 +18,7 @@ public  class Main {
                System.out.println();
                System.out.println("1.Programa 1");
                System.out.println("2.Programa 2");
-               System.out.println("3.Programa 1");
+               System.out.println("3.Programa 3");
                System.out.println();
                System.out.print("Opcion: ");
 
@@ -31,26 +31,15 @@ public  class Main {
           }
           else if(opcion == 2){
                System.out.println();
-               System.out.println("1.Funciones                6.Condiciones");
-               System.out.println("2.Lambda                   7.Asignaciones");
-               System.out.println("3.While                    8.Programa");
-               System.out.println("4.If                       9.Print");
-               System.out.println("5.Punto y coma             10.prueba");
-               System.out.println();
-               System.out.print("Opcion: ");
+               System.out.println("1.Errores lexicos");
+               System.out.println("2.Errores de alcance");
+               System.out.println("3.Error en ejecucion");
 
                int op = entrada.nextInt();
                switch (op){
-                    case 1 -> path = "test/incorrectos/funcion.txt";
-                    case 2 -> path = "test/incorrectos/lambda.txt";
-                    case 3 -> path = "test/incorrectos/while.txt";
-                    case 4 -> path = "test/incorrectos/if.txt";
-                    case 5 -> path = "test/incorrectos/puntocoma.txt";
-                    case 6 -> path = "test/incorrectos/condiciones.txt";
-                    case 7 -> path = "test/incorrectos/asignaciones.txt";
-                    case 8 -> path = "test/incorrectos/programa.txt";
-                    case 9 -> path = "test/incorrectos/print.txt";
-                    case 10 -> path = "test/incorrectos/prueba.txt";
+                    case 1 -> path = "test/incorrectos/erroresLexicos.txt";
+                    case 2 -> path = "test/incorrectos/erroresAlcance.txt";
+                    case 3 -> path = "test/incorrectos/erroresEnEjecucion.txt";
                }
           } else if (opcion == 3){
                System.out.println("Ingrese path: ");
@@ -69,20 +58,25 @@ public  class Main {
           aLex.imprimirErroresLexicos();
           parser.imprimirErrores();
           parser.imprimirErroresSemanticos();
-          System.out.println();
-          //System.out.println("TABLA DEL LEXICO");
-          //aLex.imprimirTabla();
           System.out.println("TABLA DEL SINTACTICO");
           parser.imprimirTabla();
-          //aLex.imprimirTokensLeidos();
           if(parser.getPolacaInversa() != null) {
                parser.imprimirPolaca();
                Assembler a = new Assembler(parser.getTablaDeSimbolos(),parser.getPolacaInversa());
-               a.generarAssembler();
+               path = path.substring(path.lastIndexOf("/")+1, path.lastIndexOf("."));
+               path = "assembler/"+path +".asm";
+               a.generarAssembler(path);
           }
           System.out.println(parser.getError());
 
-
+          System.out.println();
+          System.out.println("Si desea imprimir las estructuras del lexico ingrese 1, sino, ingrese cualquier caracter: ");
+          opcion = entrada.nextInt();
+          if(opcion == 1){
+               System.out.println("TABLA DEL LEXICO");
+               aLex.imprimirTabla();
+               aLex.imprimirTokensLeidos();
+          }
      }
 }
 

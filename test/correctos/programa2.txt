@@ -1,5 +1,0 @@
-PRORAMA2{
-    -> (ulong A) {if (A > 1UL) {print("hola"); }endif;} (3UL) ;
-
-
-}

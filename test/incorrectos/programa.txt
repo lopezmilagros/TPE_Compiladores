@@ -1,3 +1,0 @@
-PROGRAMA1
-    print("Hola");
-}

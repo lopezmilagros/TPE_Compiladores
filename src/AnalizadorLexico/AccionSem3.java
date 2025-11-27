@@ -16,7 +16,7 @@ public class AccionSem3 implements AccionSem{
     @Override
     public TokenLexema ejecutar(TokenLexema lexema, char caracter, int nroLinea) {
         long numero = Long.parseLong(lexema.getLexema());
-        long max = 4294967295L; // 2^32 -1    2147483648
+        long max = 4294967295L; // 2^32 -1
         int min = 0;
         if ( numero <= max & numero >= min){
             lexema.setToken(265);
