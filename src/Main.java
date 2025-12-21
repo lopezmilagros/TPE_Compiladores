@@ -40,10 +40,6 @@ public  class Main {
                parser.imprimirPolaca();
                Assembler a = new Assembler(parser.getTablaDeSimbolos(),parser.getPolacaInversa());
 
-               path = path.substring(path.lastIndexOf("/")+1, path.lastIndexOf("."));
-               path = "assembler/"+path +".asm";
-               a.generarAssembler(path);
-
                // Ruta del archivo fuente (absoluta)
                Path fuente = Path.of(args[0]).toAbsolutePath();
 
@@ -60,6 +56,7 @@ public  class Main {
                // Ruta final del .asm
                Path outAsm = outDir.resolve(nombre + ".asm");
 
+               a.generarAssembler(outAsm.toString());
                System.out.println("ASM generado en: " + outAsm);
 
           }
