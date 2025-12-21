@@ -1,6 +1,7 @@
 PRORAMA2{
-##Este programa imprime 'Primer lambda' porque entra al if, y imprime el 'Segundo lambda' con el valor '3' ##
+##Este programa imprime "Primer lambda" porque entra al if, y imprime el "Segundo lambda" con el valor "3" ##
     print("Espero que tengas un lindo dia! soy el programa 2");
     -> (ulong A) {if (A > 1UL) {print("Primera lambda");} else {print("else");} endif;} (3UL) ;
     -> (ulong A) {print("Segunda lambda"); print(A);} (3UL) ;
+
 }

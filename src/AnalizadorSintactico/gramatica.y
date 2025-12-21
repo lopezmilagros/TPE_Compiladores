@@ -252,7 +252,8 @@ header_funcion
                                                                    modificarAmbitosTS((ArrayList<String>)$4.obj);
                                                                    modificarUsosParametros((ArrayList<String>)$4.obj, "Nombre de parametro");
                                                                    agregarInfoFuncionTS($1.sval, (ArrayList<String>) $4.obj);
-                                                                   polacaInversa.put(ambito, new ArrayList<String>());
+                                                                   if(polacaInversa != null){
+                                                                   polacaInversa.put(ambito, new ArrayList<String>());}
                                                                }}
     | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
     ;
@@ -296,7 +297,8 @@ expresion_lambda
 header_lambda
     : FLECHA PARENTESISA tipo ID PARENTESISC                        {ambito = ambito + ":LAMBDA"+nroLambda;
                                                                      ArrayList<String> polaca = new ArrayList<String>();
-                                                                     polacaInversa.put(ambito, polaca);
+                                                                     if(polacaInversa != null){
+                                                                     polacaInversa.put(ambito, polaca);}
 
                                                                     ArrayList<String> parametroCompleto = new ArrayList<String>();
                                                                     String parametro =  "cv " + $3.sval+ " "+$4.sval;

@@ -252,7 +252,8 @@ header_funcion
                                                                    modificarAmbitosTS((ArrayList<String>)$4.obj);
                                                                    modificarUsosParametros((ArrayList<String>)$4.obj, "Nombre de parametro");
                                                                    agregarInfoFuncionTS($1.sval, (ArrayList<String>) $4.obj);
-                                                                   polacaInversa.put(ambito, new ArrayList<String>());
+                                                                   if(polacaInversa != null){
+                                                                   polacaInversa.put(ambito, new ArrayList<String>());}
                                                                }}
     | tipo PARENTESISA parametros_formales PARENTESISC          {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
     ;
@@ -296,7 +297,8 @@ expresion_lambda
 header_lambda
     : FLECHA PARENTESISA tipo ID PARENTESISC                        {ambito = ambito + ":LAMBDA"+nroLambda;
                                                                      ArrayList<String> polaca = new ArrayList<String>();
-                                                                     polacaInversa.put(ambito, polaca);
+                                                                     if(polacaInversa != null){
+                                                                     polacaInversa.put(ambito, polaca);}
 
                                                                     ArrayList<String> parametroCompleto = new ArrayList<String>();
                                                                     String parametro =  "cv " + $3.sval+ " "+$4.sval;
@@ -625,31 +627,6 @@ public void agregarListaAPolaca(ArrayList<String> a){
     for (String s: a){
         agregarAPolaca(s);
     }
-}
-
-public void limpiarPolaca(String ambitoFuncion) {
-    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
-    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
-
-    ArrayList<String> a;
-    if (polacaInversa.containsKey(ambito)) {
-        a = polacaInversa.get(ambito);
-    } else {
-        a = mainArreglo;
-    }
-
-    // Usamos Iterator para poder eliminar mientras iteramos
-    Iterator<String> it = a.iterator();
-    while (it.hasNext()) {
-        String s = it.next();
-        String clave = ambitoFuncion + ":" + s;
-        ArrayList<String> ts = tablaDeSimbolos.get(clave);
-        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
-            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
-        }
-    }
-
-    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
 }
 
 public void agregarBifurcacion(String flag){

@@ -668,7 +668,7 @@ final static String yyrule[] = {
 "tipo_cte : MENOS CTE",
 };
 
-//#line 351 "gramatica.y"
+//#line 353 "gramatica.y"
 
 /* -------------------------------------------------------------------------------------------------------------CODIGO AUXILIAR ----------------------------------------------------*/
 
@@ -946,31 +946,6 @@ public void agregarListaAPolaca(ArrayList<String> a){
     for (String s: a){
         agregarAPolaca(s);
     }
-}
-
-public void limpiarPolaca(String ambitoFuncion) {
-    // Esta función se llama luego de salir de un ámbito. Limpia la polaca inversa del ámbito de afuera (borramos parámetros formales)
-    // ambito es el externo, ambitoFuncion es el ámbito de la función que fue definida
-
-    ArrayList<String> a;
-    if (polacaInversa.containsKey(ambito)) {
-        a = polacaInversa.get(ambito);
-    } else {
-        a = mainArreglo;
-    }
-
-    // Usamos Iterator para poder eliminar mientras iteramos
-    Iterator<String> it = a.iterator();
-    while (it.hasNext()) {
-        String s = it.next();
-        String clave = ambitoFuncion + ":" + s;
-        ArrayList<String> ts = tablaDeSimbolos.get(clave);
-        if (ts != null && ts.size() == 3 && "Nombre de parametro".equals(ts.get(2))) {
-            it.remove(); // elimino de la polacaInversa el nombre del parametro de la funcion que declare
-        }
-    }
-
-    // No hace falta volver a asignar porque 'a' es referencia al mismo objeto
 }
 
 public void agregarBifurcacion(String flag){
@@ -1391,7 +1366,7 @@ public void imprimirErroresSemanticos(){
 public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
     return tablaDeSimbolos;
 }
-//#line 1323 "Parser.java"
+//#line 1298 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1944,67 +1919,68 @@ case 117:
                                                                    modificarAmbitosTS((ArrayList<String>)val_peek(1).obj);
                                                                    modificarUsosParametros((ArrayList<String>)val_peek(1).obj, "Nombre de parametro");
                                                                    agregarInfoFuncionTS(val_peek(4).sval, (ArrayList<String>) val_peek(1).obj);
-                                                                   polacaInversa.put(ambito, new ArrayList<String>());
+                                                                   if(polacaInversa != null){
+                                                                   polacaInversa.put(ambito, new ArrayList<String>());}
                                                                }}
 break;
 case 118:
-//#line 257 "gramatica.y"
+//#line 258 "gramatica.y"
 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
 break;
 case 119:
-//#line 261 "gramatica.y"
+//#line 262 "gramatica.y"
 {ArrayList<String> a = (ArrayList<String>)val_peek(2).obj; a.add(val_peek(0).sval); yyval = new ParserVal(a);}
 break;
 case 120:
-//#line 262 "gramatica.y"
+//#line 263 "gramatica.y"
 {ArrayList<String> a = new ArrayList<String>(); a.add(val_peek(0).sval); yyval = new ParserVal(a);}
 break;
 case 121:
-//#line 263 "gramatica.y"
+//#line 264 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta ',' en declaracion de las variables");}
 break;
 case 122:
-//#line 267 "gramatica.y"
+//#line 268 "gramatica.y"
 { yyval = new ParserVal("cvr "+val_peek(1).sval+" "+val_peek(0).sval);}
 break;
 case 123:
-//#line 268 "gramatica.y"
+//#line 269 "gramatica.y"
 { yyval = new ParserVal("cv "+val_peek(1).sval+" "+val_peek(0).sval);}
 break;
 case 124:
-//#line 269 "gramatica.y"
+//#line 270 "gramatica.y"
 {yyval = new ParserVal();}
 break;
 case 125:
-//#line 273 "gramatica.y"
-{agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
-break;
-case 126:
 //#line 274 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
 break;
-case 127:
+case 126:
 //#line 275 "gramatica.y"
-{agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
+{agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
 break;
-case 128:
+case 127:
 //#line 276 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
 break;
+case 128:
+//#line 277 "gramatica.y"
+{agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
+break;
 case 129:
-//#line 280 "gramatica.y"
+//#line 281 "gramatica.y"
 {ArrayList<String> b = (ArrayList<String>) val_peek(4).obj; b.addAll((ArrayList<String>)val_peek(2).obj); b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b); sacarParamFormTS(ambito+":"+val_peek(0).sval);}
 break;
 case 130:
-//#line 281 "gramatica.y"
+//#line 282 "gramatica.y"
 {ArrayList<String> b = (ArrayList<String>) val_peek(2).obj; b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b); sacarParamFormTS(ambito+":"+val_peek(0).sval);}
 break;
 case 131:
-//#line 282 "gramatica.y"
+//#line 283 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
 break;
 case 132:
-//#line 286 "gramatica.y"
+//#line 287 "gramatica.y"
 {agregarAPolaca("returnLambda");
                                                                      borrarAmbito();
                                                                      agregarAPolaca(val_peek(1).sval);
@@ -2015,10 +1991,11 @@ case 132:
                                                                      nroLambda++;}
 break;
 case 133:
-//#line 297 "gramatica.y"
+//#line 298 "gramatica.y"
 {ambito = ambito + ":LAMBDA"+nroLambda;
                                                                      ArrayList<String> polaca = new ArrayList<String>();
-                                                                     polacaInversa.put(ambito, polaca);
+                                                                     if(polacaInversa != null){
+                                                                     polacaInversa.put(ambito, polaca);}
 
                                                                     ArrayList<String> parametroCompleto = new ArrayList<String>();
                                                                     String parametro =  "cv " + val_peek(2).sval+ " "+val_peek(1).sval;
@@ -2033,58 +2010,58 @@ case 133:
                                                                     yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 134:
-//#line 315 "gramatica.y"
+//#line 317 "gramatica.y"
 {if(!variablePermitida(val_peek(1).sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(2).sval+"' no declarada.");} yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 135:
-//#line 316 "gramatica.y"
+//#line 318 "gramatica.y"
 {yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 136:
-//#line 320 "gramatica.y"
+//#line 322 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 137:
-//#line 321 "gramatica.y"
+//#line 323 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(2).sval); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo); }
 break;
 case 138:
-//#line 322 "gramatica.y"
+//#line 324 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
 break;
 case 141:
-//#line 331 "gramatica.y"
+//#line 333 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 142:
-//#line 332 "gramatica.y"
+//#line 334 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 143:
-//#line 333 "gramatica.y"
+//#line 335 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
 break;
 case 144:
-//#line 337 "gramatica.y"
+//#line 339 "gramatica.y"
 {yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 145:
-//#line 338 "gramatica.y"
+//#line 340 "gramatica.y"
 {String name = val_peek(2).sval + "." + val_peek(0).sval; String a = val_peek(2).sval + ":" + val_peek(0).sval; yyval = new ParserVal(name); }
 break;
 case 146:
-//#line 342 "gramatica.y"
+//#line 344 "gramatica.y"
 {yyval = new ParserVal("ULONG");}
 break;
 case 147:
-//#line 346 "gramatica.y"
+//#line 348 "gramatica.y"
 {agregarCteTS(val_peek(0).sval); yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 148:
-//#line 347 "gramatica.y"
+//#line 349 "gramatica.y"
 {String cte = "-" + val_peek(0).sval; if(dentroDeRango(cte)){ agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);}} else {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");} yyval = new ParserVal(cte);}
 break;
-//#line 2011 "Parser.java"
+//#line 1988 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
