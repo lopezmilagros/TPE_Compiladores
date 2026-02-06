@@ -1,0 +1,24 @@
+PROGRAMA{
+    ## Este programa contiene de alcance a verificar ##
+    ulong X;
+    ulong Y, Z; 
+
+    X := 6UL;
+    Y := 20UL;
+
+    ulong SUMAR (cvr ulong PX, cvr ulong PY){
+		print(X);
+		print(Y);
+		PX := PX + 1UL;
+		PY := PY + 1UL;
+        print(PX);
+		print(PY);
+		return (PX + PY);	
+    }
+
+
+	Z := SUMAR(4UL->PX, Y->PY);
+	print(X);
+	print(Y);
+	print(Z);
+}

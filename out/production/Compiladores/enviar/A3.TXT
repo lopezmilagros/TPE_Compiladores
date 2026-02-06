@@ -1,0 +1,44 @@
+PROGRAMA{
+    ## Este programa contiene de alcance a verificar ##
+    ulong X, DENTROM;
+    ulong Y; ## X ya esta declarada ##
+
+    X := 6UL;
+    X := Y; ## Y no esta declarada ##
+
+    ulong IMPRIMIR (ulong X){
+        print(X);
+        return(X);
+    }
+
+    ulong IMPRIMIR2 (ulong X){  ## Funcion ya declarada ##
+        ulong DENTRO;
+		print(X);
+        return(X);
+    }
+
+    ulong FUNCION (ulong Y){
+        ulong DENTRO;
+		DENTRO := 3UL;
+        ulong FUNCION3 (ulong Y){
+			ulong DENTRO2;
+			Y := X+DENTRO;            ## Permitido usar x porque fue declarada en el padre ##
+			return (Y);
+		}
+		return (DENTRO);
+		
+    }
+
+    
+	DENTROM := FUNCION(10UL -> Y);
+	print(DENTROM);  ## Debe imprimir 3 ##
+
+    X := IMPRIMIR2(X -> Y); ## debería dar error, porque el parámetro formal de IMPRIMIR2 es X, no Y ##
+
+
+
+    ulong FUNCION4 (ulong H){
+        print("hola");    ## funcion sin return ##
+		return(H);
+    }
+}

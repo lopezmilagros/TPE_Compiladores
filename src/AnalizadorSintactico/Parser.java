@@ -668,7 +668,7 @@ final static String yyrule[] = {
 "tipo_cte : MENOS CTE",
 };
 
-//#line 353 "gramatica.y"
+//#line 362 "gramatica.y"
 
 /* -------------------------------------------------------------------------------------------------------------CODIGO AUXILIAR ----------------------------------------------------*/
 
@@ -761,6 +761,25 @@ public void modificarUsosParametros(ArrayList<String> lista, String uso){
         int indice = parametro.lastIndexOf(" ");
         parametro = parametro.substring(indice + 1);
         modificarUsoTS(parametro, uso);
+    }
+}
+
+public void modificarSemantica(ArrayList<String> lista, String clave){
+    for (String parametro: lista){
+        int indice = parametro.lastIndexOf(" ");
+        String nombre = parametro.substring(indice + 1);
+        System.out.println("AFUERA; "+clave+":"+nombre);
+        if(tablaDeSimbolos.containsKey(clave+":"+nombre)){
+          System.out.println("ADENTRO DEL IF"+clave+":"+nombre);
+            ArrayList<String> info = tablaDeSimbolos.get(clave+":"+nombre);
+            if(info.size() == 3)
+                info.add("");
+            if(parametro.contains("cvr")){
+                info.set(3,"cvr");
+            }else{
+                info.set(3,"cv");
+            }
+        }
     }
 }
 
@@ -1066,6 +1085,30 @@ public boolean estaDeclarada(String id){
     return false;
 }
 
+boolean verificacionParametros(ArrayList<String> parametros, String funcion){
+    //verificamos que los nombres de los parametros a asignar coincidan con los parametros de la funcion
+    for (int i = 0; i < parametros.size(); i++) {
+        if (parametros.get(i).equals("->")) {
+            String formal = parametros.get(i - 1);
+            // chequeo en la tabla de símbolos
+            String clave = funcionAlAlcance(funcion);
+            if(clave != null){
+                clave = clave + ":" + formal;
+                if (!tablaDeSimbolos.containsKey(clave)) {
+                    return false;
+                }
+                else{
+                  ArrayList<String> info = tablaDeSimbolos.get(clave);
+                  if(!info.get(2).equals("Nombre de parametro")){
+                    return false;
+                  }
+                }
+            }
+        }
+    }
+    return true;
+}
+
 public String funcionAlAlcance(String id){
     //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
     String ambitoActual = ambito;
@@ -1311,44 +1354,44 @@ public void imprimirPolaca() {
     System.out.println();
 }
 
-  public void imprimirTabla() {
+public void imprimirTabla() {
+
     System.out.println("\nTabla de símbolos:");
 
-    // Encabezados con buen espaciado
     System.out.printf(
-            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
-            "Ámbito / Lexema",
-            "Tipo Token",
-            "Tipo",
-            "Uso",
-            "Semántica"
+        "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+        "Ámbito / Lexema",
+        "Tipo Token",
+        "Tipo",
+        "Uso",
+        "Semántica"
     );
 
     System.out.println("----------------------------------------------------------------------------------------------");
 
     for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
 
-      String clave = entry.getKey();
-      ArrayList<String> valores = entry.getValue();
+        String clave = entry.getKey();
+        ArrayList<String> valores = entry.getValue();
 
-      String tipoToken   = valores.size() > 0 ? valores.get(0) : "";
-      String tipo        = valores.size() > 1 ? valores.get(1) : "";
-      String uso         = valores.size() > 2 ? valores.get(2) : "";
-      String otraInfo    = valores.size() > 3 ? valores.get(3) : "";
-      String semantica   = valores.size() > 4 ? valores.get(4) : "";
+        String tipoToken = valores.size() > 0 ? valores.get(0) : "";
+        String tipo      = valores.size() > 1 ? valores.get(1) : "";
+        String uso       = valores.size() > 2 ? valores.get(2) : "";
+        String semantica = valores.size() > 3 ? valores.get(3) : "";
 
-      System.out.printf(
-              "%-35s | %-15s | %-15s | %-20s | %-20s%n",
-              clave,
-              tipoToken,
-              tipo,
-              uso,
-              semantica
-      );
+        System.out.printf(
+            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+            clave,
+            tipoToken,
+            tipo,
+            uso,
+            semantica
+        );
     }
 
     System.out.println();
-  }
+}
+
 
 
 public void imprimirErroresSemanticos(){
@@ -1366,7 +1409,7 @@ public void imprimirErroresSemanticos(){
 public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
     return tablaDeSimbolos;
 }
-//#line 1298 "Parser.java"
+//#line 1341 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1856,60 +1899,68 @@ case 105:
 //#line 210 "gramatica.y"
 {ArrayList<String> a = new ArrayList<>((ArrayList<String>) val_peek(1).obj);
                                                          if (funcionPermitida(val_peek(3).sval)){
-                                                            a.add(val_peek(3).sval);
-                                                            a.add("call");
-                                                            /*Chequeo si es CVR reasigno los formales a los reales*/
-                                                            if(val_peek(1) != null) {cvrAPolaca(val_peek(3).sval, (ArrayList<String>)val_peek(1).obj, a);}
-                                                            a.add("reemplazar_"+ambito+":"+val_peek(3).sval);
-                                                            yyval = new ParserVal(a);
+                                                            if(verificacionParametros(a, val_peek(3).sval)){
+                                                                a.add(val_peek(3).sval);
+                                                                a.add("call");
+                                                                /*Chequeo si es CVR reasigno los formales a los reales*/
+                                                                if(val_peek(1) != null) {cvrAPolaca(val_peek(3).sval, (ArrayList<String>)val_peek(1).obj, a);}
+                                                                a.add("reemplazar_"+ambito+":"+val_peek(3).sval);
+                                                                yyval = new ParserVal(a);
+                                                            }else{
+                                                                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Parametros formales incorrectos");
+                                                                a.add("null");
+                                                            }
                                                          }else {
                                                             agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+val_peek(3).sval+"' fuera de alcance.");
-                                                            a.add("null");} yyval = new ParserVal(a);
+                                                            a.add("null");
+                                                            }
+                                                            yyval = new ParserVal(a);
+
                                                          }
 break;
 case 106:
-//#line 225 "gramatica.y"
+//#line 233 "gramatica.y"
 {agregarAPolaca("+");}
 break;
 case 107:
-//#line 226 "gramatica.y"
+//#line 234 "gramatica.y"
 {agregarAPolaca("-");}
 break;
 case 108:
-//#line 227 "gramatica.y"
+//#line 235 "gramatica.y"
 {agregarAPolaca("*");}
 break;
 case 109:
-//#line 228 "gramatica.y"
+//#line 236 "gramatica.y"
 {agregarAPolaca("/");}
 break;
 case 110:
-//#line 232 "gramatica.y"
+//#line 240 "gramatica.y"
 {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variable"); ArrayList<String> b = new ArrayList<String>(); b.add(val_peek(1).sval); if(!variablePermitida(val_peek(1).sval)){modificarTipoTS(b, val_peek(2).sval); modificarUsoTS(val_peek(1).sval, "Nombre de variable");}else{agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(1).sval+"' ya fue declarada.");}}
 break;
 case 111:
-//#line 233 "gramatica.y"
+//#line 241 "gramatica.y"
 {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de variables"); ArrayList<String> a = (ArrayList<String>)val_peek(1).obj; if(!variablesDeclaradas(a)){modificarTipoTS(a, val_peek(2).sval); modificarUsos(a, "Nombre de variable");}}
 break;
 case 112:
-//#line 234 "gramatica.y"
+//#line 242 "gramatica.y"
 {agregarSentencia("LINEA "+aLex.getNroLinea()+" SENTENCIA: Declaracion de funcion");}
 break;
 case 113:
-//#line 235 "gramatica.y"
+//#line 243 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
 break;
 case 114:
-//#line 236 "gramatica.y"
+//#line 244 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ';' al final de la sentencia");}
 break;
 case 116:
-//#line 241 "gramatica.y"
+//#line 249 "gramatica.y"
 {String ambitoConFuncion = ambito;
                                             borrarAmbito();}
 break;
 case 117:
-//#line 246 "gramatica.y"
+//#line 254 "gramatica.y"
 {String nombre = val_peek(3).sval;
                                                                  if (existeFuncionVisibleConNombre(nombre)) {
                                                                    agregarErrorSemantico("LINEA " + aLex.getNroLinea() +" ERROR SEMANTICO: Funcion '" + nombre + "' redeclarada");
@@ -1919,68 +1970,69 @@ case 117:
                                                                    modificarAmbitosTS((ArrayList<String>)val_peek(1).obj);
                                                                    modificarUsosParametros((ArrayList<String>)val_peek(1).obj, "Nombre de parametro");
                                                                    agregarInfoFuncionTS(val_peek(4).sval, (ArrayList<String>) val_peek(1).obj);
+                                                                   modificarSemantica((ArrayList<String>)val_peek(1).obj, ambito);
                                                                    if(polacaInversa != null){
                                                                    polacaInversa.put(ambito, new ArrayList<String>());}
                                                                }}
 break;
 case 118:
-//#line 258 "gramatica.y"
+//#line 267 "gramatica.y"
 {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de la funcion");}
 break;
 case 119:
-//#line 262 "gramatica.y"
+//#line 271 "gramatica.y"
 {ArrayList<String> a = (ArrayList<String>)val_peek(2).obj; a.add(val_peek(0).sval); yyval = new ParserVal(a);}
 break;
 case 120:
-//#line 263 "gramatica.y"
+//#line 272 "gramatica.y"
 {ArrayList<String> a = new ArrayList<String>(); a.add(val_peek(0).sval); yyval = new ParserVal(a);}
 break;
 case 121:
-//#line 264 "gramatica.y"
+//#line 273 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta ',' en declaracion de las variables");}
 break;
 case 122:
-//#line 268 "gramatica.y"
+//#line 277 "gramatica.y"
 { yyval = new ParserVal("cvr "+val_peek(1).sval+" "+val_peek(0).sval);}
 break;
 case 123:
-//#line 269 "gramatica.y"
+//#line 278 "gramatica.y"
 { yyval = new ParserVal("cv "+val_peek(1).sval+" "+val_peek(0).sval);}
 break;
 case 124:
-//#line 270 "gramatica.y"
+//#line 279 "gramatica.y"
 {yyval = new ParserVal();}
 break;
 case 125:
-//#line 274 "gramatica.y"
+//#line 283 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
 break;
 case 126:
-//#line 275 "gramatica.y"
+//#line 284 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta nombre del parametro formal");}
 break;
 case 127:
-//#line 276 "gramatica.y"
+//#line 285 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
 break;
 case 128:
-//#line 277 "gramatica.y"
+//#line 286 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta tipo del parametro formal");}
 break;
 case 129:
-//#line 281 "gramatica.y"
+//#line 290 "gramatica.y"
 {ArrayList<String> b = (ArrayList<String>) val_peek(4).obj; b.addAll((ArrayList<String>)val_peek(2).obj); b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b); sacarParamFormTS(ambito+":"+val_peek(0).sval);}
 break;
 case 130:
-//#line 282 "gramatica.y"
+//#line 291 "gramatica.y"
 {ArrayList<String> b = (ArrayList<String>) val_peek(2).obj; b.add(val_peek(0).sval); b.add("->"); yyval = new ParserVal(b); sacarParamFormTS(ambito+":"+val_peek(0).sval);}
 break;
 case 131:
-//#line 283 "gramatica.y"
+//#line 292 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta especificacion del parametro formal");}
 break;
 case 132:
-//#line 287 "gramatica.y"
+//#line 296 "gramatica.y"
 {agregarAPolaca("returnLambda");
                                                                      borrarAmbito();
                                                                      agregarAPolaca(val_peek(1).sval);
@@ -1991,7 +2043,7 @@ case 132:
                                                                      nroLambda++;}
 break;
 case 133:
-//#line 298 "gramatica.y"
+//#line 307 "gramatica.y"
 {ambito = ambito + ":LAMBDA"+nroLambda;
                                                                      ArrayList<String> polaca = new ArrayList<String>();
                                                                      if(polacaInversa != null){
@@ -2010,58 +2062,58 @@ case 133:
                                                                     yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 134:
-//#line 317 "gramatica.y"
+//#line 326 "gramatica.y"
 {if(!variablePermitida(val_peek(1).sval)){agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: variable '"+val_peek(2).sval+"' no declarada.");} yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 135:
-//#line 318 "gramatica.y"
+//#line 327 "gramatica.y"
 {yyval = new ParserVal(val_peek(1).sval);}
 break;
 case 136:
-//#line 322 "gramatica.y"
+//#line 331 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 137:
-//#line 323 "gramatica.y"
+//#line 332 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(2).sval); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo); }
 break;
 case 138:
-//#line 324 "gramatica.y"
+//#line 333 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre variables de la lista");}
 break;
 case 141:
-//#line 333 "gramatica.y"
+//#line 342 "gramatica.y"
 {ArrayList<String> arreglo = new ArrayList<String>(); arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 142:
-//#line 334 "gramatica.y"
+//#line 343 "gramatica.y"
 {ArrayList<String> arreglo = (ArrayList<String>) val_peek(2).obj; arreglo.add(val_peek(0).sval); yyval = new ParserVal(arreglo);}
 break;
 case 143:
-//#line 335 "gramatica.y"
+//#line 344 "gramatica.y"
 {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta ',' entre constantes de la lista");}
 break;
 case 144:
-//#line 339 "gramatica.y"
+//#line 348 "gramatica.y"
 {yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 145:
-//#line 340 "gramatica.y"
+//#line 349 "gramatica.y"
 {String name = val_peek(2).sval + "." + val_peek(0).sval; String a = val_peek(2).sval + ":" + val_peek(0).sval; yyval = new ParserVal(name); }
 break;
 case 146:
-//#line 344 "gramatica.y"
+//#line 353 "gramatica.y"
 {yyval = new ParserVal("ULONG");}
 break;
 case 147:
-//#line 348 "gramatica.y"
+//#line 357 "gramatica.y"
 {agregarCteTS(val_peek(0).sval); yyval = new ParserVal(val_peek(0).sval);}
 break;
 case 148:
-//#line 349 "gramatica.y"
+//#line 358 "gramatica.y"
 {String cte = "-" + val_peek(0).sval; if(dentroDeRango(cte)){ agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);}} else {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");} yyval = new ParserVal(cte);}
 break;
-//#line 1988 "Parser.java"
+//#line 2040 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
