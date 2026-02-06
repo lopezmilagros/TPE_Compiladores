@@ -82,13 +82,38 @@ public class Assembler {
         } else {
             if (ts.containsKey(ambito +":"+ identificador)) {
                 //puede ser identificador o cadena
-
                 ArrayList<String> info = ts.get(ambito +":"+ identificador);
                 return (info.get(0)); //ID O CADENA
             } else {
                 if (ts.containsKey(llamadoFuncion+":"+ identificador)){
                     ArrayList<String> info = ts.get(llamadoFuncion +":"+ identificador);
                     return (info.get(0)); //ID O CADENA
+                }
+                //Prefijado
+                if(identificador.contains(".")){
+                    //Concatenamos el ambito al ifentificador con el prefijado, buscando hasta la funcion que pertenece
+                    String[] partesId = identificador.split("\\.");
+                    String funcionId = partesId[0];
+                    String nombreVar = partesId[1];
+
+                    String[] partesAmbito = ambito.split(":");
+
+                    StringBuilder nuevoIdentificador = new StringBuilder();
+
+                    for (String parte : partesAmbito) {
+                        nuevoIdentificador.append(parte).append(":");
+                        if (parte.equals(funcionId)) {
+                            break; // cortamos justo en la función
+                        }
+                    }
+
+                    nuevoIdentificador.append(nombreVar);
+                    identificador = nuevoIdentificador.toString();
+
+                    if (ts.containsKey(identificador)) {
+                        ArrayList<String> info = ts.get(identificador);
+                        return info.get(0);
+                    }
                 }
             }
         }

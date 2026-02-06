@@ -1,0 +1,16 @@
+FACT
+{
+	ulong FACTORIAL(ulong N, cvr ulong TOTAL){
+		ulong I;
+		TOTAL := 1UL;
+		while (I < N) do {
+			I := I + 1UL;
+			TOTAL := TOTAL * I;
+			}
+			return (TOTAL);
+	}
+	ulong NUM, RES, RESFACT;
+	NUM := 5UL;
+	RES := FACTORIAL(NUM->N,RESFACT->TOTAL); 
+	print(RES);
+}

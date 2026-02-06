@@ -1,0 +1,17 @@
+PROGRAMA{
+    ## Este programa contiene de alcance a verificar ##
+    ulong X;
+    ulong Y; ## X ya esta declarada ##
+
+    X := 6UL;
+    Y := 20UL;
+
+    ulong SUMAR (ulong PX, ulong PY){
+        print(PX);
+		print(PY);
+		return (PX + PY);	
+    }
+
+
+	print(SUMAR(X->PX, Y->PY));
+}

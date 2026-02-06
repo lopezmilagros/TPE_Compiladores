@@ -209,15 +209,23 @@ termino
 llamado_funcion
     :ID PARENTESISA parametros_reales PARENTESISC       {ArrayList<String> a = new ArrayList<>((ArrayList<String>) $3.obj);
                                                          if (funcionPermitida($1.sval)){
-                                                            a.add($1.sval);
-                                                            a.add("call");
-                                                            //Chequeo si es CVR reasigno los formales a los reales
-                                                            if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
-                                                            a.add("reemplazar_"+ambito+":"+$1.sval);
-                                                            $$ = new ParserVal(a);
+                                                            if(verificacionParametros(a, $1.sval)){
+                                                                a.add($1.sval);
+                                                                a.add("call");
+                                                                //Chequeo si es CVR reasigno los formales a los reales
+                                                                if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
+                                                                a.add("reemplazar_"+ambito+":"+$1.sval);
+                                                                $$ = new ParserVal(a);
+                                                            }else{
+                                                                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Parametros formales incorrectos");
+                                                                a.add("null");
+                                                            }
                                                          }else {
                                                             agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+$1.sval+"' fuera de alcance.");
-                                                            a.add("null");} $$ = new ParserVal(a);
+                                                            a.add("null");
+                                                            }
+                                                            $$ = new ParserVal(a);
+
                                                          }
     ;
 
@@ -252,6 +260,7 @@ header_funcion
                                                                    modificarAmbitosTS((ArrayList<String>)$4.obj);
                                                                    modificarUsosParametros((ArrayList<String>)$4.obj, "Nombre de parametro");
                                                                    agregarInfoFuncionTS($1.sval, (ArrayList<String>) $4.obj);
+                                                                   modificarSemantica((ArrayList<String>)$4.obj, ambito);
                                                                    if(polacaInversa != null){
                                                                    polacaInversa.put(ambito, new ArrayList<String>());}
                                                                }}
@@ -442,6 +451,25 @@ public void modificarUsosParametros(ArrayList<String> lista, String uso){
         int indice = parametro.lastIndexOf(" ");
         parametro = parametro.substring(indice + 1);
         modificarUsoTS(parametro, uso);
+    }
+}
+
+public void modificarSemantica(ArrayList<String> lista, String clave){
+    for (String parametro: lista){
+        int indice = parametro.lastIndexOf(" ");
+        String nombre = parametro.substring(indice + 1);
+        System.out.println("AFUERA; "+clave+":"+nombre);
+        if(tablaDeSimbolos.containsKey(clave+":"+nombre)){
+          System.out.println("ADENTRO DEL IF"+clave+":"+nombre);
+            ArrayList<String> info = tablaDeSimbolos.get(clave+":"+nombre);
+            if(info.size() == 3)
+                info.add("");
+            if(parametro.contains("cvr")){
+                info.set(3,"cvr");
+            }else{
+                info.set(3,"cv");
+            }
+        }
     }
 }
 
@@ -747,6 +775,30 @@ public boolean estaDeclarada(String id){
     return false;
 }
 
+boolean verificacionParametros(ArrayList<String> parametros, String funcion){
+    //verificamos que los nombres de los parametros a asignar coincidan con los parametros de la funcion
+    for (int i = 0; i < parametros.size(); i++) {
+        if (parametros.get(i).equals("->")) {
+            String formal = parametros.get(i - 1);
+            // chequeo en la tabla de símbolos
+            String clave = funcionAlAlcance(funcion);
+            if(clave != null){
+                clave = clave + ":" + formal;
+                if (!tablaDeSimbolos.containsKey(clave)) {
+                    return false;
+                }
+                else{
+                  ArrayList<String> info = tablaDeSimbolos.get(clave);
+                  if(!info.get(2).equals("Nombre de parametro")){
+                    return false;
+                  }
+                }
+            }
+        }
+    }
+    return true;
+}
+
 public String funcionAlAlcance(String id){
     //Si una variable esta al alcance, devuelve su clave en la TS (ambito+variable), sino devuelve null
     String ambitoActual = ambito;
@@ -992,44 +1044,44 @@ public void imprimirPolaca() {
     System.out.println();
 }
 
-  public void imprimirTabla() {
+public void imprimirTabla() {
+
     System.out.println("\nTabla de símbolos:");
 
-    // Encabezados con buen espaciado
     System.out.printf(
-            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
-            "Ámbito / Lexema",
-            "Tipo Token",
-            "Tipo",
-            "Uso",
-            "Semántica"
+        "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+        "Ámbito / Lexema",
+        "Tipo Token",
+        "Tipo",
+        "Uso",
+        "Semántica"
     );
 
     System.out.println("----------------------------------------------------------------------------------------------");
 
     for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
 
-      String clave = entry.getKey();
-      ArrayList<String> valores = entry.getValue();
+        String clave = entry.getKey();
+        ArrayList<String> valores = entry.getValue();
 
-      String tipoToken   = valores.size() > 0 ? valores.get(0) : "";
-      String tipo        = valores.size() > 1 ? valores.get(1) : "";
-      String uso         = valores.size() > 2 ? valores.get(2) : "";
-      String otraInfo    = valores.size() > 3 ? valores.get(3) : "";
-      String semantica   = valores.size() > 4 ? valores.get(4) : "";
+        String tipoToken = valores.size() > 0 ? valores.get(0) : "";
+        String tipo      = valores.size() > 1 ? valores.get(1) : "";
+        String uso       = valores.size() > 2 ? valores.get(2) : "";
+        String semantica = valores.size() > 3 ? valores.get(3) : "";
 
-      System.out.printf(
-              "%-35s | %-15s | %-15s | %-20s | %-20s%n",
-              clave,
-              tipoToken,
-              tipo,
-              uso,
-              semantica
-      );
+        System.out.printf(
+            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+            clave,
+            tipoToken,
+            tipo,
+            uso,
+            semantica
+        );
     }
 
     System.out.println();
-  }
+}
+
 
 
 public void imprimirErroresSemanticos(){

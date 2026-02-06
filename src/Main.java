@@ -13,7 +13,6 @@ public  class Main {
           if (args.length >= 1) {
                path = args[0];
           } else {
-               // (opcional) tu menú actual, o directamente mostrar "Uso: ..."
                System.out.println("Uso: java -jar compilador.jar <archivo_fuente>");
                return;
           }
@@ -28,14 +27,16 @@ public  class Main {
           aLex.imprimirErroresLexicos();
           parser.imprimirErrores();
           parser.imprimirErroresSemanticos();
+
           System.out.println("TABLA DEL SINTACTICO");
+
           parser.imprimirTabla();
           System.out.println(parser.getError());
 
           System.out.println();
-          System.out.println("TABLA DEL LEXICO");
-          aLex.imprimirTabla();
-          aLex.imprimirTokensLeidos();
+          //System.out.println("TABLA DEL LEXICO");
+          //aLex.imprimirTabla();
+          //aLex.imprimirTokensLeidos();
           if(parser.getPolacaInversa() != null) {
                parser.imprimirPolaca();
                Assembler a = new Assembler(parser.getTablaDeSimbolos(),parser.getPolacaInversa());

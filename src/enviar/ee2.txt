@@ -1,0 +1,18 @@
+PROGRAMA{
+    ## Este programa contiene expresiones aritméticas ##
+	ulong X,Y,Z;
+	print("inicio");
+
+	X := 10UL;
+
+	Y := 1UL-X;
+		print(Y);
+		
+
+
+	
+	
+	print(X);
+
+
+}
