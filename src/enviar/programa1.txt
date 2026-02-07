@@ -9,7 +9,8 @@ PRORAMA{
         ulong J := A + B;
         return (J);
     }
-    H := SUMA(H->A, Y ->B);
+    H := SUMA(H->A, H->B);
     print("Valor de suma: ");
     print(H);
+    print(1.1);
 }

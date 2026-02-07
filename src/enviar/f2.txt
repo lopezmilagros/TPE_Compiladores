@@ -13,5 +13,5 @@ PROGRAMA{
     }
 
 
-	print(SUMAR(X->PX, Y->PY));
+	print(SUMAR(X->PX, Y->PY) + 3UL);
 }
