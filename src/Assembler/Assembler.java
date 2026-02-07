@@ -242,7 +242,7 @@ public class Assembler {
                 // resta
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(operando2, operando1);
 
                 code.append("; resta\n");
                 code.append("SUB EAX, EBX\n");
@@ -429,6 +429,8 @@ public class Assembler {
                 String operando = pila.pop();
                 operando = ambito.replace(":", "_") + "_" + operando;
                 code.append("CALL "+operando+"\n");
+
+                pila.push("reemplazar_" + operando);
             }
 
             case "print" -> {
@@ -441,20 +443,30 @@ public class Assembler {
                     data.append("msj"+nroMensaje+" db "+mensaje+", 0\n");
                     code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
                 }else{
-                    String tipo = tipoToken(mensaje);
-                    if(tipo.equals("ID")){
-                        String a = ambito.replace(":","_");
-                        code.append("MOV EAX, _"+a+"_"+mensaje+"\n");
-                    }else if(tipo.equals("ULONG")){
-                        conversion(mensaje);
-                        code.append("MOV EAX, @AUX"+nroAux+"\n");
-                    }else{
-                        code.append("MOV EAX, _"+mensaje+"\n");
+                    if(mensaje.startsWith("reemplazar_")){
+                        code.append("MOV EAX, " + mensaje + "\n");
+                    }else {
+                        String tipo = tipoToken(mensaje);
+                        if (tipo == null) {
+                            throw new RuntimeException(
+                                    "No se pudo determinar el tipo de: " + mensaje
+                            );
+                        }
+                        System.out.println("MENSAJE A IMPRIMIR " + mensaje);
+                        if (tipo.equals("ID")) {
+                            String a = ambito.replace(":", "_");
+                            code.append("MOV EAX, _" + a + "_" + mensaje + "\n");
+                        } else if (tipo.equals("ULONG")) {
+                            code.append("MOV EAX, @AUX" + nroAux + "\n");
+                        } else {
+                            conversion(mensaje);
+                            code.append("MOV EAX, _" + mensaje + "\n");
+                        }
                     }
-                    //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
-                    code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
-                    code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
                 }
+                //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
+                code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
+                code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
             }
 
             case "BI" -> {
@@ -474,26 +486,20 @@ public class Assembler {
             // OPERACIONES ESPECIALES-----------------------------------------------------
 
             case "return" -> {
-                // return
                 ArrayList<String> variables = new ArrayList<>();
                 while (!pila.peek().equals("empieza lista")) {
-                    String var = pila.pop();
-                    variables.add(var);
+                    variables.add(pila.pop());
                 }
-                // saco el "empieza lista"
-                pila.pop();
+                pila.pop(); // saco "empieza lista"
 
                 code.append("RET\n");
-                //Busco donde esta reemplazar_(funcion) y le asigno la primera variable del return
-                //Tengo que cambiar el code a string para reemplazar lo que coincida
-                String variable = variables.getLast();
+
                 String flag = "reemplazar_" + ambito;
-                String reemplazo = "_"+ambito.replace(":","_")+"_"+variable;
+                String reemplazo = "@AUX" + nroAux;
 
                 String nuevo = code.toString().replace(flag, reemplazo);
-                code.setLength(0); // vacía el StringBuilder
-                code.append(nuevo); // lo vuelve a cargar
-
+                code.setLength(0);
+                code.append(nuevo);
             }
 
             case "returnLambda" -> {

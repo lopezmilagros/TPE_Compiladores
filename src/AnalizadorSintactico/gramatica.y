@@ -142,7 +142,7 @@ condicion
                                                     }
     | expresiones MAYIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca(">="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | expresiones MENOR expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("<"); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
-    | expresiones MENIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca(">="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
+    | expresiones MENIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("<="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | expresiones IGIG expresiones                  {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("=="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | expresiones DIF expresiones                   {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("=!"); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | condicion_error                               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Condicion incompleta");}
@@ -209,16 +209,21 @@ termino
 llamado_funcion
     :ID PARENTESISA parametros_reales PARENTESISC       {ArrayList<String> a = new ArrayList<>((ArrayList<String>) $3.obj);
                                                          if (funcionPermitida($1.sval)){
-                                                            if(verificacionParametros(a, $1.sval)){
-                                                                a.add($1.sval);
-                                                                a.add("call");
-                                                                //Chequeo si es CVR reasigno los formales a los reales
-                                                                if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
-                                                                a.add("reemplazar_"+ambito+":"+$1.sval);
-                                                                $$ = new ParserVal(a);
+                                                            if(cantidadParametros(a, $1.sval)){
+                                                                if(verificacionParametros(a, $1.sval)){
+                                                                    a.add($1.sval);
+                                                                    a.add("call");
+                                                                    //Chequeo si es CVR reasigno los formales a los reales
+                                                                    if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
+                                                                    a.add("reemplazar_"+ambito+":"+$1.sval);
+                                                                    $$ = new ParserVal(a);
+                                                                }else{
+                                                                    agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Uso incorrecto de parametros");
+                                                                    a.add("null");
+                                                                }
                                                             }else{
-                                                                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Parametros formales incorrectos");
-                                                                a.add("null");
+                                                              agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Cantidad de parametros reales incorrecta");
+                                                              a.add("null");
                                                             }
                                                          }else {
                                                             agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+$1.sval+"' fuera de alcance.");
@@ -637,7 +642,7 @@ if (polacaInversa != null){
 
     if (polacaInversa.containsKey(ambito)) {
         ArrayList<String> a = tablaDeSimbolos.get(valor);
-        if (a!= null && a.size() == 3){
+        if (a!= null && a.size() >= 3){
             String uso = a.get(2);
             if(!uso.equals("Nombre de parametro"))
                 polacaInversa.get(ambito).add(valor);
@@ -749,7 +754,7 @@ public boolean estaInicializada(String id){
         return false;
     else {
       ArrayList<String> a = tablaDeSimbolos.get(id);
-      if (a != null && a.size() == 3) {
+      if (a != null && a.size() >= 3) {
         String uso = a.get(2);
         if (uso.equals("Nombre de variable") || uso.equals("Nombre de parametro") || uso.equals("Nombre de funcion"))
           //inicializada
@@ -791,12 +796,50 @@ boolean verificacionParametros(ArrayList<String> parametros, String funcion){
                   ArrayList<String> info = tablaDeSimbolos.get(clave);
                   if(!info.get(2).equals("Nombre de parametro")){
                     return false;
+                  }else{
+                    //chequeo si la semantica es cvr que el real sea un identificador
+                    if(info.get(3).equals("cvr")){
+                        String real = parametros.get(i - 2);
+                        String clave2 = variableAlAlcance(real); //busca si existe una variable, sino devuelve null
+                        if(clave2 == null){
+                            //no esta al alcance, o es una CTE o una expresion
+                            return false;
+                        }
+                    }
                   }
                 }
             }
         }
     }
     return true;
+}
+
+public boolean cantidadParametros(ArrayList<String> lista, String funcion){
+//chequea que la cantidad de parametros reales coincida con la cantidad de parametros formales
+    int cant = 0;
+    for (int i = 0; i < lista.size(); i++){
+        if (lista.get(i).equals("->"))
+            cant++;
+    }
+
+    String clave = funcionAlAlcance(funcion);
+    if(clave != null){
+        if(tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> info = tablaDeSimbolos.get(clave);
+            String parametros = info.get(3);
+            //contamos la cantidad de comas + 1 para ver cuantos parametros tiene
+            int comas = 0;
+            for (int i = 0; i < parametros.length(); i++) {
+                if (parametros.charAt(i) == ',') {
+                    comas++;
+                }
+            }
+            comas++;
+
+            return(comas == cant);
+        }
+    }
+    return false;
 }
 
 public String funcionAlAlcance(String id){
