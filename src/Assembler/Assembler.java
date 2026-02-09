@@ -29,7 +29,7 @@ public class Assembler {
             polacaLineal.addAll(polacaInversa.get("MAIN"));
             polacaLineal.add("FIN");
             polacaLineal.add("BI"); //agrego un salto a fin cuando termina main para evitar siga leyendo hacia abajo y
-                                    // que se ejecuten las funciones cuando no deben.
+            // que se ejecuten las funciones cuando no deben.
         }
         // agregar el resto de las funciones
         for (String funcion : polacaInversa.keySet()) {
@@ -64,7 +64,7 @@ public class Assembler {
                     else{
                         if(polacaLineal.get(j).contains("LAMBDA"))
                             llamadoFuncion = clave;
-                        }
+                    }
                     j++;
                 }
             }
@@ -77,18 +77,16 @@ public class Assembler {
     public String tipoToken(String identificador) {
         if (ts.containsKey(identificador)) {
             //ES CTE porque no tiene ambito asociado
-            System.out.println("esta en la tabla");
+            System.out.println("ENTRO A CTE");
             ArrayList<String> info = ts.get(identificador);
             return (info.get(1)); //TIPO DE CTE
         } else {
-            if (ts.containsKey(ambito +":"+ identificador)) {
-                System.out.println("esta en la tabla con ambito"+ identificador);
-                //puede ser identificador o cadena
-                ArrayList<String> info = ts.get(ambito +":"+ identificador);
-                return (info.get(0)); //ID O CADENA
+            ArrayList<String> info = buscar(identificador);
+            if(info != null){
+                    return (info.get(0)); //ID O CADENA
             } else {
                 if (ts.containsKey(llamadoFuncion+":"+ identificador)){
-                    ArrayList<String> info = ts.get(llamadoFuncion +":"+ identificador);
+                    info = ts.get(llamadoFuncion +":"+ identificador);
                     return (info.get(0)); //ID O CADENA
                 }
                 //Prefijado
@@ -113,10 +111,34 @@ public class Assembler {
                     identificador = nuevoIdentificador.toString();
 
                     if (ts.containsKey(identificador)) {
-                        ArrayList<String> info = ts.get(identificador);
+                        info = ts.get(identificador);
                         return info.get(0);
                     }
                 }
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<String> buscar(String id){
+        String ambitoActual = ambito;
+        while (true) {
+            String clave = ambitoActual + ":" + id;
+
+            // esta al alcance
+            if (ts.containsKey(clave))
+                return ts.get(clave);
+
+            // Si ya estamos en el global, cortar
+            if (ambitoActual.equals("MAIN"))
+                break;
+
+            // Quitar el último nivel del ámbito
+            int idx = ambitoActual.lastIndexOf(":");
+            if (idx == -1) {
+                ambitoActual = "MAIN";
+            } else {
+                ambitoActual = ambitoActual.substring(0, idx);
             }
         }
         return null;
@@ -182,11 +204,10 @@ public class Assembler {
 
     }
 
-    public void conversion(String dfloat){
+    public boolean conversion(String dfloat){
         if(!dfloat.startsWith("-")) {
-            System.out.println("dfloat en conversion: "+ dfloat);
+
             String dfloatConvertido = traducirDfloat(dfloat);
-            System.out.println("dfloat despues de traducir: "+ dfloatConvertido);
             //la operacion FISTP toma el DFLOAT la pila SP y guarda en aux el nro parseado
             nroAux++;
             data.append("@AUX" + nroAux + " DQ "+dfloatConvertido+"\n"); //cargo en aux el dfloat 64 bits
@@ -195,12 +216,13 @@ public class Assembler {
             nroAux++;
             data.append("@AUX" + nroAux + " DD ?\n"); //resultado ulong
             code.append("FISTP @AUX" + nroAux + " ; convierto a ulong y lo guardo en aux\n"); //convierte ulong y lo guarda en var aux
+            return true;
         }else{
             //No puedo convertir de negativo a unsigned
             nroError++;
             agregarError("ERROR: No es posible convertir dfloat negativo '"+dfloat+"' a entero sin signo");
             code.append("JMP ERROR"+nroError+"\n");
-
+            return false;
         }
     }
 
@@ -339,6 +361,8 @@ public class Assembler {
                 // asignación común
                 String operando1 = pila.pop(); //variable a asignar
                 String operando2 = pila.pop();
+                System.out.println("OP1 "+operando1);
+                System.out.println("OP2 "+operando2);
                 cargarOperandos(operando1, operando2);
 
                 code.append("; asignacion\n");
@@ -446,40 +470,33 @@ public class Assembler {
                     nroMensaje++;
                     data.append("msj"+nroMensaje+" db "+mensaje+", 0\n");
                     code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
+                    return;
                 }else{
                     if(mensaje.startsWith("reemplazar_")){
                         code.append("MOV EAX, " + mensaje + "\n");
                     }else {
-                        if (mensaje.startsWith("@AUX")) {
-                            // resultado de expresión o return
+                        String tipo = tipoToken(mensaje);
+                        if (tipo == null) {
+                            throw new RuntimeException(
+                                    "No se pudo determinar el tipo de: " + mensaje
+                            );
+                        }
+                        System.out.println("MENSAJE A IMPRIMIR " + mensaje);
+                        if (tipo.equals("ID")) {
+                            String a = ambito.replace(":", "_");
+                            code.append("MOV EAX, _" + a + "_" + mensaje + "\n");
+                        } else if (tipo.equals("ULONG")) {
                             code.append("MOV EAX, " + mensaje + "\n");
                         } else {
-                            String tipo = tipoToken(mensaje);
-                            if (tipo == null) {
-                                throw new RuntimeException(
-                                        "No se pudo determinar el tipo de: " + mensaje
-                                );
-                            }
-                            if (tipo.equals("ID")) {
-                                String a = ambito.replace(":", "_");
-                                code.append("MOV EAX, _" + a + "_" + mensaje + "\n");
-
-                            } else if (tipo.equals("ULONG")) {
-                                // CONSTANTE LITERAL
-                                code.append("MOV EAX, " + mensaje + "\n");
-
-                            } else {
-                                // DFLOAT
-                                System.out.println("MENSAJE: "+mensaje);
-                                conversion(mensaje);
+                            if (conversion(mensaje)) {
                                 code.append("MOV EAX, @AUX" + nroAux + "\n");
                             }
                         }
                     }
-                    //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
-                    code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
-                    code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
                 }
+                //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
+                code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
+                code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
             }
 
             case "BI" -> {
@@ -556,14 +573,13 @@ public class Assembler {
             case "ULONG" ->
                     code.append("MOV EAX,"+op1+"\n");
             case "DFLOAT" -> {
-                    System.out.println("ENTRO EN DFLOAT CON: "+op1);
-                    conversion(op1);
+                if (conversion(op1)) {
                     code.append("MOV EAX, @AUX"+nroAux+"\n");
+                }
             }
         }
         if(!op2.startsWith("reemplazar_")){
             String tipo2 = tipoToken(op2);
-            System.out.println("TIPO DEL TOKEN: "+op2 +" es "+ tipo2);
 
             switch (tipo2){
                 case "ID" ->{
@@ -576,8 +592,9 @@ public class Assembler {
                 case "ULONG" ->
                         code.append("MOV EBX,"+op2+"\n");
                 case "DFLOAT" -> {
-                        conversion(op2);
+                    if (conversion(op2)) {
                         code.append("MOV EBX, @AUX"+nroAux+"\n");
+                    }
                 }
             }
         }else{
@@ -605,7 +622,3 @@ public class Assembler {
         ts.put(aux,a);
     }
 }
-
-
-
-

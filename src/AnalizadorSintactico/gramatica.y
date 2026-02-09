@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 %%
 prog
-    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; polacaInversa = null; } }
+    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){polacaInversa = null; } }
     | bloque        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
     ;
 
@@ -1150,3 +1150,35 @@ public void imprimirErroresSemanticos(){
 public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
     return tablaDeSimbolos;
 }
+
+public void limpiarTS() {
+    Iterator<Map.Entry<String, ArrayList<String>>> it =
+            tablaDeSimbolos.entrySet().iterator();
+
+    while (it.hasNext()) {
+      Map.Entry<String, ArrayList<String>> entry = it.next();
+      ArrayList<String> fila = entry.getValue();
+
+      boolean borrar = false;
+      if(!fila.get(0).equals("CTE")){
+      // Si no tiene al menos Tipo + Uso
+        if (fila.size() < 3) {
+          borrar = true;
+        } else {
+          String tipo = fila.get(1);
+          String uso  = fila.get(2);
+
+          if (tipo == null || tipo.isEmpty()) {
+            borrar = true;
+          }
+          if (uso == null || uso.isEmpty()) {
+            borrar = true;
+          }
+        }
+
+        if (borrar) {
+          it.remove();
+        }
+      }
+    }
+  }

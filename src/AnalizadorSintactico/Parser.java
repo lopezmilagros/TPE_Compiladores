@@ -1336,6 +1336,41 @@ void agregarErrorSemantico(String s){
     erroresSemanticos.add(s);
 }
 
+  public void limpiarTS() {
+    Iterator<Map.Entry<String, ArrayList<String>>> it =
+            tablaDeSimbolos.entrySet().iterator();
+
+    while (it.hasNext()) {
+      Map.Entry<String, ArrayList<String>> entry = it.next();
+      ArrayList<String> fila = entry.getValue();
+
+      boolean borrar = false;
+      if(!fila.get(0).equals("CTE")){
+      // Si no tiene al menos Tipo + Uso
+        if (fila.size() < 3) {
+          borrar = true;
+        } else {
+          String tipo = fila.get(1);
+          String uso  = fila.get(2);
+
+          if (tipo == null || tipo.isEmpty()) {
+            borrar = true;
+          }
+          if (uso == null || uso.isEmpty()) {
+            borrar = true;
+          }
+        }
+
+        if (borrar) {
+          it.remove();
+        }
+      }
+    }
+  }
+
+
+
+
 public boolean huboError(){
     if(!erroresSemanticos.isEmpty()){
         for (String e :erroresSemanticos){

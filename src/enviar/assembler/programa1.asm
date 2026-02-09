@@ -96,7 +96,7 @@ invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 ; impresion de mensajes
 FLD @AUX3 ; cargo dfloat a la pila
 FISTP @AUX4 ; convierto a ulong y lo guardo en aux
-MOV EAX, _1.1
+MOV EAX, @AUX4
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 JMP FIN
