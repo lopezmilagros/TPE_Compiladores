@@ -77,10 +77,12 @@ public class Assembler {
     public String tipoToken(String identificador) {
         if (ts.containsKey(identificador)) {
             //ES CTE porque no tiene ambito asociado
+            System.out.println("esta en la tabla");
             ArrayList<String> info = ts.get(identificador);
             return (info.get(1)); //TIPO DE CTE
         } else {
             if (ts.containsKey(ambito +":"+ identificador)) {
+                System.out.println("esta en la tabla con ambito"+ identificador);
                 //puede ser identificador o cadena
                 ArrayList<String> info = ts.get(ambito +":"+ identificador);
                 return (info.get(0)); //ID O CADENA
@@ -182,7 +184,9 @@ public class Assembler {
 
     public void conversion(String dfloat){
         if(!dfloat.startsWith("-")) {
+            System.out.println("dfloat en conversion: "+ dfloat);
             String dfloatConvertido = traducirDfloat(dfloat);
+            System.out.println("dfloat despues de traducir: "+ dfloatConvertido);
             //la operacion FISTP toma el DFLOAT la pila SP y guarda en aux el nro parseado
             nroAux++;
             data.append("@AUX" + nroAux + " DQ "+dfloatConvertido+"\n"); //cargo en aux el dfloat 64 bits
@@ -446,27 +450,36 @@ public class Assembler {
                     if(mensaje.startsWith("reemplazar_")){
                         code.append("MOV EAX, " + mensaje + "\n");
                     }else {
-                        String tipo = tipoToken(mensaje);
-                        if (tipo == null) {
-                            throw new RuntimeException(
-                                    "No se pudo determinar el tipo de: " + mensaje
-                            );
-                        }
-                        System.out.println("MENSAJE A IMPRIMIR " + mensaje);
-                        if (tipo.equals("ID")) {
-                            String a = ambito.replace(":", "_");
-                            code.append("MOV EAX, _" + a + "_" + mensaje + "\n");
-                        } else if (tipo.equals("ULONG")) {
-                            code.append("MOV EAX, @AUX" + nroAux + "\n");
+                        if (mensaje.startsWith("@AUX")) {
+                            // resultado de expresión o return
+                            code.append("MOV EAX, " + mensaje + "\n");
                         } else {
-                            conversion(mensaje);
-                            code.append("MOV EAX, _" + mensaje + "\n");
+                            String tipo = tipoToken(mensaje);
+                            if (tipo == null) {
+                                throw new RuntimeException(
+                                        "No se pudo determinar el tipo de: " + mensaje
+                                );
+                            }
+                            if (tipo.equals("ID")) {
+                                String a = ambito.replace(":", "_");
+                                code.append("MOV EAX, _" + a + "_" + mensaje + "\n");
+
+                            } else if (tipo.equals("ULONG")) {
+                                // CONSTANTE LITERAL
+                                code.append("MOV EAX, " + mensaje + "\n");
+
+                            } else {
+                                // DFLOAT
+                                System.out.println("MENSAJE: "+mensaje);
+                                conversion(mensaje);
+                                code.append("MOV EAX, @AUX" + nroAux + "\n");
+                            }
                         }
                     }
+                    //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
+                    code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
+                    code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
                 }
-                //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
-                code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
-                code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
             }
 
             case "BI" -> {
@@ -543,12 +556,14 @@ public class Assembler {
             case "ULONG" ->
                     code.append("MOV EAX,"+op1+"\n");
             case "DFLOAT" -> {
+                    System.out.println("ENTRO EN DFLOAT CON: "+op1);
                     conversion(op1);
                     code.append("MOV EAX, @AUX"+nroAux+"\n");
             }
         }
         if(!op2.startsWith("reemplazar_")){
             String tipo2 = tipoToken(op2);
+            System.out.println("TIPO DEL TOKEN: "+op2 +" es "+ tipo2);
 
             switch (tipo2){
                 case "ID" ->{

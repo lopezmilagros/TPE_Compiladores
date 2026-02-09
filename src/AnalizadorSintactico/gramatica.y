@@ -192,10 +192,10 @@ asignacion_error
     ;
 
 expresiones
-    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("+"); $$ = new ParserVal(a);}
-    | expresiones MENOS termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("-"); $$ = new ParserVal(a);}
-    | expresiones AST termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b);a.add("*"); $$ = new ParserVal(a);}
-    | expresiones BARRA termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("/"); $$ = new ParserVal(a);}
+    : expresiones MAS expresiones       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("+"); $$ = new ParserVal(a);}
+    | expresiones MENOS expresiones     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("-"); $$ = new ParserVal(a);}
+    | expresiones AST expresiones       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b);a.add("*"); $$ = new ParserVal(a);}
+    | expresiones BARRA expresiones     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("/"); $$ = new ParserVal(a);}
     | termino                       {ArrayList<String> a = (ArrayList<String>)$1.obj; $$ = new ParserVal($1.obj);}
     | expresiones operador error         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
     ;
@@ -360,7 +360,15 @@ tipo
 
 tipo_cte
     : CTE               {agregarCteTS($1.sval); $$ = new ParserVal($1.sval);}
-    | MENOS CTE         {String cte = "-" + $2.sval; if(dentroDeRango(cte)){ agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);}} else {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");} $$ = new ParserVal(cte);}
+    | MENOS CTE         {String cte = "-" + $2.sval;
+                        if(dentroDeRango(cte)){
+                            agregarCteTS(cte);
+                            if(!cte.contains(".") & !cte.contains("D")){
+                                cte = cte.substring(1);}
+                            } else {
+                                agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");
+                            }
+                        $$ = new ParserVal(cte);}
     ;
 
 %%
@@ -562,7 +570,7 @@ public void agregarCteTS(String lexema){
         //Si el lexema no esta en la tabla de simbolos lo agrega
         ArrayList<String> a = new ArrayList<>();
         //Sacar solo el valor numerico si es UL
-        if(lexema.contains(".") & lexema.contains("D")) {
+        if(lexema.contains(".") || lexema.contains("D")) {
             a.add(0, "CTE");
             a.add(1,"DFLOAT");
             tablaDeSimbolos.put(lexema, a);
