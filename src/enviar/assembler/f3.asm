@@ -77,12 +77,12 @@ JMP FIN
 MAIN_SUMAR:
 
 ; impresion de mensajes
-MOV EAX, _MAIN_SUMAR_X
+MOV EAX, _MAIN_X
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 
 ; impresion de mensajes
-MOV EAX, _MAIN_SUMAR_Y
+MOV EAX, _MAIN_Y
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 
