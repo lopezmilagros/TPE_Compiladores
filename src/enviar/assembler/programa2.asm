@@ -13,12 +13,12 @@ includelib \masm32\lib\masm32.lib
 .DATA
 IMPRESIONES DB 20 dup(0)
 FORMATO db "%d",0
-_MAIN_X DD ?
-msj1 db "Bienvenido al programa 3!", 0
-msj2 db "ERROR: La suma ha exedido el rango del tipo utilizado", 0
-@AUX1 DD ?
-msj3 db "dentro else", 0
-msj4 db "Chau Marce!", 0
+_MAIN_LAMBDA0_A DD ?
+_MAIN_LAMBDA1_A DD ?
+msj1 db "Espero que tengas un lindo dia! soy el programa 2", 0
+msj2 db "Primera lambda", 0
+msj3 db "else", 0
+msj4 db "Segunda lambda", 0
 
 .CODE
 START:
@@ -29,68 +29,65 @@ invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 
 ; cargar operandos en registros
-MOV EAX,_MAIN_X
-MOV EBX,5
+MOV EAX,_MAIN_LAMBDA0_A
+MOV EBX,3
 
-; asignacion
-MOV _MAIN_X, EBX
+; asignacion de parametros
+MOV _MAIN_LAMBDA0_A, EBX
 
-; cargar operandos en registros
-MOV EAX,8
-MOV EBX,_MAIN_X
-
-CMP EAX, EBX
-JB LABEL2
-LABEL0:
+; llamado a funcion
+CALL MAIN_LAMBDA0
 
 ; cargar operandos en registros
-MOV EAX,7
-MOV EBX,_MAIN_X
+MOV EAX,_MAIN_LAMBDA1_A
+MOV EBX,3
 
-CMP EAX, EBX
-JB LABEL1
+; asignacion de parametros
+MOV _MAIN_LAMBDA1_A, EBX
 
-; impresion de mensajes
-MOV EAX, _MAIN_X
-invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
-invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+; llamado a funcion
+CALL MAIN_LAMBDA1
+JMP FIN
+
+; comienza MAIN:LAMBDA0-------------------------
+MAIN_LAMBDA0:
 
 ; cargar operandos en registros
 MOV EAX,1
-MOV EBX,_MAIN_X
+MOV EBX,_MAIN_LAMBDA0_A
 
-; suma
-ADD EAX, EBX
-JC ERROR1
-MOV @AUX1, EAX
+CMP EAX, EBX
+JA LABEL0
 
-; cargar operandos en registros
-MOV EAX,_MAIN_X
-MOV EBX,@AUX1
-
-; asignacion
-MOV _MAIN_X, EBX
-JMP LABEL0
-LABEL1:
-JMP LABEL3
-LABEL2:
+; impresion de mensajes
+invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+JMP LABEL1
+LABEL0:
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj3, addr msj3, MB_OK
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
-LABEL3:
+LABEL1:
+RET
+
+; comienza MAIN:LAMBDA1-------------------------
+MAIN_LAMBDA1:
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj4, addr msj4, MB_OK
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
-JMP FIN
+
+; impresion de mensajes
+MOV EAX, _MAIN_LAMBDA1_A
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+RET
 
 ; manejo de errores
-ERROR1:
-invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
-JMP FIN
 
 FIN:
  invoke ExitProcess, 0

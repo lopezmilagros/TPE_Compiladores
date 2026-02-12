@@ -33,9 +33,7 @@ PROGRAMA{
 	DENTROM := FUNCION(10UL -> Y);
 	print(DENTROM);  ## Debe imprimir 3 ##
 
-    X := IMPRIMIR2(X -> X); ## debería dar error, porque el parámetro formal de IMPRIMIR2 es X, no Y ##
-
-
+    X := IMPRIMIR2(X -> X);
 
     ulong FUNCION4 (ulong H){
         print("hola");    ## funcion sin return ##

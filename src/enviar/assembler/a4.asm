@@ -91,8 +91,8 @@ JMP FIN
 MAIN_FUNCION_FUNCION3:
 
 ; cargar operandos en registros
-MOV EAX,_MAIN_FUNCION_FUNCION3_DENTRO
-MOV EBX,_MAIN_FUNCION_FUNCION3_X
+MOV EAX,_MAIN_FUNCION_DENTRO
+MOV EBX,_MAIN_X
 
 ; suma
 ADD EAX, EBX
@@ -132,6 +132,8 @@ MAIN_FUNCION4:
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 RET
 
 ; comienza MAIN:IMPRIMIR-------------------------
