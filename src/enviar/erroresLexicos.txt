@@ -1,0 +1,44 @@
+PROGRAMA{
+    ##Este programa contiene todos los errores lexicos a verificar##
+
+    ## Rango de ulong ##
+    ulong DENTRO := 4294967295UL;
+    DENTRO := 0UL;
+    ulong FUERA := 4294967296UL;
+    ulong FUERA := -1UL;              ##Este valor se truncaria a positivo##
+
+    ## Rango de dfloat ##
+    DENTRO := 2.2250738585072017D-308;
+    DENTRO := 1.7976931348623155D+308
+
+    FUERA := 2.2250738585072014D-308;
+    FUERA := 1.7976931348623157D+308;;
+    FUERA := -1.7976931348623157D+308;
+    FUERA := -2.2250738585072014D-308;
+
+    ## Tipos de dfloats ##
+
+    ulong CORRECTO = 3. + .9 + 2.D+2 + 2.D-2;
+    ulong INCORRECTO = 3 + .D
+
+    ## Identificadores con mas y menos de 20 caracteres ##
+    ulong TENGOMASDEVEINTECARACTERES;
+    ulong TENGOMENOSCARACTERES;
+
+    ## Identificadores con % y digitos e identificadores incorrectos ##
+    ulong VAR%5;
+    ulong VAR@;
+
+    ## Palabras reservadas escritas en mayusculas o minusculas ##
+    print("Hola");
+    PRINT("Hola"); ## Lo toma como ID ##
+
+    ## Cadenas bien y mal escritas ##
+    print("
+    ");
+
+    ## Comentarios bien y mal escritos ##
+    # estoy mal escrito #
+
+    ## No termino nunca
+}

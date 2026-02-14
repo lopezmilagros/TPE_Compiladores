@@ -1,0 +1,23 @@
+PRORAMA6{
+##If anidado + while con else externo##
+    print("Programa 7: control combinado");
+    ulong X := 1UL;
+
+    if(X < 4UL){
+        print("Entré al if");
+        while(X < 6UL)do{
+            if(X == 3UL){
+                print("X llego a 3");
+            }else{
+                print("X distinto de 3");
+            }endif;
+
+            print(X);
+            X := X + 1UL;
+        };
+    }else{
+        print("No entro al if");
+    }endif;
+
+    print("Fin programa 7");
+}

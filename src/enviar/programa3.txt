@@ -1,0 +1,15 @@
+PRORAMA3{
+##Sentencias de control##
+    print("Bienvenido al programa 3!");
+    ulong X := 5UL;
+    if(X < 8UL){
+        while(X < 7UL)do{
+            print(X);
+            X := X + 1UL;
+        };
+    }else{
+        print("dentro else");
+    }endif;
+
+    print("Chau Marce!");
+}
