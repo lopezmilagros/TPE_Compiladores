@@ -28,7 +28,7 @@ PROGRAMA{
 		
     }
 
-    DENTROM := 7UL; ## DENTRO no esta declarada ##
+    ## DENTROM := 7UL;  DENTRO no esta declarada ##
 
     X := IMPRIMIR2(X -> Y); ## FUNCION2 no esta declarada ##
 

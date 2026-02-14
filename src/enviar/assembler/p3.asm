@@ -27,14 +27,12 @@ START:
 ; cargar operandos en registros
 MOV EAX,_MAIN_X
 JMP ERROR1
-MOV EBX, @AUX0
 
 ; asignacion
 MOV _MAIN_X, EBX
 
 ; cargar operandos en registros
 JMP ERROR2
-MOV EAX, @AUX0
 MOV EBX,_MAIN_X
 
 ; multiplicacion

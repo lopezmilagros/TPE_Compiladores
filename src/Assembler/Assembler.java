@@ -165,23 +165,27 @@ public class Assembler {
 
     }
 
-    public void conversion(String dfloat){
+    public String conversion(String dfloat){
         if(!dfloat.startsWith("-")) {
             String dfloatConvertido = traducirDfloat(dfloat);
-            //la operacion FISTP toma el DFLOAT la pila SP y guarda en aux el nro parseado
-            nroAux++;
-            data.append("@AUX" + nroAux + " DQ "+dfloatConvertido+"\n"); //cargo en aux el dfloat 64 bits
-            code.append("FLD @AUX" + nroAux + " ; cargo dfloat a la pila\n");// cargo en st(0) el dfloat
 
             nroAux++;
-            data.append("@AUX" + nroAux + " DD ?\n"); //resultado ulong
-            code.append("FISTP @AUX" + nroAux + " ; convierto a ulong y lo guardo en aux\n"); //convierte ulong y lo guarda en var aux
+            String auxDfloat = "@AUX" + nroAux;
+            data.append(auxDfloat + " DQ " + dfloatConvertido + "\n");
+            code.append("FLD " + auxDfloat + "\n");
+
+            nroAux++;
+            String auxUlong = "@AUX" + nroAux;
+            data.append(auxUlong + " DD ?\n");
+            code.append("FISTP " + auxUlong + "\n");
+            return auxUlong;
         }else{
             //No puedo convertir de negativo a unsigned
             nroError++;
             agregarError("ERROR: No es posible convertir dfloat negativo '"+dfloat+"' a entero sin signo");
             code.append("JMP ERROR"+nroError+"\n");
 
+            return null;
         }
     }
 
@@ -445,9 +449,10 @@ public class Assembler {
                             code.append("MOV EAX, " + nombreASM(mensaje) + "\n");
                         } else if (tipo.equals("ULONG")) {
                             code.append("MOV EAX, @AUX" + nroAux + "\n");
-                        } else {
-                            conversion(mensaje);
-                            code.append("MOV EAX, _" + mensaje + "\n");
+                        } else if (tipo.equals("DFLOAT")) {
+                            String aux = conversion(mensaje);
+                            if (aux != null)
+                                code.append("MOV EAX , " + aux + "\n");
                         }
                     }
                 }
@@ -485,7 +490,9 @@ public class Assembler {
                 String reemplazo = "@AUX" + nroAux;
                 System.out.println("Reemplazando "+flag+" por "+reemplazo);
                 String nuevo = code.toString().replace(flag, reemplazo);
+                System.out.println("reemp "+reemplazo);
                 code.setLength(0);
+
                 code.append(nuevo);
             }
 
@@ -522,8 +529,10 @@ public class Assembler {
             case "ID" -> code.append("MOV EAX," + nombreASM(op1) + "\n");
             case "ULONG" -> code.append("MOV EAX," + op1 + "\n");
             case "DFLOAT" -> {
-                conversion(op1);
-                code.append("MOV EAX, @AUX"+nroAux+"\n");
+                if (conversion(op1) != null) {
+                    System.out.println("NUMERO AUX" + nroAux);
+                    code.append("MOV EAX, @AUX" + nroAux + "\n");
+                }
             }
         }
         if(!op2.startsWith("reemplazar_")){
@@ -533,13 +542,22 @@ public class Assembler {
                 case "ID" -> code.append("MOV EBX," + nombreASM(op2) + "\n");
                 case "ULONG" -> code.append("MOV EBX," + op2 + "\n");
                 case "DFLOAT" -> {
-                    conversion(op2);
-                    code.append("MOV EBX, @AUX"+nroAux+"\n");
+                    String aux = conversion(op2);
+
+                    System.out.println("AUX "+aux+ " OP2 "+op2);
+                    if (aux != null) {
+                        System.out.println("NUMERO AUX" + nroAux);
+                        System.out.println("AUX "+aux);
+                        code.append("MOV EBX, " + aux + "\n");;
+                    } else {
+                        return;
+                    }
                 }
             }
         }else{
             code.append("; asignacion del retorno de la funcion\n");
-            code.append("MOV EBX, "+op2+"\n");
+            System.out.println("EN cargar operandos con "+op2);
+            code.append("MOV EAX, "+op2+"\n");
         }
 
         code.append("\n");
