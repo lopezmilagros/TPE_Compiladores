@@ -9,6 +9,10 @@ PRORAMA4{
         N := N - 1UL;
     };
 
+    if(N == 3UL){
+    print("hola");
+    }endif;
+
     print("Suma de 1..10: ");
     print(ACC);
 }

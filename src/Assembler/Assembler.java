@@ -339,13 +339,14 @@ public class Assembler {
 
             }
             case ">" -> {
+                //A > B
                 // mayor que
-                String operando1 = pila.pop();
-                String operando2 = pila.pop();
-                cargarOperandos(operando1, operando2);
+                String operando1 = pila.pop(); //B
+                String operando2 = pila.pop(); //A
+                cargarOperandos(operando2, operando1); // cargo al reves los operandos porque estan desordenados en la pila
                 //Siempre va a ser Jump above (saltos sin signo) porque los dfloats son convertidos a ulong
                 code.append("CMP EAX, EBX\n");
-                code.append("JA ");
+                code.append("JBE ");
             }
 
             case ">=" -> {
@@ -353,9 +354,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(operando2, operando1);
                 code.append("CMP EAX, EBX\n");
-                code.append("JAE ");
+                code.append("JB ");
             }
 
             case "<" -> {
@@ -363,9 +364,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(operando2, operando1);
                 code.append("CMP EAX, EBX\n");
-                code.append("JB ");
+                code.append("JAE ");
             }
 
             case "<=" -> {
@@ -373,9 +374,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(operando2, operando1);
                 code.append("CMP EAX, EBX\n");
-                code.append("JBE ");
+                code.append("JA ");
             }
 
             case "==" -> {
@@ -385,7 +386,7 @@ public class Assembler {
 
                 cargarOperandos(operando1, operando2);
                 code.append("CMP EAX, EBX\n");
-                code.append("JE ");
+                code.append("JNE ");
             }
 
             case "=!" -> {
@@ -395,7 +396,7 @@ public class Assembler {
 
                 cargarOperandos(operando1, operando2);
                 code.append("CMP EAX, EBX\n");
-                code.append("JNE ");
+                code.append("JE ");
             }
 
             case "BF" -> {
@@ -429,12 +430,12 @@ public class Assembler {
                 // imprimir
                 code.append("\n; impresion de mensajes\n");
                 String mensaje = pila.pop();
-                if(mensaje.startsWith("\"")){ //Empriza con comillas, es una cadena
-                    //Creo un messagebox y lo imrpimo
+                if (mensaje.startsWith("\"")) {
                     nroMensaje++;
                     data.append("msj"+nroMensaje+" db "+mensaje+", 0\n");
-                    code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
-                }else{
+                    code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+ ", addr msj"+nroMensaje+", MB_OK\n");
+                    return;
+                } else{
                     if(mensaje.startsWith("reemplazar_")){
                         code.append("MOV EAX, " + mensaje + "\n");
                     }else {
