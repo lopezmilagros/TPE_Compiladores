@@ -39,25 +39,41 @@ MOV EBX,6
 MOV _MAIN_X, EBX
 
 ; cargar operandos en registros
-MOV EAX,_MAIN_X
-MOV EBX,_MAIN_Y
+MOV EAX,_MAIN_Y
+MOV EBX,6
 
 ; asignacion
-MOV _MAIN_X, EBX
+MOV _MAIN_Y, EBX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_Y
+MOV EBX,10
+
+; asignacion de parametros
+MOV _MAIN_FUNCION_Y, EBX
+
+; llamado a funcion
+CALL MAIN_FUNCION
 
 ; cargar operandos en registros
 MOV EAX,_MAIN_DENTROM
-MOV EBX,7
+; asignacion del retorno de la funcion
+MOV EBX, @AUX1
 
 ; asignacion
 MOV _MAIN_DENTROM, EBX
 
+; impresion de mensajes
+MOV EAX, _MAIN_DENTROM
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
 ; cargar operandos en registros
-MOV EAX,_MAIN_Y
+MOV EAX,_MAIN_X
 MOV EBX,_MAIN_X
 
 ; asignacion de parametros
-MOV _MAIN_IMPRIMIR2_Y, EBX
+MOV _MAIN_IMPRIMIR2_X, EBX
 
 ; llamado a funcion
 CALL MAIN_IMPRIMIR2
@@ -65,18 +81,23 @@ CALL MAIN_IMPRIMIR2
 ; cargar operandos en registros
 MOV EAX,_MAIN_X
 ; asignacion del retorno de la funcion
-MOV EBX, _MAIN_IMPRIMIR2_X
+MOV EBX, @AUX1
 
 ; asignacion
 MOV _MAIN_X, EBX
+
+; impresion de mensajes
+MOV EAX, _MAIN_X
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 JMP FIN
 
 ; comienza MAIN:FUNCION:FUNCION3-------------------------
 MAIN_FUNCION_FUNCION3:
 
 ; cargar operandos en registros
-MOV EAX,_MAIN_IMPRIMIR2_FUNCION.DENTRO
-MOV EBX,_MAIN_FUNCION_FUNCION3_X
+MOV EAX,_MAIN_FUNCION_DENTRO
+MOV EBX,_MAIN_X
 
 ; suma
 ADD EAX, EBX
@@ -89,6 +110,12 @@ MOV EBX,@AUX1
 
 ; asignacion
 MOV _MAIN_FUNCION_FUNCION3_Y, EBX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNCION_FUNCION3_Y
+MOV EBX,_MAIN_FUNCION_FUNCION3_Y
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:IMPRIMIR2-------------------------
@@ -98,10 +125,34 @@ MAIN_IMPRIMIR2:
 MOV EAX, _MAIN_IMPRIMIR2_X
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_IMPRIMIR2_X
+MOV EBX,_MAIN_IMPRIMIR2_X
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:FUNCION-------------------------
 MAIN_FUNCION:
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNCION_DENTRO
+MOV EBX,3
+
+; asignacion
+MOV _MAIN_FUNCION_DENTRO, EBX
+
+; impresion de mensajes
+MOV EAX, _MAIN_FUNCION_DENTRO
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNCION_DENTRO
+MOV EBX,_MAIN_FUNCION_DENTRO
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:FUNCION4-------------------------
@@ -109,6 +160,12 @@ MAIN_FUNCION4:
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNCION4_H
+MOV EBX,_MAIN_FUNCION4_H
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:IMPRIMIR-------------------------
@@ -118,6 +175,12 @@ MAIN_IMPRIMIR:
 MOV EAX, _MAIN_IMPRIMIR_X
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_IMPRIMIR_X
+MOV EBX,_MAIN_IMPRIMIR_X
+
+MOV @AUX1, EBX
 RET
 
 ; manejo de errores

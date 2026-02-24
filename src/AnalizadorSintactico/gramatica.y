@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 %%
 prog
-    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; polacaInversa = null; } }
+    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){polacaInversa = null; } }
     | bloque        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
     ;
 
@@ -192,10 +192,10 @@ asignacion_error
     ;
 
 expresiones
-    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("+"); $$ = new ParserVal(a);}
-    | expresiones MENOS termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("-"); $$ = new ParserVal(a);}
-    | expresiones AST termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b);a.add("*"); $$ = new ParserVal(a);}
-    | expresiones BARRA termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("/"); $$ = new ParserVal(a);}
+    : expresiones MAS expresiones       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("+"); $$ = new ParserVal(a);}
+    | expresiones MENOS expresiones     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("-"); $$ = new ParserVal(a);}
+    | expresiones AST expresiones       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b);a.add("*"); $$ = new ParserVal(a);}
+    | expresiones BARRA expresiones     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("/"); $$ = new ParserVal(a);}
     | termino                       {ArrayList<String> a = (ArrayList<String>)$1.obj; $$ = new ParserVal($1.obj);}
     | expresiones operador error         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
     ;
@@ -360,7 +360,15 @@ tipo
 
 tipo_cte
     : CTE               {agregarCteTS($1.sval); $$ = new ParserVal($1.sval);}
-    | MENOS CTE         {String cte = "-" + $2.sval; if(dentroDeRango(cte)){ agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);}} else {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");} $$ = new ParserVal(cte);}
+    | MENOS CTE         {String cte = "-" + $2.sval;
+                        if(dentroDeRango(cte)){
+                            agregarCteTS(cte);
+                            if(!cte.contains(".") & !cte.contains("D")){
+                                cte = cte.substring(1);}
+                            } else {
+                                agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");
+                            }
+                        $$ = new ParserVal(cte);}
     ;
 
 %%
@@ -463,9 +471,7 @@ public void modificarSemantica(ArrayList<String> lista, String clave){
     for (String parametro: lista){
         int indice = parametro.lastIndexOf(" ");
         String nombre = parametro.substring(indice + 1);
-        System.out.println("AFUERA; "+clave+":"+nombre);
         if(tablaDeSimbolos.containsKey(clave+":"+nombre)){
-          System.out.println("ADENTRO DEL IF"+clave+":"+nombre);
             ArrayList<String> info = tablaDeSimbolos.get(clave+":"+nombre);
             if(info.size() == 3)
                 info.add("");
@@ -562,7 +568,7 @@ public void agregarCteTS(String lexema){
         //Si el lexema no esta en la tabla de simbolos lo agrega
         ArrayList<String> a = new ArrayList<>();
         //Sacar solo el valor numerico si es UL
-        if(lexema.contains(".") & lexema.contains("D")) {
+        if(lexema.contains(".") || lexema.contains("D")) {
             a.add(0, "CTE");
             a.add(1,"DFLOAT");
             tablaDeSimbolos.put(lexema, a);
@@ -1142,3 +1148,35 @@ public void imprimirErroresSemanticos(){
 public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
     return tablaDeSimbolos;
 }
+
+public void limpiarTS() {
+    Iterator<Map.Entry<String, ArrayList<String>>> it =
+            tablaDeSimbolos.entrySet().iterator();
+
+    while (it.hasNext()) {
+      Map.Entry<String, ArrayList<String>> entry = it.next();
+      ArrayList<String> fila = entry.getValue();
+
+      boolean borrar = false;
+      if(!fila.get(0).equals("CTE")){
+      // Si no tiene al menos Tipo + Uso
+        if (fila.size() < 3) {
+          borrar = true;
+        } else {
+          String tipo = fila.get(1);
+          String uso  = fila.get(2);
+
+          if (tipo == null || tipo.isEmpty()) {
+            borrar = true;
+          }
+          if (uso == null || uso.isEmpty()) {
+            borrar = true;
+          }
+        }
+
+        if (borrar) {
+          it.remove();
+        }
+      }
+    }
+  }

@@ -1,0 +1,10 @@
+PROGRAMA{
+    ##Este programa divide por cero, por lo que compila, pero da mensaje de error cuando ejecutas##
+    ulong DIVIDENDO := 10UL;
+    ulong DIVISOR := 0.0; ##Aca se convierte de dfloat a ulong##
+
+    ulong DIVISION := DIVIDENDO / DIVISOR;
+
+    print("La division se ejecuto correctamente");
+
+}

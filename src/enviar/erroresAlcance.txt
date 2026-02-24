@@ -1,0 +1,36 @@
+PROGRAMA{
+    ## Este programa contiene de alcance a verificar ##
+    ulong X;
+    ulong X; ## X ya esta declarada ##
+
+    X := 6UL;
+    X := Y; ## Y no esta declarada ##
+
+    ulong IMPRIMIR (ulong X){
+        print(X);
+        return(X);
+    }
+
+    ulong IMPRIMIR (ulong X){  ## Funcion ya declarada ##
+        print(X);
+        return(X);
+    }
+
+    ulong FUNCION (ulong Y){
+        ulong DENTRO;
+        return (DENTRO);
+    }
+
+    DENTRO := 7UL; ## DENTRO no esta declarada ##
+
+    X := FUNCION2(X -> Y); ## FUNCION2 no esta declarada ##
+
+    ulong FUNCION3 (ulong Y){
+        Y := X;            ## Permitido usar x porque fue declarada en el padre ##
+        return (Y);
+    }
+
+    ulong FUNCION4 (ulong H){
+        print("hola");    ## funcion sin return ##
+    }
+}

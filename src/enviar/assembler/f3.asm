@@ -13,6 +13,7 @@ includelib \masm32\lib\masm32.lib
 .DATA
 IMPRESIONES DB 20 dup(0)
 FORMATO db "%d",0
+_MAIN_Z DD ?
 _MAIN_Y DD ?
 _MAIN_SUMAR_PY DD ?
 _MAIN_SUMAR_PX DD ?
@@ -21,6 +22,8 @@ msj1 db "ERROR: La suma ha exedido el rango del tipo utilizado", 0
 @AUX1 DD ?
 msj2 db "ERROR: La suma ha exedido el rango del tipo utilizado", 0
 @AUX2 DD ?
+msj3 db "ERROR: La suma ha exedido el rango del tipo utilizado", 0
+@AUX3 DD ?
 
 .CODE
 START:
@@ -57,23 +60,63 @@ MOV _MAIN_SUMAR_PY, EBX
 CALL MAIN_SUMAR
 
 ; cargar operandos en registros
-MOV EAX,3
+MOV EAX,_MAIN_Z
 ; asignacion del retorno de la funcion
-MOV EBX, @AUX2
+MOV EBX, @AUX3
 
-; suma
-ADD EAX, EBX
-JC ERROR1
-MOV @AUX1, EAX
+; asignacion
+MOV _MAIN_Z, EBX
 
 ; impresion de mensajes
-MOV EAX, @AUX1
+MOV EAX, _MAIN_Z
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 JMP FIN
 
 ; comienza MAIN:SUMAR-------------------------
 MAIN_SUMAR:
+
+; impresion de mensajes
+MOV EAX, _MAIN_X
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; impresion de mensajes
+MOV EAX, _MAIN_Y
+invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,1
+MOV EBX,_MAIN_SUMAR_PX
+
+; suma
+ADD EAX, EBX
+JC ERROR1
+MOV @AUX1, EAX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_SUMAR_PX
+MOV EBX,@AUX1
+
+; asignacion
+MOV _MAIN_SUMAR_PX, EBX
+
+; cargar operandos en registros
+MOV EAX,1
+MOV EBX,_MAIN_SUMAR_PY
+
+; suma
+ADD EAX, EBX
+JC ERROR2
+MOV @AUX2, EAX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_SUMAR_PY
+MOV EBX,@AUX2
+
+; asignacion
+MOV _MAIN_SUMAR_PY, EBX
 
 ; impresion de mensajes
 MOV EAX, _MAIN_SUMAR_PX
@@ -91,14 +134,14 @@ MOV EBX,_MAIN_SUMAR_PX
 
 ; suma
 ADD EAX, EBX
-JC ERROR2
-MOV @AUX2, EAX
+JC ERROR3
+MOV @AUX3, EAX
 
 ; cargar operandos en registros
-MOV EAX,@AUX2
-MOV EBX,@AUX2
+MOV EAX,@AUX3
+MOV EBX,@AUX3
 
-MOV @AUX2, EBX
+MOV @AUX3, EBX
 RET
 
 ; manejo de errores
@@ -107,6 +150,9 @@ invoke MessageBox, NULL, addr msj1, addr msj1, MB_OK
 JMP FIN
 ERROR2:
 invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
+JMP FIN
+ERROR3:
+invoke MessageBox, NULL, addr msj3, addr msj3, MB_OK
 JMP FIN
 
 FIN:

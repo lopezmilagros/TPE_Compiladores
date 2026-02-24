@@ -25,8 +25,6 @@ START:
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj1, addr msj1, MB_OK
-invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
-invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 
 ; cargar operandos en registros
 MOV EAX,_MAIN_X

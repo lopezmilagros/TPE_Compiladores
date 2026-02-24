@@ -19,16 +19,16 @@ public  class Main {
 
 
           System.out.print("Compilando....");
+          System.out.println();
           Parser parser = new Parser();
           AnalisisLexico aLex = new AnalisisLexico(path);
           parser.setAlex(aLex);
           parser.run();
+          parser.limpiarTS();
           parser.imprimirSentencias();
           aLex.imprimirErroresLexicos();
           parser.imprimirErrores();
           parser.imprimirErroresSemanticos();
-
-          System.out.println("TABLA DEL SINTACTICO");
 
           parser.imprimirTabla();
           System.out.println(parser.getError());
@@ -37,7 +37,8 @@ public  class Main {
           //System.out.println("TABLA DEL LEXICO");
           //aLex.imprimirTabla();
           //aLex.imprimirTokensLeidos();
-          if(parser.getPolacaInversa() != null) {
+
+          if(parser.getPolacaInversa() != null && !parser.huboError()) {
                parser.imprimirPolaca();
                Assembler a = new Assembler(parser.getTablaDeSimbolos(),parser.getPolacaInversa());
 
@@ -60,6 +61,9 @@ public  class Main {
                a.generarAssembler(outAsm.toString());
                System.out.println("ASM generado en: " + outAsm);
 
+          }else{
+               System.out.println("No se genero codigo assembler por presencia de errores");
+               System.out.println();
           }
      }
 }

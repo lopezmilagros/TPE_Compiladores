@@ -29,7 +29,7 @@ public class Assembler {
             polacaLineal.addAll(polacaInversa.get("MAIN"));
             polacaLineal.add("FIN");
             polacaLineal.add("BI"); //agrego un salto a fin cuando termina main para evitar siga leyendo hacia abajo y
-                                    // que se ejecuten las funciones cuando no deben.
+            // que se ejecuten las funciones cuando no deben.
         }
         // agregar el resto de las funciones
         for (String funcion : polacaInversa.keySet()) {
@@ -54,8 +54,8 @@ public class Assembler {
             if (token.equals("->")){
                 int j = i;
                 while(j < polacaLineal.size() && !polacaLineal.get(j).equals("call")){
-                    String clave = ambito + ":" + polacaLineal.get(j);
-                    if (ts.containsKey(clave)){
+                    String clave = resolverIdentificador(polacaLineal.get(j));
+                    if (clave != null){
                         ArrayList<String> a = ts.get(clave);
                         if(a.contains("Nombre de funcion")){
                             llamadoFuncion = clave;
@@ -63,8 +63,8 @@ public class Assembler {
                     }
                     else{
                         if(polacaLineal.get(j).contains("LAMBDA"))
-                            llamadoFuncion = clave;
-                        }
+                            llamadoFuncion = ambito + ":" + polacaLineal.get(j);
+                    }
                     j++;
                 }
             }
@@ -75,47 +75,32 @@ public class Assembler {
     }
 
     public String tipoToken(String identificador) {
+        // Constantes y auxiliares (sin ámbito en la TS)
         if (ts.containsKey(identificador)) {
-            //ES CTE porque no tiene ambito asociado
             ArrayList<String> info = ts.get(identificador);
-            return (info.get(1)); //TIPO DE CTE
-        } else {
-            if (ts.containsKey(ambito +":"+ identificador)) {
-                //puede ser identificador o cadena
-                ArrayList<String> info = ts.get(ambito +":"+ identificador);
-                return (info.get(0)); //ID O CADENA
-            } else {
-                if (ts.containsKey(llamadoFuncion+":"+ identificador)){
-                    ArrayList<String> info = ts.get(llamadoFuncion +":"+ identificador);
-                    return (info.get(0)); //ID O CADENA
-                }
-                //Prefijado
-                if(identificador.contains(".")){
-                    //Concatenamos el ambito al ifentificador con el prefijado, buscando hasta la funcion que pertenece
-                    String[] partesId = identificador.split("\\.");
-                    String funcionId = partesId[0];
-                    String nombreVar = partesId[1];
-
-                    String[] partesAmbito = ambito.split(":");
-
-                    StringBuilder nuevoIdentificador = new StringBuilder();
-
-                    for (String parte : partesAmbito) {
-                        nuevoIdentificador.append(parte).append(":");
-                        if (parte.equals(funcionId)) {
-                            break; // cortamos justo en la función
-                        }
-                    }
-
-                    nuevoIdentificador.append(nombreVar);
-                    identificador = nuevoIdentificador.toString();
-
-                    if (ts.containsKey(identificador)) {
-                        ArrayList<String> info = ts.get(identificador);
-                        return info.get(0);
-                    }
-                }
+            return info.get(1); // TIPO DE CTE o AUX
+        }
+        // Prefijado (funcion.variable)
+        if (identificador.contains(".")) {
+            String[] partesId = identificador.split("\\.");
+            String funcionId = partesId[0];
+            String nombreVar = partesId[1];
+            String[] partesAmbito = ambito.split(":");
+            StringBuilder nuevoIdentificador = new StringBuilder();
+            for (String parte : partesAmbito) {
+                nuevoIdentificador.append(parte).append(":");
+                if (parte.equals(funcionId)) break;
             }
+            nuevoIdentificador.append(nombreVar);
+            String clave = nuevoIdentificador.toString();
+            if (ts.containsKey(clave)) {
+                return ts.get(clave).get(0);
+            }
+        }
+        // Buscar con resolución de ámbitos (sube hasta MAIN)
+        String clave = resolverIdentificador(identificador);
+        if (clave != null) {
+            return ts.get(clave).get(0);
         }
         return null;
     }
@@ -180,23 +165,27 @@ public class Assembler {
 
     }
 
-    public void conversion(String dfloat){
+    public String conversion(String dfloat){
         if(!dfloat.startsWith("-")) {
             String dfloatConvertido = traducirDfloat(dfloat);
-            //la operacion FISTP toma el DFLOAT la pila SP y guarda en aux el nro parseado
-            nroAux++;
-            data.append("@AUX" + nroAux + " DQ "+dfloatConvertido+"\n"); //cargo en aux el dfloat 64 bits
-            code.append("FLD @AUX" + nroAux + " ; cargo dfloat a la pila\n");// cargo en st(0) el dfloat
 
             nroAux++;
-            data.append("@AUX" + nroAux + " DD ?\n"); //resultado ulong
-            code.append("FISTP @AUX" + nroAux + " ; convierto a ulong y lo guardo en aux\n"); //convierte ulong y lo guarda en var aux
+            String auxDfloat = "@AUX" + nroAux;
+            data.append(auxDfloat + " DQ " + dfloatConvertido + "\n");
+            code.append("FLD " + auxDfloat + "\n");
+
+            nroAux++;
+            String auxUlong = "@AUX" + nroAux;
+            data.append(auxUlong + " DD ?\n");
+            code.append("FISTP " + auxUlong + "\n");
+            return auxUlong;
         }else{
             //No puedo convertir de negativo a unsigned
             nroError++;
             agregarError("ERROR: No es posible convertir dfloat negativo '"+dfloat+"' a entero sin signo");
             code.append("JMP ERROR"+nroError+"\n");
 
+            return null;
         }
     }
 
@@ -326,9 +315,7 @@ public class Assembler {
                 cargarOperandos(operando1, operando2);
 
                 code.append("; asignacion copia-valor-resultado al retornar \n");
-                //llamadoFuncion es una variable que indica el proximo ambito a llamar
-                String a = ambito.replace(":", "_");
-                code.append("MOV _"+a+"_"+operando1+", EBX\n");
+                code.append("MOV " + nombreASM(operando1) + ", EBX\n");
             }
 
             case ":=" -> {
@@ -338,8 +325,7 @@ public class Assembler {
                 cargarOperandos(operando1, operando2);
 
                 code.append("; asignacion\n");
-                String a = ambito.replace(":", "_");
-                code.append("MOV _"+a+"_"+operando1+", EBX\n");
+                code.append("MOV " + nombreASM(operando1) + ", EBX\n");
 
             }
             case "asignLambda" -> {
@@ -353,13 +339,14 @@ public class Assembler {
 
             }
             case ">" -> {
+                //A > B
                 // mayor que
-                String operando1 = pila.pop();
-                String operando2 = pila.pop();
-                cargarOperandos(operando1, operando2);
+                String operando1 = pila.pop(); //B
+                String operando2 = pila.pop(); //A
+                cargarOperandos(operando2, operando1); // cargo al reves los operandos porque estan desordenados en la pila
                 //Siempre va a ser Jump above (saltos sin signo) porque los dfloats son convertidos a ulong
                 code.append("CMP EAX, EBX\n");
-                code.append("JA ");
+                code.append("JBE ");
             }
 
             case ">=" -> {
@@ -367,9 +354,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(operando2, operando1);
                 code.append("CMP EAX, EBX\n");
-                code.append("JAE ");
+                code.append("JB ");
             }
 
             case "<" -> {
@@ -377,9 +364,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(operando2, operando1);
                 code.append("CMP EAX, EBX\n");
-                code.append("JB ");
+                code.append("JAE ");
             }
 
             case "<=" -> {
@@ -387,9 +374,9 @@ public class Assembler {
                 String operando1 = pila.pop();
                 String operando2 = pila.pop();
 
-                cargarOperandos(operando1, operando2);
+                cargarOperandos(operando2, operando1);
                 code.append("CMP EAX, EBX\n");
-                code.append("JBE ");
+                code.append("JA ");
             }
 
             case "==" -> {
@@ -399,7 +386,7 @@ public class Assembler {
 
                 cargarOperandos(operando1, operando2);
                 code.append("CMP EAX, EBX\n");
-                code.append("JE ");
+                code.append("JNE ");
             }
 
             case "=!" -> {
@@ -409,7 +396,7 @@ public class Assembler {
 
                 cargarOperandos(operando1, operando2);
                 code.append("CMP EAX, EBX\n");
-                code.append("JNE ");
+                code.append("JE ");
             }
 
             case "BF" -> {
@@ -427,22 +414,28 @@ public class Assembler {
                 // llamada a función
                 code.append("\n; llamado a funcion\n");
                 String operando = pila.pop();
-                operando = ambito.replace(":", "_") + "_" + operando;
-                code.append("CALL "+operando+"\n");
+                String claveFuncion = resolverIdentificador(operando);
+                String etiqueta;
+                if (claveFuncion != null) {
+                    etiqueta = claveFuncion.replace(":", "_");
+                } else {
+                    etiqueta = ambito.replace(":", "_") + "_" + operando;
+                }
+                code.append("CALL "+etiqueta+"\n");
 
-                pila.push("reemplazar_" + operando);
+                pila.push("reemplazar_" + etiqueta);
             }
 
             case "print" -> {
                 // imprimir
                 code.append("\n; impresion de mensajes\n");
                 String mensaje = pila.pop();
-                if(mensaje.startsWith("\"")){ //Empriza con comillas, es una cadena
-                    //Creo un messagebox y lo imrpimo
+                if (mensaje.startsWith("\"")) {
                     nroMensaje++;
                     data.append("msj"+nroMensaje+" db "+mensaje+", 0\n");
-                    code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+", addr msj"+nroMensaje+", MB_OK\n");
-                }else{
+                    code.append("invoke MessageBox, NULL, addr msj"+nroMensaje+ ", addr msj"+nroMensaje+", MB_OK\n");
+                    return;
+                } else{
                     if(mensaje.startsWith("reemplazar_")){
                         code.append("MOV EAX, " + mensaje + "\n");
                     }else {
@@ -452,20 +445,21 @@ public class Assembler {
                                     "No se pudo determinar el tipo de: " + mensaje
                             );
                         }
-                        System.out.println("MENSAJE A IMPRIMIR " + mensaje);
                         if (tipo.equals("ID")) {
-                            String a = ambito.replace(":", "_");
-                            code.append("MOV EAX, _" + a + "_" + mensaje + "\n");
+                            code.append("MOV EAX, " + nombreASM(mensaje) + "\n");
+                            code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
                         } else if (tipo.equals("ULONG")) {
                             code.append("MOV EAX, @AUX" + nroAux + "\n");
-                        } else {
-                            conversion(mensaje);
-                            code.append("MOV EAX, _" + mensaje + "\n");
+                            code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
+                        } else if (tipo.equals("DFLOAT")) {
+                            //Creo una variable con el valor de la constante
+                            nroAux++;
+                            data.append("@DF" + nroAux + " DQ " + mensaje + "\n");
+                            code.append("invoke FloatToStr, @DF" + nroAux + ", addr IMPRESIONES\n");
                         }
                     }
                 }
                 //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
-                code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
                 code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
             }
 
@@ -492,13 +486,17 @@ public class Assembler {
                 }
                 pila.pop(); // saco "empieza lista"
 
+                //asignar la variable a retornar a EBX y a AUX
+                String ret = variables.get(0);
+                cargarOperandos(ret, ret);   // deja valor en EBX
+                code.append("MOV @AUX" + nroAux + ", EBX\n");
                 code.append("RET\n");
 
                 String flag = "reemplazar_" + ambito;
                 String reemplazo = "@AUX" + nroAux;
-
                 String nuevo = code.toString().replace(flag, reemplazo);
                 code.setLength(0);
+
                 code.append(nuevo);
             }
 
@@ -530,39 +528,30 @@ public class Assembler {
         code.append("\n");
         code.append("; cargar operandos en registros\n");
         String tipo1 = tipoToken(op1);
-        String a;
 
         switch (tipo1){
-            case "ID" ->{
-                if(ts.containsKey(ambito+ ":" +op1))
-                    a = ambito.replace(":", "_");
-                else
-                    a = llamadoFuncion.replace(":","_");
-                code.append("MOV EAX,_"+a+"_"+op1+"\n");
-            }
-            case "ULONG" ->
-                    code.append("MOV EAX,"+op1+"\n");
+            case "ID" -> code.append("MOV EAX," + nombreASM(op1) + "\n");
+            case "ULONG" -> code.append("MOV EAX," + op1 + "\n");
             case "DFLOAT" -> {
-                    conversion(op1);
-                    code.append("MOV EAX, @AUX"+nroAux+"\n");
+                if (conversion(op1) != null) {
+                    code.append("MOV EAX, @AUX" + nroAux + "\n");
+                }
             }
         }
         if(!op2.startsWith("reemplazar_")){
             String tipo2 = tipoToken(op2);
 
             switch (tipo2){
-                case "ID" ->{
-                    if(ts.containsKey(ambito+ ":" +op2))
-                        a = ambito.replace(":", "_");
-                    else
-                        a = llamadoFuncion.replace(":","_");
-                    code.append("MOV EBX,_"+a+"_"+op2+"\n");
-                }
-                case "ULONG" ->
-                        code.append("MOV EBX,"+op2+"\n");
+                case "ID" -> code.append("MOV EBX," + nombreASM(op2) + "\n");
+                case "ULONG" -> code.append("MOV EBX," + op2 + "\n");
                 case "DFLOAT" -> {
-                        conversion(op2);
-                        code.append("MOV EBX, @AUX"+nroAux+"\n");
+                    String aux = conversion(op2);
+
+                    if (aux != null) {
+                        code.append("MOV EBX, " + aux + "\n");;
+                    } else {
+                        return;
+                    }
                 }
             }
         }else{
@@ -589,8 +578,57 @@ public class Assembler {
         a.add(2,"Variable auxiliar");
         ts.put(aux,a);
     }
+
+    /**
+     * Busca un identificador subiendo por la cadena de ámbitos.
+     * Retorna la clave completa en la TS (ej: "MAIN:X") o null si no se encuentra.
+     */
+    private String resolverIdentificador(String id) {
+        String ambitoActual = ambito;
+        while (true) {
+            String clave = ambitoActual + ":" + id;
+            if (ts.containsKey(clave)) {
+                return clave;
+            }
+            if (ambitoActual.equals("MAIN")) break;
+            int idx = ambitoActual.lastIndexOf(":");
+            if (idx == -1) break;
+            ambitoActual = ambitoActual.substring(0, idx);
+        }
+        // Buscar en el ámbito de la función llamada (para parámetros formales)
+        if (llamadoFuncion != null) {
+            String clave = llamadoFuncion + ":" + id;
+            if (ts.containsKey(clave)) {
+                return clave;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Dado un identificador simple, devuelve su nombre en assembler
+     * con el ámbito real donde fue declarado (ej: "_MAIN_X").
+     */
+    private String nombreASM(String id) {
+        // Prefijado (funcion.variable)
+        if (id.contains(".")) {
+            String[] partes = id.split("\\.");
+            String funcionId = partes[0];
+            String nombreVar = partes[1];
+            String[] partesAmbito = ambito.split(":");
+            StringBuilder sb = new StringBuilder();
+            for (String parte : partesAmbito) {
+                sb.append(parte).append("_");
+                if (parte.equals(funcionId)) break;
+            }
+            sb.append(nombreVar);
+            return "_" + sb.toString();
+        }
+        String clave = resolverIdentificador(id);
+        if (clave != null) {
+            return "_" + clave.replace(":", "_");
+        }
+        // Fallback (no debería llegar acá si pasó el análisis semántico)
+        return "_" + ambito.replace(":", "_") + "_" + id;
+    }
 }
-
-
-
-
