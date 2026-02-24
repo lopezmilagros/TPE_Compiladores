@@ -58,7 +58,7 @@ CALL MAIN_FUNCION
 ; cargar operandos en registros
 MOV EAX,_MAIN_DENTROM
 ; asignacion del retorno de la funcion
-MOV EAX, @AUX1
+MOV EBX, @AUX1
 
 ; asignacion
 MOV _MAIN_DENTROM, EBX
@@ -81,7 +81,7 @@ CALL MAIN_IMPRIMIR2
 ; cargar operandos en registros
 MOV EAX,_MAIN_X
 ; asignacion del retorno de la funcion
-MOV EAX, @AUX1
+MOV EBX, @AUX1
 
 ; asignacion
 MOV _MAIN_X, EBX
@@ -110,6 +110,12 @@ MOV EBX,@AUX1
 
 ; asignacion
 MOV _MAIN_FUNCION_FUNCION3_Y, EBX
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNCION_FUNCION3_Y
+MOV EBX,_MAIN_FUNCION_FUNCION3_Y
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:IMPRIMIR2-------------------------
@@ -119,6 +125,12 @@ MAIN_IMPRIMIR2:
 MOV EAX, _MAIN_IMPRIMIR2_X
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_IMPRIMIR2_X
+MOV EBX,_MAIN_IMPRIMIR2_X
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:FUNCION-------------------------
@@ -135,6 +147,12 @@ MOV _MAIN_FUNCION_DENTRO, EBX
 MOV EAX, _MAIN_FUNCION_DENTRO
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNCION_DENTRO
+MOV EBX,_MAIN_FUNCION_DENTRO
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:FUNCION4-------------------------
@@ -142,8 +160,12 @@ MAIN_FUNCION4:
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
-invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
-invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_FUNCION4_H
+MOV EBX,_MAIN_FUNCION4_H
+
+MOV @AUX1, EBX
 RET
 
 ; comienza MAIN:IMPRIMIR-------------------------
@@ -153,6 +175,12 @@ MAIN_IMPRIMIR:
 MOV EAX, _MAIN_IMPRIMIR_X
 invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
+
+; cargar operandos en registros
+MOV EAX,_MAIN_IMPRIMIR_X
+MOV EBX,_MAIN_IMPRIMIR_X
+
+MOV @AUX1, EBX
 RET
 
 ; manejo de errores

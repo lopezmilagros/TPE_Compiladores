@@ -17,32 +17,33 @@ _MAIN_Z DD ?
 _MAIN_Y DD ?
 _MAIN_X DD ?
 msj1 db "inicio", 0
+@DF1 DQ 1.1
 msj2 db "imprimio el 1.1", 0
 msj3 db "ERROR: La multiplicacion ha exedido el rango del tipo utilizado", 0
-@AUX1 DD ?
-msj4 db "ERROR: La suma ha exedido el rango del tipo utilizado", 0
 @AUX2 DD ?
-msj5 db "ERROR: No se puede realizar la division por cero", 0
+msj4 db "ERROR: La suma ha exedido el rango del tipo utilizado", 0
 @AUX3 DD ?
-msj6 db "ERROR: La resta ha exedido el rango del tipo utilizado", 0
+msj5 db "ERROR: No se puede realizar la division por cero", 0
 @AUX4 DD ?
+msj6 db "ERROR: La resta ha exedido el rango del tipo utilizado", 0
+@AUX5 DD ?
 msj7 db "ERROR: No es posible convertir dfloat negativo '-1.2' a entero sin signo", 0
 msj8 db "ERROR: No es posible convertir dfloat negativo '-1.2' a entero sin signo", 0
 msj9 db "ERROR: La multiplicacion ha exedido el rango del tipo utilizado", 0
-@AUX5 DD ?
+@AUX6 DD ?
 
 .CODE
 START:
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj1, addr msj1, MB_OK
-invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
+
+; impresion de mensajes
+invoke FloatToStr, @DF1, addr IMPRESIONES
 invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 
 ; impresion de mensajes
 invoke MessageBox, NULL, addr msj2, addr msj2, MB_OK
-invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX
-invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK
 
 ; cargar operandos en registros
 MOV EAX,_MAIN_X
@@ -58,16 +59,16 @@ MOV EBX,_MAIN_X
 ; multiplicacion
 MUL EBX
 JC ERROR1
-MOV @AUX1, EAX
+MOV @AUX2, EAX
 
 ; cargar operandos en registros
-MOV EAX,@AUX1
+MOV EAX,@AUX2
 MOV EBX,1
 
 ; suma
 ADD EAX, EBX
 JC ERROR2
-MOV @AUX2, EAX
+MOV @AUX3, EAX
 
 ; cargar operandos en registros
 MOV EAX,_MAIN_X
@@ -78,20 +79,20 @@ CMP EBX, 0
 JZ ERROR3
 MOV EDX, 0
 DIV EBX
-MOV @AUX3, EAX
+MOV @AUX4, EAX
 
 ; cargar operandos en registros
-MOV EAX,@AUX2
-MOV EBX,@AUX3
+MOV EAX,@AUX3
+MOV EBX,@AUX4
 
 ; resta
 SUB EAX, EBX
 JC ERROR4
-MOV @AUX4, EAX
+MOV @AUX5, EAX
 
 ; cargar operandos en registros
 MOV EAX,_MAIN_Y
-MOV EBX,@AUX4
+MOV EBX,@AUX5
 
 ; asignacion
 MOV _MAIN_Y, EBX
@@ -109,11 +110,11 @@ MOV EBX,_MAIN_X
 ; multiplicacion
 MUL EBX
 JC ERROR7
-MOV @AUX5, EAX
+MOV @AUX6, EAX
 
 ; cargar operandos en registros
 MOV EAX,_MAIN_Y
-MOV EBX,@AUX5
+MOV EBX,@AUX6
 
 ; asignacion
 MOV _MAIN_Y, EBX

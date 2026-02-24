@@ -471,9 +471,7 @@ public void modificarSemantica(ArrayList<String> lista, String clave){
     for (String parametro: lista){
         int indice = parametro.lastIndexOf(" ");
         String nombre = parametro.substring(indice + 1);
-        System.out.println("AFUERA; "+clave+":"+nombre);
         if(tablaDeSimbolos.containsKey(clave+":"+nombre)){
-          System.out.println("ADENTRO DEL IF"+clave+":"+nombre);
             ArrayList<String> info = tablaDeSimbolos.get(clave+":"+nombre);
             if(info.size() == 3)
                 info.add("");

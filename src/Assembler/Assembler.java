@@ -445,20 +445,21 @@ public class Assembler {
                                     "No se pudo determinar el tipo de: " + mensaje
                             );
                         }
-                        System.out.println("MENSAJE A IMPRIMIR " + mensaje);
                         if (tipo.equals("ID")) {
                             code.append("MOV EAX, " + nombreASM(mensaje) + "\n");
+                            code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
                         } else if (tipo.equals("ULONG")) {
                             code.append("MOV EAX, @AUX" + nroAux + "\n");
+                            code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
                         } else if (tipo.equals("DFLOAT")) {
-                            String aux = conversion(mensaje);
-                            if (aux != null)
-                                code.append("MOV EAX , " + aux + "\n");
+                            //Creo una variable con el valor de la constante
+                            nroAux++;
+                            data.append("@DF" + nroAux + " DQ " + mensaje + "\n");
+                            code.append("invoke FloatToStr, @DF" + nroAux + ", addr IMPRESIONES\n");
                         }
                     }
                 }
                 //Ahora imrpimo el mensaje, usando el lugar en memoria IMPRESIONES que cree en la seccion data
-                code.append("invoke wsprintf, addr IMPRESIONES, addr FORMATO, EAX\n");
                 code.append("invoke MessageBox, NULL, addr IMPRESIONES, addr IMPRESIONES, MB_OK\n");
             }
 
@@ -485,13 +486,15 @@ public class Assembler {
                 }
                 pila.pop(); // saco "empieza lista"
 
+                //asignar la variable a retornar a EBX y a AUX
+                String ret = variables.get(0);
+                cargarOperandos(ret, ret);   // deja valor en EBX
+                code.append("MOV @AUX" + nroAux + ", EBX\n");
                 code.append("RET\n");
 
                 String flag = "reemplazar_" + ambito;
                 String reemplazo = "@AUX" + nroAux;
-                System.out.println("Reemplazando "+flag+" por "+reemplazo);
                 String nuevo = code.toString().replace(flag, reemplazo);
-                System.out.println("reemp "+reemplazo);
                 code.setLength(0);
 
                 code.append(nuevo);
@@ -531,7 +534,6 @@ public class Assembler {
             case "ULONG" -> code.append("MOV EAX," + op1 + "\n");
             case "DFLOAT" -> {
                 if (conversion(op1) != null) {
-                    System.out.println("NUMERO AUX" + nroAux);
                     code.append("MOV EAX, @AUX" + nroAux + "\n");
                 }
             }
@@ -545,10 +547,7 @@ public class Assembler {
                 case "DFLOAT" -> {
                     String aux = conversion(op2);
 
-                    System.out.println("AUX "+aux+ " OP2 "+op2);
                     if (aux != null) {
-                        System.out.println("NUMERO AUX" + nroAux);
-                        System.out.println("AUX "+aux);
                         code.append("MOV EBX, " + aux + "\n");;
                     } else {
                         return;
@@ -557,8 +556,7 @@ public class Assembler {
             }
         }else{
             code.append("; asignacion del retorno de la funcion\n");
-            System.out.println("EN cargar operandos con "+op2);
-            code.append("MOV EAX, "+op2+"\n");
+            code.append("MOV EBX, "+op2+"\n");
         }
 
         code.append("\n");

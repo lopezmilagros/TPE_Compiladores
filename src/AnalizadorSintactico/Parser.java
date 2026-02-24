@@ -778,9 +778,7 @@ public void modificarSemantica(ArrayList<String> lista, String clave){
     for (String parametro: lista){
         int indice = parametro.lastIndexOf(" ");
         String nombre = parametro.substring(indice + 1);
-        System.out.println("AFUERA; "+clave+":"+nombre);
         if(tablaDeSimbolos.containsKey(clave+":"+nombre)){
-          System.out.println("ADENTRO DEL IF"+clave+":"+nombre);
             ArrayList<String> info = tablaDeSimbolos.get(clave+":"+nombre);
             if(info.size() == 3)
                 info.add("");
@@ -1336,41 +1334,6 @@ void agregarErrorSemantico(String s){
     erroresSemanticos.add(s);
 }
 
-  public void limpiarTS() {
-    Iterator<Map.Entry<String, ArrayList<String>>> it =
-            tablaDeSimbolos.entrySet().iterator();
-
-    while (it.hasNext()) {
-      Map.Entry<String, ArrayList<String>> entry = it.next();
-      ArrayList<String> fila = entry.getValue();
-
-      boolean borrar = false;
-      if(!fila.get(0).equals("CTE")){
-      // Si no tiene al menos Tipo + Uso
-        if (fila.size() < 3) {
-          borrar = true;
-        } else {
-          String tipo = fila.get(1);
-          String uso  = fila.get(2);
-
-          if (tipo == null || tipo.isEmpty()) {
-            borrar = true;
-          }
-          if (uso == null || uso.isEmpty()) {
-            borrar = true;
-          }
-        }
-
-        if (borrar) {
-          it.remove();
-        }
-      }
-    }
-  }
-
-
-
-
 public boolean huboError(){
     if(!erroresSemanticos.isEmpty()){
         for (String e :erroresSemanticos){
@@ -1492,7 +1455,39 @@ public void imprimirErroresSemanticos(){
 public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
     return tablaDeSimbolos;
 }
-//#line 1389 "Parser.java"
+
+public void limpiarTS() {
+    Iterator<Map.Entry<String, ArrayList<String>>> it =
+            tablaDeSimbolos.entrySet().iterator();
+
+    while (it.hasNext()) {
+      Map.Entry<String, ArrayList<String>> entry = it.next();
+      ArrayList<String> fila = entry.getValue();
+
+      boolean borrar = false;
+      if(!fila.get(0).equals("CTE")){
+      // Si no tiene al menos Tipo + Uso
+        if (fila.size() < 3) {
+          borrar = true;
+        } else {
+          String tipo = fila.get(1);
+          String uso  = fila.get(2);
+
+          if (tipo == null || tipo.isEmpty()) {
+            borrar = true;
+          }
+          if (uso == null || uso.isEmpty()) {
+            borrar = true;
+          }
+        }
+
+        if (borrar) {
+          it.remove();
+        }
+      }
+    }
+  }
+//#line 1419 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1648,7 +1643,7 @@ boolean doaction;
 //########## USER-SUPPLIED ACTIONS ##########
 case 1:
 //#line 19 "gramatica.y"
-{agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS(val_peek(1).sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; polacaInversa = null; } }
+{agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS(val_peek(1).sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){polacaInversa = null; } }
 break;
 case 2:
 //#line 20 "gramatica.y"
@@ -2209,7 +2204,7 @@ case 148:
                             }
                         yyval = new ParserVal(cte);}
 break;
-//#line 2101 "Parser.java"
+//#line 2131 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
