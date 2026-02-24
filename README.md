@@ -28,7 +28,7 @@ cd out/artifacts/Compiladores_jar/
 ```bash
 java -jar Compiladores.jar <ruta_al_archivo>
 ```
-_Ej de ruta del archivo: test/correctos/programa1.txt_
+_Ej de ruta del archivo: test/programa1.txt_
 
 La salida del compilador se compone de:
 - Lista de tipo de sentencias del programa

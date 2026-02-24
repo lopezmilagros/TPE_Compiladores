@@ -1,0 +1,18 @@
+PRORAMA4{
+##Aritmetica + asignaciones + while##
+    print("Bienvenido al programa 4!");
+    ulong N := 10UL;
+    ulong ACC := 0UL;
+
+    while(N > 0UL)do{
+        ACC := ACC + N;
+        N := N - 1UL;
+    };
+
+    if(N == 3UL){
+    print("hola");
+    }endif;
+
+    print("Suma de 1..10: ");
+    print(ACC);
+}

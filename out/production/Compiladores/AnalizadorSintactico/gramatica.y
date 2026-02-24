@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 %%
 prog
-    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){errorGeneral = "No se genero codigo assembler por presencia de errores"; polacaInversa = null; } }
+    : ID bloque     {agregarSentencia("LINEA: "+aLex.getNroLinea()+" SENTENCIA: Nombre de programa");  modificarUsoTS($1.sval, "Nombre de programa"); polacaInversa.put("MAIN", mainArreglo); if(!chequeoReturn()){agregarErrorSemantico("ERROR SEMANTICO: Falta 'return' en funcion");} if(huboError()){polacaInversa = null; } }
     | bloque        {agregarError("LINEA: "+aLex.getNroLinea()+" ERROR SINTACTICO: Falta nombre de programa");}
     ;
 
@@ -142,7 +142,7 @@ condicion
                                                     }
     | expresiones MAYIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca(">="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | expresiones MENOR expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("<"); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
-    | expresiones MENIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca(">="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
+    | expresiones MENIG expresiones                 {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("<="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | expresiones IGIG expresiones                  {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("=="); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | expresiones DIF expresiones                   {$$ = new ParserVal("null"); ArrayList<String> b = (ArrayList<String>) $1.obj; if (!b.contains("null")) { ArrayList<String> a = (ArrayList<String>) $3.obj; if (!a.contains("null")) { agregarListaAPolaca(b); agregarListaAPolaca(a); agregarAPolaca("=!"); agregarAPolaca("cond"); $$ = new ParserVal("sin error");}}}
     | condicion_error                               {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Condicion incompleta");}
@@ -192,10 +192,10 @@ asignacion_error
     ;
 
 expresiones
-    : expresiones MAS termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("+"); $$ = new ParserVal(a);}
-    | expresiones MENOS termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("-"); $$ = new ParserVal(a);}
-    | expresiones AST termino       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b);a.add("*"); $$ = new ParserVal(a);}
-    | expresiones BARRA termino     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("/"); $$ = new ParserVal(a);}
+    : expresiones MAS expresiones       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("+"); $$ = new ParserVal(a);}
+    | expresiones MENOS expresiones     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("-"); $$ = new ParserVal(a);}
+    | expresiones AST expresiones       {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b);a.add("*"); $$ = new ParserVal(a);}
+    | expresiones BARRA expresiones     {ArrayList<String> a = (ArrayList<String>)$1.obj; ArrayList<String> b= (ArrayList<String>)$3.obj; a.addAll(b); a.add("/"); $$ = new ParserVal(a);}
     | termino                       {ArrayList<String> a = (ArrayList<String>)$1.obj; $$ = new ParserVal($1.obj);}
     | expresiones operador error         {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: falta operando en expresion");}
     ;
@@ -209,16 +209,21 @@ termino
 llamado_funcion
     :ID PARENTESISA parametros_reales PARENTESISC       {ArrayList<String> a = new ArrayList<>((ArrayList<String>) $3.obj);
                                                          if (funcionPermitida($1.sval)){
-                                                            if(verificacionParametros(a, $1.sval)){
-                                                                a.add($1.sval);
-                                                                a.add("call");
-                                                                //Chequeo si es CVR reasigno los formales a los reales
-                                                                if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
-                                                                a.add("reemplazar_"+ambito+":"+$1.sval);
-                                                                $$ = new ParserVal(a);
+                                                            if(cantidadParametros(a, $1.sval)){
+                                                                if(verificacionParametros(a, $1.sval)){
+                                                                    a.add($1.sval);
+                                                                    a.add("call");
+                                                                    //Chequeo si es CVR reasigno los formales a los reales
+                                                                    if($3 != null) {cvrAPolaca($1.sval, (ArrayList<String>)$3.obj, a);}
+                                                                    a.add("reemplazar_"+ambito+":"+$1.sval);
+                                                                    $$ = new ParserVal(a);
+                                                                }else{
+                                                                    agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Uso incorrecto de parametros");
+                                                                    a.add("null");
+                                                                }
                                                             }else{
-                                                                agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Parametros formales incorrectos");
-                                                                a.add("null");
+                                                              agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: Cantidad de parametros reales incorrecta");
+                                                              a.add("null");
                                                             }
                                                          }else {
                                                             agregarErrorSemantico("LINEA "+aLex.getNroLinea()+" ERROR SEMANTICO: funcion '"+$1.sval+"' fuera de alcance.");
@@ -355,7 +360,15 @@ tipo
 
 tipo_cte
     : CTE               {agregarCteTS($1.sval); $$ = new ParserVal($1.sval);}
-    | MENOS CTE         {String cte = "-" + $2.sval; if(dentroDeRango(cte)){ agregarCteTS(cte); if(!cte.contains(".") & !cte.contains("D")){ cte = cte.substring(1);}} else {agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");} $$ = new ParserVal(cte);}
+    | MENOS CTE         {String cte = "-" + $2.sval;
+                        if(dentroDeRango(cte)){
+                            agregarCteTS(cte);
+                            if(!cte.contains(".") & !cte.contains("D")){
+                                cte = cte.substring(1);}
+                            } else {
+                                agregarError("LINEA "+aLex.getNroLinea()+" ERROR SINTACTICO: Dfloat:"+cte+" fuera de rango.");
+                            }
+                        $$ = new ParserVal(cte);}
     ;
 
 %%
@@ -458,9 +471,7 @@ public void modificarSemantica(ArrayList<String> lista, String clave){
     for (String parametro: lista){
         int indice = parametro.lastIndexOf(" ");
         String nombre = parametro.substring(indice + 1);
-        System.out.println("AFUERA; "+clave+":"+nombre);
         if(tablaDeSimbolos.containsKey(clave+":"+nombre)){
-          System.out.println("ADENTRO DEL IF"+clave+":"+nombre);
             ArrayList<String> info = tablaDeSimbolos.get(clave+":"+nombre);
             if(info.size() == 3)
                 info.add("");
@@ -557,7 +568,7 @@ public void agregarCteTS(String lexema){
         //Si el lexema no esta en la tabla de simbolos lo agrega
         ArrayList<String> a = new ArrayList<>();
         //Sacar solo el valor numerico si es UL
-        if(lexema.contains(".") & lexema.contains("D")) {
+        if(lexema.contains(".") || lexema.contains("D")) {
             a.add(0, "CTE");
             a.add(1,"DFLOAT");
             tablaDeSimbolos.put(lexema, a);
@@ -637,7 +648,7 @@ if (polacaInversa != null){
 
     if (polacaInversa.containsKey(ambito)) {
         ArrayList<String> a = tablaDeSimbolos.get(valor);
-        if (a!= null && a.size() == 3){
+        if (a!= null && a.size() >= 3){
             String uso = a.get(2);
             if(!uso.equals("Nombre de parametro"))
                 polacaInversa.get(ambito).add(valor);
@@ -749,7 +760,7 @@ public boolean estaInicializada(String id){
         return false;
     else {
       ArrayList<String> a = tablaDeSimbolos.get(id);
-      if (a != null && a.size() == 3) {
+      if (a != null && a.size() >= 3) {
         String uso = a.get(2);
         if (uso.equals("Nombre de variable") || uso.equals("Nombre de parametro") || uso.equals("Nombre de funcion"))
           //inicializada
@@ -791,12 +802,50 @@ boolean verificacionParametros(ArrayList<String> parametros, String funcion){
                   ArrayList<String> info = tablaDeSimbolos.get(clave);
                   if(!info.get(2).equals("Nombre de parametro")){
                     return false;
+                  }else{
+                    //chequeo si la semantica es cvr que el real sea un identificador
+                    if(info.get(3).equals("cvr")){
+                        String real = parametros.get(i - 2);
+                        String clave2 = variableAlAlcance(real); //busca si existe una variable, sino devuelve null
+                        if(clave2 == null){
+                            //no esta al alcance, o es una CTE o una expresion
+                            return false;
+                        }
+                    }
                   }
                 }
             }
         }
     }
     return true;
+}
+
+public boolean cantidadParametros(ArrayList<String> lista, String funcion){
+//chequea que la cantidad de parametros reales coincida con la cantidad de parametros formales
+    int cant = 0;
+    for (int i = 0; i < lista.size(); i++){
+        if (lista.get(i).equals("->"))
+            cant++;
+    }
+
+    String clave = funcionAlAlcance(funcion);
+    if(clave != null){
+        if(tablaDeSimbolos.containsKey(clave)) {
+            ArrayList<String> info = tablaDeSimbolos.get(clave);
+            String parametros = info.get(3);
+            //contamos la cantidad de comas + 1 para ver cuantos parametros tiene
+            int comas = 0;
+            for (int i = 0; i < parametros.length(); i++) {
+                if (parametros.charAt(i) == ',') {
+                    comas++;
+                }
+            }
+            comas++;
+
+            return(comas == cant);
+        }
+    }
+    return false;
 }
 
 public String funcionAlAlcance(String id){
@@ -1044,44 +1093,44 @@ public void imprimirPolaca() {
     System.out.println();
 }
 
-  public void imprimirTabla() {
+public void imprimirTabla() {
+
     System.out.println("\nTabla de símbolos:");
 
-    // Encabezados con buen espaciado
     System.out.printf(
-            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
-            "Ámbito / Lexema",
-            "Tipo Token",
-            "Tipo",
-            "Uso",
-            "Semántica"
+        "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+        "Ámbito / Lexema",
+        "Tipo Token",
+        "Tipo",
+        "Uso",
+        "Semántica"
     );
 
     System.out.println("----------------------------------------------------------------------------------------------");
 
     for (Map.Entry<String, ArrayList<String>> entry : tablaDeSimbolos.entrySet()) {
 
-      String clave = entry.getKey();
-      ArrayList<String> valores = entry.getValue();
+        String clave = entry.getKey();
+        ArrayList<String> valores = entry.getValue();
 
-      String tipoToken   = valores.size() > 0 ? valores.get(0) : "";
-      String tipo        = valores.size() > 1 ? valores.get(1) : "";
-      String uso         = valores.size() > 2 ? valores.get(2) : "";
-      String otraInfo    = valores.size() > 3 ? valores.get(3) : "";
-      String semantica   = valores.size() > 4 ? valores.get(4) : "";
+        String tipoToken = valores.size() > 0 ? valores.get(0) : "";
+        String tipo      = valores.size() > 1 ? valores.get(1) : "";
+        String uso       = valores.size() > 2 ? valores.get(2) : "";
+        String semantica = valores.size() > 3 ? valores.get(3) : "";
 
-      System.out.printf(
-              "%-35s | %-15s | %-15s | %-20s | %-20s%n",
-              clave,
-              tipoToken,
-              tipo,
-              uso,
-              semantica
-      );
+        System.out.printf(
+            "%-35s | %-15s | %-15s | %-20s | %-20s%n",
+            clave,
+            tipoToken,
+            tipo,
+            uso,
+            semantica
+        );
     }
 
     System.out.println();
-  }
+}
+
 
 
 public void imprimirErroresSemanticos(){
@@ -1099,3 +1148,35 @@ public void imprimirErroresSemanticos(){
 public HashMap<String, ArrayList<String>> getTablaDeSimbolos() {
     return tablaDeSimbolos;
 }
+
+public void limpiarTS() {
+    Iterator<Map.Entry<String, ArrayList<String>>> it =
+            tablaDeSimbolos.entrySet().iterator();
+
+    while (it.hasNext()) {
+      Map.Entry<String, ArrayList<String>> entry = it.next();
+      ArrayList<String> fila = entry.getValue();
+
+      boolean borrar = false;
+      if(!fila.get(0).equals("CTE")){
+      // Si no tiene al menos Tipo + Uso
+        if (fila.size() < 3) {
+          borrar = true;
+        } else {
+          String tipo = fila.get(1);
+          String uso  = fila.get(2);
+
+          if (tipo == null || tipo.isEmpty()) {
+            borrar = true;
+          }
+          if (uso == null || uso.isEmpty()) {
+            borrar = true;
+          }
+        }
+
+        if (borrar) {
+          it.remove();
+        }
+      }
+    }
+  }

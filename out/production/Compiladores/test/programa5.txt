@@ -1,0 +1,18 @@
+PRORAMA5{
+##Lambda con control de flujo + uso de parametro##
+    print("Programa 6: lambdas y if");
+    -> (ulong V) {
+        print("Chequeando V...");
+        if (V == 0UL){
+            print("V es cero");
+        }else{
+            if (V < 5UL){
+                print("V es chico");
+            }else{
+                print("V es grande");
+            }endif;
+        }endif;
+        print("Valor V: ");
+        print(V);
+    } (3UL);
+}
